@@ -2,13 +2,13 @@ Package: HeatStress
 Type: Package
 Title: Calculate heat stress indices
 Version: 1.0.8.1
-Date: 2019-07-01
+Date: 2025-08-13
 Author: A. Casanueva
 Maintainer: A.Casanueva <ana.casanueva@meteoswiss.ch>
 Description: Calculate heat stress indices based on meteorological data.
 License: file LICENSE
 RoxygenNote: 7.3.2
-Depends: R (>= 2.10.0), magrittr
+Depends: R (>= 2.10.0) 
 Suggests: testthat, assertthat
-Imports: stats
+Imports: stats, magrittr
 Encoding: UTF-8
