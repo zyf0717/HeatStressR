@@ -25,12 +25,14 @@ This is the intended first CRAN submission of HeatStressR.
 HeatStressR is an independently maintained fork of the GitHub-hosted
 HeatStress package. Its package name distinguishes this release from the
 upstream project. The public function interface is retained, while the
-Liljegren WBGT implementation includes corrected solar geometry, robust root
-solving, row-level diagnostics, and optional batch execution.
+Liljegren WBGT path is implemented in R with explicit numerical controls,
+row-level diagnostics, and optional batch execution.
 
 CRAN checks package portability and software quality. Users remain responsible
 for matching methodological assumptions to their application; this package is
-not a bitwise-compatible replacement for the original Liljegren C program.
+not a bitwise-compatible replacement for the original Liljegren C program, and
+differences from other implementations are expected. This is not a claim that
+HeatStressR improves on or supersedes the original Liljegren implementation.
 
 ## Downstream dependencies
 

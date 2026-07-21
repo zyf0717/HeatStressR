@@ -7,7 +7,8 @@
 > HeatStressR is not maintained by, or affiliated with, the original project or
 > its authors.
 
-This fork addresses the following solver and operability issues:
+This fork addresses the following solver and operability issues in the
+inherited R package implementation:
 
 - fragile globe-temperature energy-balance evaluation and fixed clipping
   limits;
@@ -20,8 +21,9 @@ This fork addresses the following solver and operability issues:
 
 **HeatStressR** is an R package for calculating heat-stress indices. It
 maintains the [HeatStress](https://github.com/anacv/HeatStress) function
-interface while improving the numerical behavior and observability of the
-Liljegren WBGT implementation.
+interface while adding explicit numerical controls and observability to the R
+implementation of the Liljegren WBGT method. It is not intended to improve on
+or supersede the original Liljegren program.
 
 ### Development version
 
@@ -46,11 +48,11 @@ indexShow()
 ### Performance and solver scope
 
 `calZenith()` now processes date vectors in one pass. `wbgt.Liljegren()`
-precomputes aligned zenith angles. Its default is the corrected scalar
-heat-balance solver; the vectorized batch solver is an explicit opt-in.
+precomputes aligned zenith angles. Its default is the scalar R heat-balance
+solver; the vectorized batch solver is an explicit opt-in.
 
 Recorded end-to-end benchmarks on deterministic, solar-consistent inputs show
-the following batch-engine speedups over the corrected scalar engine. Rerun
+the following batch-engine speedups over the scalar R engine. Rerun
 the benchmark on the target platform before using these figures for capacity
 planning.
 
@@ -80,7 +82,7 @@ scalar fallback; counts and residuals are recorded in the
 ### Selecting the Liljegren solver
 
 ```r
-# Default corrected scalar solver
+# Default scalar R solver
 result <- wbgt.Liljegren(tas, dewp, wind, radiation, dates, lon = lon, lat = lat)
 
 # Opt in to the vectorized solver
@@ -163,10 +165,11 @@ Input validation is deliberately stricter for the Liljegren path:
 - tolerance controls and physical parameters must be finite and within their
   documented domains.
 
-These rules reject malformed inputs that older versions could partly process
-or fail later. Input compatibility does not imply numerical equivalence:
-corrected solar geometry, C-aligned defaults, and validated root solving can
-change results when legacy optional defaults are omitted.
+These rules reject malformed inputs that older versions of the inherited R
+package could partly process or fail later. Input compatibility does not imply
+numerical equivalence: R-package solar-geometry changes, C-aligned defaults,
+and validated root solving can change results when legacy optional defaults
+are omitted.
 
 Use `diagnostics = TRUE` to inspect row-level solver status. Diagnostic vectors
 always match the input length; `input_status` distinguishes filtered input rows
@@ -193,9 +196,9 @@ Rscript benchmarks/benchmark-liljegren-unresolved.R
 Rscript benchmarks/benchmark-liljegren-tolerance-sensitivity.R
 ```
 
-It compares corrected scalar and explicit batch paths,
+It compares scalar and explicit batch paths in this R package,
 reports median runtime and sampled allocations, and fails if values or `NA`
-positions differ. End-to-end Liljegren improvements are expected to be modest
+positions differ. End-to-end batch speedups are expected to be modest
 because its numerical solvers remain the dominant cost. Batch diagnostics
 separate batch, bracketing, and fallback evaluations and retain final signed
 residuals for validation.
@@ -205,6 +208,9 @@ residuals for validation.
 This fork implements the Liljegren heat-balance model, not a bitwise-compatible
 port of the original C program. The comparison below is against the
 [original C source](https://raw.githubusercontent.com/mdljts/wbgt/master/src/wbgt.c.original).
+The differences describe this R package's behavior; they are expected and are
+not a claim that HeatStressR improves on or supersedes the original Liljegren
+implementation.
 
 | Area | This fork | Original C program | Consequence |
 | --- | --- | --- | --- |

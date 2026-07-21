@@ -20,9 +20,9 @@
 #' @param swap logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.
 #' @param hour logical. If TRUE, calculate from the full UTC timestamp. Default:
 #' FALSE (12:00 UTC is used for date-only inputs).
-#' @param engine Numerical solver engine. \code{"scalar"} is the default corrected
-#' reference implementation. \code{"batch"} uses the experimental vectorized
-#' safeguarded root solver with automatic scalar fallback for unresolved rows.
+#' @param engine Numerical solver engine. \code{"scalar"} is the default R
+#' implementation. \code{"batch"} uses the experimental vectorized safeguarded
+#' root solver with automatic scalar fallback for unresolved rows.
 #' @param diagnostics logical; return solver metadata in addition to the usual result.
 #' @param workers number of PSOCK worker processes for \code{engine = "batch"}.
 #' Must be an integer from 1 through the currently permitted logical CPU count.
@@ -68,11 +68,11 @@
 #' translated to R by Ana Casanueva. HeatStressR is an independently maintained
 #' fork and is not affiliated with the original project or its authors.
 #'
-#' The scalar engine is the default corrected reference implementation. The
-#' experimental batch engine is opt-in and uses explicitly requested PSOCK
-#' workers when \code{workers > 1}; no workers are created by default. Pressure,
-#' surface albedo, globe diameter, and minimum wind speed are configurable.
-#' Solar positions use timestamp, latitude, longitude, and the documented
+#' The scalar engine is the default R implementation. The experimental batch
+#' engine is opt-in and uses explicitly requested PSOCK workers when
+#' \code{workers > 1}; no workers are created by default. Pressure, surface
+#' albedo, globe diameter, and minimum wind speed are configurable. Solar
+#' positions use timestamp, latitude, longitude, and the documented
 #' local-standard-time midpoint controls. Radiation is zeroed when the computed
 #' solar elevation is not positive.
 #'
@@ -98,7 +98,10 @@
 #' Agreement with another implementation requires matching pressure,
 #' wind-height treatment, timestamp convention, averaging interval,
 #' solar-position method, radiation partitioning, and failure semantics. This
-#' function is not a bitwise-compatible port of the original C implementation.
+#' function is not a bitwise-compatible port of the original C implementation,
+#' and differences from other implementations are expected. These differences
+#' are not intended as a claim that this R implementation improves on or
+#' supersedes the original Liljegren program.
 #' @export
 #'
 #' @examples

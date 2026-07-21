@@ -11,9 +11,10 @@ Authors@R: c(
 Description: Calculates heat-stress indices from meteorological observations,
     including the physically based wet-bulb globe temperature model described
     by Liljegren et al. (2008) <doi:10.1080/15459620802310770>. The package
-    provides an independently maintained implementation with improved numerical
-    robustness, row-level diagnostics, solar geometry, and batch processing for
-    the Liljegren method.
+    provides an independently maintained R implementation with row-level
+    diagnostics, configurable physical controls, and batch processing for the
+    Liljegren method; it is not a bitwise-compatible port of the original
+    program, and cross-implementation differences are expected.
 License: GPL-3
 URL: https://github.com/zyf0717/HeatStressR
 BugReports: https://github.com/zyf0717/HeatStressR/issues

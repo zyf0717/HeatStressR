@@ -28,12 +28,12 @@ The following calculation methods are implemented:
 }
 
 \code{wbgt.Liljegren()} implements the outdoor Liljegren wet-bulb globe
-temperature model. Its corrected scalar engine is the default; the batch
-engine is opt-in and can use explicitly requested PSOCK workers. Pressure
-and documented physical constants are configurable. Set
+temperature model in R. Its scalar engine is the default; the batch engine is
+opt-in and can use explicitly requested PSOCK workers. Pressure and
+documented physical constants are configurable. Set
 \code{diagnostics = TRUE} to obtain row-aligned input and solver metadata.
-The implementations are not necessarily interchangeable with other WBGT
-programs.
+This is not a bitwise-compatible port of the original Liljegren program, and
+cross-implementation differences are expected.
 
 Invalid inputs and numerical solver failures are distinct. Complete WBGT is
 \code{NA} unless both globe and natural-wet-bulb temperatures validate, while
@@ -41,10 +41,12 @@ an independently valid component can be retained. Diagnostic vectors remain
 aligned with the supplied meteorological rows.
 
 HeatStressR is an independently maintained fork of the HeatStress package.
-Ana Casanueva made the original R translation; this fork adds numerical
-robustness, solar-geometry corrections, row-level diagnostics, and optional
-batch execution. It is maintained by Yifei Zheng and is not affiliated with
-the original project or its authors. The source repository is
+Ana Casanueva made the original R translation; this fork changes the R
+package implementation by adding explicit numerical controls, row-level
+diagnostics, and optional batch execution. These changes are not a claim that
+HeatStressR improves on or supersedes the original Liljegren implementation.
+It is maintained by Yifei Zheng and is not affiliated with the original
+project or its authors. The source repository is
 \url{https://github.com/zyf0717/HeatStressR}.
 
 CRAN checks package portability and software quality; users remain
