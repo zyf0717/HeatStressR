@@ -18,13 +18,13 @@ test_that("Liljegren validates independent tolerance controls", {
 
 test_that("residual acceptance thresholds are independent from root precision", {
   residuals <- c(5e-5, 5e-4, 5e-3, 2e-2)
-  expect_identical(HeatStress:::valid_solver_result(rep(300, 4), residuals, 1e-4),
+  expect_identical(HeatStressR:::valid_solver_result(rep(300, 4), residuals, 1e-4),
     c(TRUE, FALSE, FALSE, FALSE))
-  expect_identical(HeatStress:::valid_solver_result(rep(300, 4), residuals, 1e-3),
+  expect_identical(HeatStressR:::valid_solver_result(rep(300, 4), residuals, 1e-3),
     c(TRUE, TRUE, FALSE, FALSE))
-  expect_identical(HeatStress:::valid_solver_result(rep(300, 4), residuals, 0.01),
+  expect_identical(HeatStressR:::valid_solver_result(rep(300, 4), residuals, 0.01),
     c(TRUE, TRUE, TRUE, FALSE))
-  expect_false(HeatStress:::valid_solver_result(300, Inf, 0.01))
+  expect_false(HeatStressR:::valid_solver_result(300, Inf, 0.01))
 
   args <- liljegren_tolerance_args()
   loose <- do.call(wbgt.Liljegren, c(args, list(diagnostics = TRUE,

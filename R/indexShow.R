@@ -18,7 +18,7 @@ indexShow <- function() {
 #' @keywords internal
 read.master <- function() {
   utils::read.table(
-    system.file("master", package = "HeatStress"),
+    system.file("master", package = "HeatStressR"),
     header = TRUE,
     sep = ";",
     stringsAsFactors = FALSE,

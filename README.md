@@ -1,8 +1,11 @@
-# HeatStress
+# HeatStressR
+
+[![R-CMD-check](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml)
 
 > **Fork notice:** This repository is an independently maintained fork of
-> HeatStress. It is not maintained by, or affiliated with, the original
-> project or its authors.
+> [HeatStress at `f77a263`](https://github.com/anacv/HeatStress/tree/f77a263ba6820a79b7092518ff4376c787ac45b2).
+> HeatStressR is not maintained by, or affiliated with, the original project or
+> its authors.
 
 This fork addresses the following solver and operability issues:
 
@@ -13,18 +16,19 @@ This fork addresses the following solver and operability issues:
 - insufficient row-level diagnostics for invalid inputs and solver failures;
 - avoidable overhead in solar-geometry and batch evaluation paths.
 
-## What is `HeatStress`?
+## What is `HeatStressR`?
 
-**HeatStress** is an R package for calculating heat-stress indices. This fork
-maintains the public package interface while improving the numerical behavior
-and observability of the Liljegren WBGT implementation.
+**HeatStressR** is an R package for calculating heat-stress indices. It
+maintains the [HeatStress](https://github.com/anacv/HeatStress) function
+interface while improving the numerical behavior and observability of the
+Liljegren WBGT implementation.
 
 ### Installation
 
 The recommended procedure for installing the package is using the devtools package.
 
 ```R
-devtools::install_github("zyf0717/HeatStress")
+devtools::install_github("zyf0717/HeatStressR")
 ```
 
 ### R support
@@ -35,7 +39,7 @@ which is pinned in CI alongside release, oldrel-1, and devel.
 A list of all available indices and the atomic functions calculating them is printed on screen with:
 
 ```R
-library(HeatStress)
+library(HeatStressR)
 indexShow()
 ```
 
@@ -87,12 +91,14 @@ midpoint. Do not combine `gmt_offset` with an offset-bearing ISO 8601 string.
 
 ### Input compatibility
 
-The public exports and legacy argument order are retained relative to the
-pre-fork interface. Existing positional or named calls to `calZenith()`,
-`fTg()`, `fTnwb()`, and `wbgt.Liljegren()` remain valid; fork-specific options
-are trailing optional arguments. Standard date strings and `POSIXct` inputs
-continue to work, while offset-aware ISO 8601 datetimes are additionally
-supported.
+The package is now named `HeatStressR`; replace
+`library(HeatStress)` from [HeatStress](https://github.com/anacv/HeatStress)
+with `library(HeatStressR)`. The public exports and legacy argument order are
+retained relative to the pre-fork interface. Existing positional or named calls
+to `calZenith()`, `fTg()`, `fTnwb()`, and `wbgt.Liljegren()` remain valid;
+fork-specific options are trailing optional arguments. Standard date strings
+and `POSIXct` inputs continue to work, while offset-aware ISO 8601 datetimes
+are additionally supported.
 
 Input validation is deliberately stricter for the Liljegren path:
 

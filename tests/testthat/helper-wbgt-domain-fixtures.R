@@ -14,7 +14,7 @@ wbgt_domain_cases <- function(n = 180L) {
       dewpoint_delta[(index * 3L + 1L) %% length(dewpoint_delta) + 1L],
     wind = wind[(index * 5L + 2L) %% length(wind) + 1L],
     radiation = radiation[(index * 7L + 3L) %% length(radiation) + 1L],
-    zenith = HeatStress:::degToRad(zenith[(index * 11L + 5L) %% length(zenith) + 1L]),
+    zenith = HeatStressR:::degToRad(zenith[(index * 11L + 5L) %% length(zenith) + 1L]),
     Pair = pressure[(index * 13L + 7L) %% length(pressure) + 1L],
     SurfAlbedo = albedo[(index * 17L + 11L) %% length(albedo) + 1L],
     propDirect = direct[(index * 19L + 13L) %% length(direct) + 1L],

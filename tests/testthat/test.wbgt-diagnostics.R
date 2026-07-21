@@ -4,7 +4,7 @@ input_status_vocabulary <- c("attempted", "missing_input", "missing_date", "inva
 
 diagnostic_result <- function(n) {
   result <- seq_len(n)
-  for (field in HeatStress:::WBGT_DIAGNOSTIC_FIELDS) {
+  for (field in HeatStressR:::WBGT_DIAGNOSTIC_FIELDS) {
     value <- if (field %in% c("batch_iterations", "batch_evaluations",
       "bracket_evaluations", "fallback_evaluations", "total_evaluations")) {
       seq_len(n)
@@ -23,24 +23,24 @@ diagnostic_result <- function(n) {
 
 test_that("expand_solver_diagnostics preserves alignment and rejects malformed metadata", {
   result <- diagnostic_result(2)
-  expanded <- HeatStress:::expand_solver_diagnostics(result, c(2L, 4L), 5L)
+  expanded <- HeatStressR:::expand_solver_diagnostics(result, c(2L, 4L), 5L)
   expect_true(all(vapply(expanded, length, integer(1)) == 5L))
   expect_identical(expanded$converged, c(NA, TRUE, NA, TRUE, NA))
   expect_identical(expanded$fallback_reason,
     c("not_attempted", "none", "not_attempted", "none", "not_attempted"))
-  expect_true(all(vapply(HeatStress:::expand_solver_diagnostics(numeric(), integer(), 3L),
+  expect_true(all(vapply(HeatStressR:::expand_solver_diagnostics(numeric(), integer(), 3L),
     length, integer(1)) == 3L))
-  expect_error(HeatStress:::expand_solver_diagnostics(result, 1L, 2L), "result length")
+  expect_error(HeatStressR:::expand_solver_diagnostics(result, 1L, 2L), "result length")
   attr(result, "converged") <- NULL
-  expect_error(HeatStress:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
+  expect_error(HeatStressR:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
     "missing required")
   result <- diagnostic_result(2)
   attr(result, "extra") <- TRUE
-  expect_error(HeatStress:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
+  expect_error(HeatStressR:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
     "unexpected")
   result <- diagnostic_result(2)
   attr(result, "lower") <- 1
-  expect_error(HeatStress:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
+  expect_error(HeatStressR:::expand_solver_diagnostics(result, c(1L, 2L), 2L),
     "must match")
 })
 

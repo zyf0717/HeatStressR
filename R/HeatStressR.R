@@ -1,8 +1,8 @@
-#' HeatStress 
+#' HeatStressR
 #' 
 #' Calculate heat stress indices
 #' 
-#' The package \code{HeatStress} provides methods to calculate heat stress indices.
+#' The package \code{HeatStressR} provides methods to calculate heat stress indices.
 #' 
 #' 
 #' @details 
@@ -24,12 +24,12 @@
 #'  
 #'  Check the details of the indices and input variables: 
 #' 
-#' \code{library(HeatStress)}
+#' \code{library(HeatStressR)}
 #' 
 #' \code{indexShow()}
 #' 
 #' 
-#' @name HeatStress 
+#' @name HeatStressR
 #'  
 NULL 
 #"_PACKAGE"

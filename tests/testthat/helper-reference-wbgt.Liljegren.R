@@ -10,10 +10,10 @@
 reference_wbgt.Liljegren_scalar_zenith <- local({
   # Only the zenith path is intentionally frozen here. The solver calls stay
   # shared with production because solver changes are outside this work.
-  dewp2hurs <- HeatStress:::dewp2hurs
-  degToRad <- HeatStress:::degToRad
-  fTg <- HeatStress:::fTg
-  fTnwb <- HeatStress:::fTnwb
+  dewp2hurs <- HeatStressR:::dewp2hurs
+  degToRad <- HeatStressR:::degToRad
+  fTg <- HeatStressR:::fTg
+  fTnwb <- HeatStressR:::fTnwb
 
   function(tas, dewp, wind, radiation, dates, lon, lat,
            tolerance = 1e-4, noNAs = TRUE, swap = FALSE, hour = FALSE) {

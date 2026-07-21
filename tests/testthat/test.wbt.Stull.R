@@ -1,11 +1,11 @@
 ####################################################################
 #
-# Package HeatStress
+# Package HeatStressR
 #
 # Test for heat stress indices computation
 #
 ###################################################################
-library("HeatStress")
+library("HeatStressR")
 context("Heat Stress indices computation: WBT")
 
 test_that("test if the wbt.Stull function computes WBT properly",{

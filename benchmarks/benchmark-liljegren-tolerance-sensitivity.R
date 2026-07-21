@@ -12,7 +12,7 @@ make_weather <- function(n = 100000L, lon = -5.66, lat = 40.96) {
   index <- seq_len(n)
   phase <- 2 * pi * ((index - 1) %% 24) / 24
   dates <- as.POSIXct("2020-01-01 00:00:00", tz = "UTC") + (index - 1) * 3600
-  zenith <- HeatStress:::degToRad(calZenith(dates, lon, lat, hour = TRUE))
+  zenith <- HeatStressR:::degToRad(calZenith(dates, lon, lat, hour = TRUE))
   list(tas = 22 + 8 * sin(phase - pi / 2),
     dewp = 22 + 8 * sin(phase - pi / 2) - rep(c(0, 2, 4, 6), length.out = n),
     wind = rep(c(0, 0.05, 0.2, 0.8, 1.5, 2.5), length.out = n),

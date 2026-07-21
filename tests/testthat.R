@@ -1,4 +1,4 @@
 library(testthat)
-library(HeatStress)
+library(HeatStressR)
 
-test_check("HeatStress")
+test_check("HeatStressR")

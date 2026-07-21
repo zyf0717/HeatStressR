@@ -1,11 +1,11 @@
 ####################################################################
 #
-# Package HeatStress
+# Package HeatStressR
 #
 # Test for heat stress indices computation
 #
 ###################################################################
-library("HeatStress")
+library("HeatStressR")
 context("Heat Stress indices computation: WBGT Liljegren")
 
 

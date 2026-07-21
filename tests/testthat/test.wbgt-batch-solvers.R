@@ -4,15 +4,15 @@ batch_fixture <- function() {
   list(
     tas = c(20, 30, 35), dewp = c(15, 20, 25), relh = c(70, 55, 50),
     wind = c(0, 0.2, 1), radiation = c(0, 400, 1000),
-    zenith = HeatStress:::degToRad(c(90, 45, 30))
+    zenith = HeatStressR:::degToRad(c(90, 45, 30))
   )
 }
 
 test_that("batch solvers report residual-backed diagnostics", {
   x <- batch_fixture()
-  tg <- HeatStress:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1,
+  tg <- HeatStressR:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1,
     x$radiation, 0.8, x$zenith)
-  tnwb <- HeatStress:::fTnwb_batch(x$tas, x$dewp, x$relh, 1010, x$wind,
+  tnwb <- HeatStressR:::fTnwb_batch(x$tas, x$dewp, x$relh, 1010, x$wind,
     0.1, x$radiation, 0.8, x$zenith)
 
   for (result in list(tg, tnwb)) {
@@ -30,13 +30,13 @@ test_that("batch solvers report residual-backed diagnostics", {
 })
 
 test_that("solver validation rejects finite residual-invalid values", {
-  expect_false(HeatStress:::valid_solver_result(300, 2e-4, 1e-4))
-  expect_false(HeatStress:::valid_solver_result(NA_real_, 0, 1e-4))
-  expect_true(HeatStress:::valid_solver_result(300, 1e-5, 1e-4))
+  expect_false(HeatStressR:::valid_solver_result(300, 2e-4, 1e-4))
+  expect_false(HeatStressR:::valid_solver_result(NA_real_, 0, 1e-4))
+  expect_true(HeatStressR:::valid_solver_result(300, 1e-5, 1e-4))
 })
 
 test_that("failed scalar globe fallback is not returned as a finite value", {
-  failed <- suppressWarnings(HeatStress:::fTg_solution(
+  failed <- suppressWarnings(HeatStressR:::fTg_solution(
     tas = 22, relh = 50, Pair = 1010, wind = 0, min.speed = 0.1,
     radiation = 850, propDirect = 0.8, zenith = 1.54
   ))
@@ -46,9 +46,9 @@ test_that("failed scalar globe fallback is not returned as a finite value", {
 
 test_that("batch roots are bracketed, converged, and order invariant", {
   x <- batch_fixture()
-  forward <- HeatStress:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1,
+  forward <- HeatStressR:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1,
     x$radiation, 0.8, x$zenith)
-  reverse <- HeatStress:::fTg_batch(rev(x$tas), rev(x$relh), 1010,
+  reverse <- HeatStressR:::fTg_batch(rev(x$tas), rev(x$relh), 1010,
     rev(x$wind), 0.1, rev(x$radiation), 0.8, rev(x$zenith))
   expect_equal(as.numeric(forward), as.numeric(rev(reverse)), tolerance = 1e-4)
   expect_true(all(attr(forward, "converged")))
@@ -59,18 +59,18 @@ test_that("batch roots are bracketed, converged, and order invariant", {
 
 test_that("batch solvers handle empty and single-row inputs", {
   x <- batch_fixture()
-  expect_length(HeatStress:::fTg_batch(numeric(), numeric(), 1010, numeric(),
+  expect_length(HeatStressR:::fTg_batch(numeric(), numeric(), 1010, numeric(),
     0.1, numeric(), 0.8, numeric()), 0)
-  expect_length(HeatStress:::fTnwb_batch(numeric(), numeric(), numeric(), 1010,
+  expect_length(HeatStressR:::fTnwb_batch(numeric(), numeric(), numeric(), 1010,
     numeric(), 0.1, numeric(), 0.8, numeric()), 0)
-  expect_length(HeatStress:::fTg_batch(x$tas[1], x$relh[1], 1010, x$wind[1],
+  expect_length(HeatStressR:::fTg_batch(x$tas[1], x$relh[1], 1010, x$wind[1],
     0.1, x$radiation[1], 0.8, x$zenith[1]), 1)
 })
 
 test_that("batch solvers reject mismatched inputs", {
-  expect_error(HeatStress:::fTg_batch(c(20, 21), 50, 1010, c(1, 1), 0.1,
+  expect_error(HeatStressR:::fTg_batch(c(20, 21), 50, 1010, c(1, 1), 0.1,
     c(0, 0), 0.8, c(1, 1)), "same length")
-  expect_error(HeatStress:::fTnwb_batch(c(20, 21), c(15, 16), 50, 1010,
+  expect_error(HeatStressR:::fTnwb_batch(c(20, 21), c(15, 16), 50, 1010,
     c(1, 1), 0.1, c(0, 0), 0.8, c(1, 1)), "same length")
 })
 

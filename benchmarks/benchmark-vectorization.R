@@ -64,7 +64,7 @@ make_weather <- function(n, dates, lon = -5.66, lat = 40.96) {
   tas <- 22 + 8 * sin(phase - pi / 2)
   dewp <- tas - rep(c(0, 2, 4, 6), length.out = n)
   wind <- rep(c(0, 0.05, 0.2, 0.8, 1.5, 2.5), length.out = n)
-  zenith <- HeatStress:::degToRad(calZenith(dates, lon, lat, hour = TRUE))
+  zenith <- HeatStressR:::degToRad(calZenith(dates, lon, lat, hour = TRUE))
   radiation <- 850 * pmax(cos(zenith), 0)
 
   missing_idx <- unique(pmin(n, c(13L, max(1L, n %/% 2), n)))
@@ -287,7 +287,7 @@ solver_sizes <- parse_sizes("SOLVER_SIZES", c(1L, 10L, 100L))
 repetitions <- benchmark_repetitions()
 if (is.na(repetitions) || repetitions < 1L) stop("BENCH_REPS must be a positive integer")
 
-cat("HeatStress vectorization benchmark\n")
+cat("HeatStressR vectorization benchmark\n")
 cat("repetitions:", repetitions, "\n")
 cat("allocation bytes: Rprofmem allocations >= 1024 bytes\n\n")
 

@@ -1,12 +1,16 @@
-# HeatStress NEWS
+# HeatStressR NEWS
 
-## 1.1.0 — 2026-07-21
+## 2.0.0 — 2026-07-21
 
-This is the first release of the independently maintained HeatStress fork.
-It is not an upstream release.
+This is the first release of the independently maintained fork under the
+HeatStressR name. It is not an upstream release.
 
 ### Breaking changes
 
+* The package has been renamed from `HeatStress` to `HeatStressR`. Install it
+  from `zyf0717/HeatStressR` and replace `library(HeatStress)` with
+  `library(HeatStressR)`. Exported function names and their legacy argument
+  order are retained.
 * The calculation runtime now requires R 3.4 or later. Running the test suite
   requires R 4.1 or later because the current `testthat` dependency requires
   that version; CI pins an R 4.1 job in addition to rolling release jobs.
@@ -55,10 +59,11 @@ It is not an upstream release.
 * Batch and scalar engines now validate aligned output positions and final
   residuals consistently.
 
-## Historical lineage
+## Historical HeatStress lineage
 
-The entries below describe inherited release history. They are retained for
-upgrade context and do not imply ongoing maintenance by the original project.
+The entries below describe inherited [HeatStress](https://github.com/anacv/HeatStress)
+release history. They are retained for upgrade context and do not imply ongoing
+maintenance by the original project.
 
 ### 1.0.8.1
 

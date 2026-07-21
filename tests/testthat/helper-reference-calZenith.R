@@ -10,9 +10,9 @@
 reference_calZenith_scalar <- local({
   # Keep these bindings and the function body aligned with the scalar source;
   # do not apply vectorization or numerical corrections in this reference.
-  is.leapyear <- HeatStress:::is.leapyear
-  degToRad <- HeatStress:::degToRad
-  radToDeg <- HeatStress:::radToDeg
+  is.leapyear <- HeatStressR:::is.leapyear
+  degToRad <- HeatStressR:::degToRad
+  radToDeg <- HeatStressR:::radToDeg
 
   function(dates, lon, lat, hour = FALSE) {
     # Internal constants used for conversion

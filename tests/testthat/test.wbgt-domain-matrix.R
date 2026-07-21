@@ -2,10 +2,10 @@ scalar_domain_result <- function(cases, component) {
   vapply(seq_len(nrow(cases)), function(i) {
     x <- cases[i, ]
     solution <- if (identical(component, "Tg")) {
-      suppressWarnings(HeatStress:::fTg_solution(x$tas, 50, x$Pair, x$wind,
+      suppressWarnings(HeatStressR:::fTg_solution(x$tas, 50, x$Pair, x$wind,
         0.1, x$radiation, x$propDirect, x$zenith, x$SurfAlbedo))
     } else {
-      suppressWarnings(HeatStress:::fTnwb_solution(x$tas, x$dewp, 50, x$Pair,
+      suppressWarnings(HeatStressR:::fTnwb_solution(x$tas, x$dewp, 50, x$Pair,
         x$wind, 0.1, x$radiation, x$propDirect, x$zenith, x$irad,
         x$SurfAlbedo))
     }
@@ -21,10 +21,10 @@ test_that("WBGT direct solvers agree over a deterministic domain matrix", {
       idx <- which(cases$Pair == Pair)
       x <- cases[idx, ]
       batch <- if (identical(component, "Tg")) {
-        HeatStress:::fTg_batch(x$tas, rep(50, nrow(x)), Pair, x$wind, 0.1,
+        HeatStressR:::fTg_batch(x$tas, rep(50, nrow(x)), Pair, x$wind, 0.1,
           x$radiation, x$propDirect, x$zenith, x$SurfAlbedo)
       } else {
-        HeatStress:::fTnwb_batch(x$tas, x$dewp, rep(50, nrow(x)), Pair,
+        HeatStressR:::fTnwb_batch(x$tas, x$dewp, rep(50, nrow(x)), Pair,
           x$wind, 0.1, x$radiation, x$propDirect, x$zenith, x$irad,
           x$SurfAlbedo)
       }
@@ -42,10 +42,10 @@ test_that("WBGT direct solvers agree over a deterministic domain matrix", {
 
 test_that("WBGT batch solver results are invariant to row order", {
   cases <- wbgt_domain_cases(48L)
-  forward <- HeatStress:::fTg_batch(cases$tas, rep(50, nrow(cases)), 1010,
+  forward <- HeatStressR:::fTg_batch(cases$tas, rep(50, nrow(cases)), 1010,
     cases$wind, 0.1, cases$radiation, cases$propDirect, cases$zenith,
     cases$SurfAlbedo)
-  reverse <- HeatStress:::fTg_batch(rev(cases$tas), rep(50, nrow(cases)), 1010,
+  reverse <- HeatStressR:::fTg_batch(rev(cases$tas), rep(50, nrow(cases)), 1010,
     rev(cases$wind), 0.1, rev(cases$radiation), rev(cases$propDirect),
     rev(cases$zenith), rev(cases$SurfAlbedo))
   expect_equal(as.numeric(forward), as.numeric(rev(reverse)), tolerance = 1e-4)

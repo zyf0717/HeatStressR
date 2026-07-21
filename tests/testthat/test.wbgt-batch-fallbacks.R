@@ -1,23 +1,23 @@
 batch_fallback_fixture <- function() {
   list(
     tas = c(20, 30), dewp = c(15, 20), relh = c(70, 55), wind = c(1, 0.2),
-    radiation = c(0, 400), zenith = HeatStress:::degToRad(c(90, 45))
+    radiation = c(0, 400), zenith = HeatStressR:::degToRad(c(90, 45))
   )
 }
 
 run_batch_solver <- function(kind, ...) {
   x <- batch_fallback_fixture()
   if (identical(kind, "Tg")) {
-    HeatStress:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1, x$radiation,
+    HeatStressR:::fTg_batch(x$tas, x$relh, 1010, x$wind, 0.1, x$radiation,
       0.8, x$zenith, ...)
   } else {
-    HeatStress:::fTnwb_batch(x$tas, x$dewp, x$relh, 1010, x$wind, 0.1,
+    HeatStressR:::fTnwb_batch(x$tas, x$dewp, x$relh, 1010, x$wind, 0.1,
       x$radiation, 0.8, x$zenith, ...)
   }
 }
 
 scalar_solver <- function(kind) {
-  if (identical(kind, "Tg")) HeatStress:::fTg_solution else HeatStress:::fTnwb_solution
+  if (identical(kind, "Tg")) HeatStressR:::fTg_solution else HeatStressR:::fTnwb_solution
 }
 
 fake_batch_solver <- function(converged, failure_reason) {

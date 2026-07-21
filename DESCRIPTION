@@ -1,7 +1,7 @@
-Package: HeatStress
+Package: HeatStressR
 Type: Package
 Title: Calculate Heat Stress Indices
-Version: 1.1.0
+Version: 2.0.0
 Date: 2026-07-21
 Authors@R: c(
     person("Yifei", "Zheng", email = "zyf0717@gmail.com", role = c("aut", "cre"),
@@ -9,12 +9,12 @@ Authors@R: c(
     person("Ana", "Casanueva", role = "aut", comment = "Original package author")
     )
 Description: Calculate heat stress indices from meteorological observations.
-    This independently maintained fork improves the numerical robustness,
+    HeatStressR is an independently maintained fork that improves numerical robustness,
     diagnostics, solar geometry, and performance of the Liljegren wet-bulb
     globe temperature implementation.
 License: file LICENSE
-URL: https://github.com/zyf0717/HeatStress
-BugReports: https://github.com/zyf0717/HeatStress/issues
+URL: https://github.com/zyf0717/HeatStressR
+BugReports: https://github.com/zyf0717/HeatStressR/issues
 RoxygenNote: 7.3.2
 Depends: R (>= 3.4.0)
 Suggests:
