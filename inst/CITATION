@@ -1,0 +1,31 @@
+citHeader("To cite HeatStressR in publications, use:")
+
+bibentry(
+  bibtype = "Manual",
+  title = "HeatStressR: Calculate Heat Stress Indices",
+  author = c(
+    person("Yifei", "Zheng"),
+    person("Ana", "Casanueva")
+  ),
+  year = sub("-.*", "", meta$Date),
+  note = paste("R package version", meta$Version),
+  url = meta$URL
+)
+
+bibentry(
+  bibtype = "Article",
+  title = "Modeling the Wet Bulb Globe Temperature Using Standard Meteorological Measurements",
+  author = c(
+    person("James C.", "Liljegren"),
+    person("Richard A.", "Carhart"),
+    person("Philip", "Lawday"),
+    person("Stephen", "Tschopp"),
+    person("Robert", "Sharp")
+  ),
+  journal = "Journal of Occupational and Environmental Hygiene",
+  year = "2008",
+  volume = "5",
+  number = "10",
+  pages = "645-655",
+  doi = "10.1080/15459620802310770"
+)
