@@ -77,11 +77,6 @@ Across both recorded environments, component outputs differed by less than
 scalar fallback; counts and residuals are recorded in the
 [end-to-end benchmark](benchmarks/results/liljegren-e2e.md).
 
-A separate default vectorization run on an Apple M2 Max with R 4.6.1 recorded
-25.70x speedup for `calZenith()` at 87,600 rows. Its command, full
-measurements, and environment are recorded in the
-[benchmark environment](benchmarks/results/environment.md).
-
 ### Selecting the Liljegren solver
 
 ```r
