@@ -1,5 +1,12 @@
 # HeatStressR NEWS
 
+## 2.1.0 — 2026-07-21
+
+* `wbgt.Liljegren()` batch execution accepts an explicit `workers` count.
+  Values above one use cross-platform PSOCK workers while retaining output,
+  warning, and diagnostic ordering. Worker count is fully user-selected within
+  the detected logical CPU limit; it is not reduced for small batches.
+
 ## 2.0.0 — 2026-07-21
 
 This is the first release of the independently maintained fork under the

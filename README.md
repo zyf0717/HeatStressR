@@ -89,6 +89,25 @@ result_fast <- wbgt.Liljegren(
 )
 ```
 
+### Optional multicore batch execution
+
+The batch engine remains single-process by default. Set `workers` explicitly
+to use that many local PSOCK R processes; no row-count threshold or automatic
+core selection changes this choice, so small inputs may also use multiple
+workers.
+
+```r
+result_parallel <- wbgt.Liljegren(
+  tas, dewp, wind, radiation, dates, lon = lon, lat = lat,
+  engine = "batch", workers = 4
+)
+```
+
+`workers` must be an integer between 1 and the detected logical CPU count.
+Each batch call creates and stops its own worker cluster. Worker startup and
+data transfer can make small workloads slower; retain `workers = 1` when a
+single process is preferable.
+
 `pressure` accepts one value or a vector aligned with the meteorological rows;
 the default is 1010 hPa. The C-aligned defaults are `surface_albedo = 0.45`,
 `globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.

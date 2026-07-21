@@ -30,4 +30,7 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
       - name: Run benchmark smoke test
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
-        run: BENCH_REPS=1 CAL_ZENITH_SIZES=100 LILJEGREN_SIZES=10 SOLVER_SIZES=10 Rscript benchmarks/benchmark-vectorization.R
+        run: |
+          R CMD INSTALL .
+          BENCH_REPS=1 CAL_ZENITH_SIZES=100 LILJEGREN_SIZES=10 SOLVER_SIZES=10 Rscript benchmarks/benchmark-vectorization.R
+          LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-parallel.R

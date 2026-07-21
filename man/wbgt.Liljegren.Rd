@@ -26,7 +26,8 @@ wbgt.Liljegren(
   globe_diameter = 0.0508,
   min_wind_speed = 0.13,
   gmt_offset = NULL,
-  averaging_period = 0
+  averaging_period = 0,
+  workers = 1L
 )
 }
 \arguments{
@@ -64,6 +65,11 @@ reference implementation. \code{"batch"} uses the experimental vectorized
 safeguarded root solver with automatic scalar fallback for unresolved rows.}
 
 \item{diagnostics}{logical; return solver metadata in addition to the usual result.}
+
+\item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
+Must be an integer from 1 through the detected logical CPU count. The default
+of 1 preserves sequential batch execution; values greater than 1 always use
+the requested number of workers for non-empty batch inputs.}
 
 \item{root_tolerance}{numerical precision (K) used to locate heat-balance roots.}
 

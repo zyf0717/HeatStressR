@@ -74,6 +74,22 @@ differences, fallback count, final residual, and `NA` alignment.
 Its default sizes are 100, 1,000, 10,000, and 87,600 rows; the last represents
 one year of hourly observations. Override them with `E2E_SIZES` when needed.
 
+`benchmark-liljegren-parallel.R` compares explicit batch worker counts and
+records startup-inclusive wall time, speedup, throughput, output/diagnostic
+equivalence, `NA` alignment, fallback count, and final residual. Its default
+sizes are 87,600, 250,000, 1,000,000, and 5,000,000 rows. It requires an
+installed HeatStressR package because PSOCK workers load the installed
+namespace; use a smaller smoke run as follows:
+
+```bash
+R CMD INSTALL .
+LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 \
+  Rscript benchmarks/benchmark-liljegren-parallel.R
+```
+
+The worker list is filtered to the current system's logical CPU limit. This
+benchmark does not imply automatic worker selection by `wbgt.Liljegren()`.
+
 `benchmark-liljegren-three-way.R` measures one arm of the baseline/current
 comparison. Set `BENCHMARK_ROOT` to the checkout under test and
 `BENCHMARK_ENGINE` to `pre`, `scalar`, or `batch`; the `pre` mode supports the
