@@ -23,14 +23,33 @@ test_that("workers are validated and restricted to the batch engine", {
   x <- parallel_fixture()
   args <- list(x$tas, x$dewp, x$wind, x$radiation, x$dates,
     lon = -5.66, lat = 40.96, hour = TRUE, engine = "batch")
-  for (workers in list(0, -1, 1.5, NA_real_, Inf, "2")) {
+  for (workers in list(0, -1, 1.5, NA_real_, Inf, "2", NULL)) {
     expect_error(do.call(wbgt.Liljegren, c(args, list(workers = workers))), "workers")
   }
+  expect_error(HeatStressR:::validate_workers(), "workers")
   args$engine <- "scalar"
   expect_error(do.call(wbgt.Liljegren, c(args, list(workers = 2))),
     "requires engine")
   expect_error(HeatStressR:::validate_workers(HeatStressR:::max_liljegren_workers() + 1L),
-    "detected logical CPU count")
+    "permitted worker count")
+})
+
+test_that("check core limit constrains the permitted worker maximum", {
+  key <- "_R_CHECK_LIMIT_CORES_"
+  previous <- Sys.getenv(key, unset = NA_character_)
+  on.exit({
+    if (is.na(previous)) Sys.unsetenv(key) else Sys.setenv(`_R_CHECK_LIMIT_CORES_` = previous)
+  }, add = TRUE)
+
+  Sys.setenv(`_R_CHECK_LIMIT_CORES_` = "false")
+  unrestricted <- HeatStressR:::max_liljegren_workers()
+  Sys.setenv(`_R_CHECK_LIMIT_CORES_` = "true")
+  limited <- HeatStressR:::max_liljegren_workers()
+
+  expect_lte(limited, 2L)
+  expect_identical(limited, min(unrestricted, 2L))
+  expect_error(HeatStressR:::validate_workers(limited + 1L),
+    "permitted worker count")
 })
 
 test_that("parallel batch execution preserves results and diagnostics", {

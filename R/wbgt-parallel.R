@@ -2,10 +2,16 @@ max_liljegren_workers <- function() {
   detected <- parallel::detectCores(logical = TRUE)
   if (length(detected) != 1L || is.na(detected) || !is.finite(detected) || detected < 1L)
     return(1L)
-  as.integer(detected)
+
+  detected <- as.integer(detected)
+  if (identical(tolower(Sys.getenv("_R_CHECK_LIMIT_CORES_")), "true"))
+    detected <- min(detected, 2L)
+  detected
 }
 
 validate_workers <- function(workers) {
+  if (missing(workers))
+    stop("'workers' must be one finite integer")
   if (!is.numeric(workers) || length(workers) != 1L || is.na(workers) ||
       !is.finite(workers) || workers != floor(workers)) {
     stop("'workers' must be one finite integer")
@@ -15,7 +21,7 @@ validate_workers <- function(workers) {
 
   maximum <- max_liljegren_workers()
   if (workers > maximum)
-    stop("'workers' must not exceed the detected logical CPU count (", maximum, ")")
+    stop("'workers' must not exceed the currently permitted worker count (", maximum, ")")
   as.integer(workers)
 }
 

@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 ^benchmarks$
 ^\.github$
+^cran-comments\.md$

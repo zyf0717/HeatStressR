@@ -6,25 +6,37 @@
 
 * `wbgt.Liljegren()` batch execution accepts an explicit `workers` count.
   Values above one use cross-platform PSOCK workers while retaining output,
-  warning, and diagnostic ordering. Worker count is fully user-selected within
-  the detected logical CPU limit; it is not reduced for small batches.
+  warning, and diagnostic ordering. Worker count is user-selected within the
+  currently permitted worker limit; it is not automatically reduced based on
+  workload size except that it is capped at the number of input rows.
 * New internal parallel execution layer (`R/wbgt-parallel.R`) providing
   `max_liljegren_workers()`, `validate_workers()`, `split_liljegren_chunks()`,
   `solve_liljegren_batch_raw_chunk()`, and `solve_liljegren_parallel()`.
 * Benchmark harnesses for multicore performance evaluation:
   `benchmarks/benchmark-liljegren-workers-1-to-6x87600.R` (sweeping worker
   counts with configurable `ROWS_PER_WORKER`) and
-  `benchmarks/benchmark-liljegren-workers-1-to-6x87600.R` (annual workload
+  `benchmarks/benchmark-liljegren-parallel.R` (annual workload
   profiling). Results recorded on Apple M2 Max.
 * `DESCRIPTION` now lists `parallel` as an explicit import.
+
+### CRAN preparation
+
+* Standardised licence metadata and package authorship.
+* Added package and Liljegren-model citations.
+* Added runnable Liljegren examples and expanded installed documentation.
+* Clarified that HeatStressR is an R implementation of the Liljegren method,
+  not a claim of improvement over the original Liljegren program.
+* Made worker-limit detection respect CRAN check core limits.
+* Added CRAN submission notes and related regression tests.
 
 ### Changed
 
 * `wbgt.Liljegren()` with `engine = "batch"` automatically falls back to
   multi-worker PSOCK parallel execution when `workers > 1`, splitting rows
   across chunks and combining results with preserved diagnostic attributes.
-* Worker count validation enforces finite integer input and caps at detected
-  logical CPU count; no automatic reduction for small batches.
+* Worker count validation enforces finite integer input and caps at the
+  currently permitted worker count; no workload-size heuristic is applied
+  beyond the row-count cap.
 
 ### Fixed
 
@@ -52,8 +64,10 @@ HeatStressR name. It is not an upstream release.
   `surface_albedo = 0.45`, `globe_diameter = 0.0508`, and
   `min_wind_speed = 0.13`. Existing calculations can reproduce the former
   constants by supplying `0.4`, `0.05`, and `0.1`, respectively.
-* Numeric Liljegren results may change because of the corrected solar geometry,
-  C-aligned defaults, adaptive root finding, and residual validation.
+* Numeric Liljegren results from the inherited R package may change because of
+  solar-geometry changes, C-aligned defaults, adaptive root finding, and
+  residual validation. Differences from the original Liljegren program and
+  other implementations are expected when assumptions are not matched.
 
 ### Added
 
@@ -68,7 +82,7 @@ HeatStressR name. It is not an upstream release.
 * `diagnostics = TRUE` reports row-aligned input status, root convergence,
   residuals, brackets, failure reasons, and batch-fallback metadata.
 * An explicit `engine = "batch"` path provides safeguarded vector root solving
-  with scalar fallback; the corrected scalar engine remains the default.
+  with scalar fallback; the scalar R engine remains the default.
 * Reproducible benchmark harnesses and recorded end-to-end results.
 
 ### Changed

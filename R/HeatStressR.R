@@ -2,11 +2,12 @@
 #' 
 #' Calculate heat stress indices
 #' 
-#' The package \code{HeatStressR} provides methods to calculate heat stress indices.
-#' 
-#' 
-#' @details 
-#' 
+#' The package \code{HeatStressR} calculates heat-stress indices from
+#' meteorological observations and exposes both index-level functions and
+#' lower-level physical components.
+#'
+#' @details
+#'
 #' The following calculation methods are implemented:
 #'  \itemize{
 #'  
@@ -20,15 +21,38 @@
 #'  \item \code{discomInd}: Calculation of the discomfort index (Coccolo et al. 2016 and references therein).
 #'  \item \code{hi}: Calculation of the heat index (NOAA, Rothfusz 1990).
 
-#'  }
-#'  
-#'  Check the details of the indices and input variables: 
-#' 
-#' \code{library(HeatStressR)}
-#' 
-#' \code{indexShow()}
-#' 
-#' 
+#' }
+#'
+#' \code{wbgt.Liljegren()} implements the outdoor Liljegren wet-bulb globe
+#' temperature model in R. Its scalar engine is the default; the batch engine is
+#' opt-in and can use explicitly requested PSOCK workers. Pressure and
+#' documented physical constants are configurable. Set
+#' \code{diagnostics = TRUE} to obtain row-aligned input and solver metadata.
+#' This is not a bitwise-compatible port of the original Liljegren program, and
+#' cross-implementation differences are expected.
+#'
+#' Invalid inputs and numerical solver failures are distinct. Complete WBGT is
+#' \code{NA} unless both globe and natural-wet-bulb temperatures validate, while
+#' an independently valid component can be retained. Diagnostic vectors remain
+#' aligned with the supplied meteorological rows.
+#'
+#' HeatStressR is an independently maintained fork of the HeatStress package.
+#' Ana Casanueva made the original R translation; this fork changes the R
+#' package implementation by adding explicit numerical controls, row-level
+#' diagnostics, and optional batch execution. These changes are not a claim that
+#' HeatStressR improves on or supersedes the original Liljegren implementation.
+#' It is maintained by Yifei Zheng and is not affiliated with the original
+#' project or its authors. The source repository is
+#' \url{https://github.com/zyf0717/HeatStressR}.
+#'
+#' CRAN checks package portability and software quality; users remain
+#' responsible for matching the methodological assumptions of a chosen index to
+#' their application. To cite the package and the Liljegren model, use
+#' \code{citation("HeatStressR")}.
+#'
+#' Check the details of the indices and input variables with
+#' \code{indexShow()}.
+#'
 #' @name HeatStressR
 #'  
 NULL 
