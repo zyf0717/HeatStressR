@@ -1,5 +1,10 @@
 # HeatStressR NEWS
 
+## 2.1.1 — 2026-07-21
+
+* Replaced benchmark-relative README links with permanent, versioned GitHub
+  URLs for CRAN compatibility.
+
 ## 2.1.0 — 2026-07-21
 
 ### Added
