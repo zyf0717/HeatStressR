@@ -50,10 +50,11 @@ precomputes aligned zenith angles. Its default is the corrected scalar
 heat-balance solver; the vectorized batch solver is an explicit opt-in.
 
 Recorded end-to-end benchmarks on deterministic, solar-consistent inputs show
-the following batch-engine speedups over the corrected scalar engine. Results
-were captured with R 4.3.3 on Linux x86_64 (AMD Ryzen 7 7735HS); rerun the
-benchmark on the target platform before using these figures for capacity
+the following batch-engine speedups over the corrected scalar engine. Rerun
+the benchmark on the target platform before using these figures for capacity
 planning.
+
+AMD Ryzen 7 7735HS, R 4.3.3, Linux x86_64:
 
 | Rows | Scalar | Batch | Speedup |
 | ---: | ---: | ---: | ---: |
@@ -62,15 +63,26 @@ planning.
 | 10,000 | 4.026 s | 0.105 s | 38.34x |
 | 87,600 | 36.451 s | 0.909 s | 40.10x |
 
-All recorded component outputs differed by less than `1.3e-6` degrees C and
-had aligned `NA` positions. No batch root required scalar fallback; counts and
-residuals are recorded in the
+Apple M2 Max, R 4.6.1, macOS arm64:
+
+| Rows | Scalar | Batch | Speedup |
+| ---: | ---: | ---: | ---: |
+| 100 | 0.090 s | 0.057 s | 1.58x |
+| 1,000 | 0.258 s | 0.014 s | 18.43x |
+| 10,000 | 2.680 s | 0.107 s | 25.05x |
+| 87,600 | 23.708 s | 0.932 s | 25.44x |
+
+Across both recorded environments, component outputs differed by less than
+`1.3e-6` degrees C and had aligned `NA` positions. No batch root required
+scalar fallback; counts and residuals are recorded in the
 [end-to-end benchmark](benchmarks/results/liljegren-e2e.md).
 
 A separate default vectorization run on an Apple M2 Max with R 4.6.1 recorded
-22.13x batch speedup for `wbgt.Liljegren()` at 10,000 rows and 27.79x for
-`calZenith()` at 87,600 rows. Its command, full measurements, and environment
-are recorded in the [benchmark environment](benchmarks/results/environment.md).
+25.70x speedup for `calZenith()` at 87,600 rows. Its command, full
+measurements, and environment are recorded in the
+[benchmark environment](benchmarks/results/environment.md).
+
+### Selecting the Liljegren solver
 
 ```r
 # Default corrected scalar solver
