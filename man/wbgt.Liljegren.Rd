@@ -15,7 +15,18 @@ wbgt.Liljegren(
   tolerance = 1e-04,
   noNAs = TRUE,
   swap = FALSE,
-  hour = FALSE
+  hour = FALSE,
+  engine = c("scalar", "batch"),
+  diagnostics = FALSE,
+  root_tolerance = NULL,
+  residual_tolerance = NULL,
+  dewpoint_tolerance = NULL,
+  pressure = 1010,
+  surface_albedo = 0.45,
+  globe_diameter = 0.0508,
+  min_wind_speed = 0.13,
+  gmt_offset = NULL,
+  averaging_period = 0
 )
 }
 \arguments{
@@ -27,20 +38,60 @@ wbgt.Liljegren(
 
 \item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
 
-\item{dates}{vector of dates in the format yyyy-mm-dd (or 'yyyy-mm-dd HH:MM:SS').  If format yyyy-mm-dd is provided, the default hour is 12:00:00.}
+\item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
+datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
+normalized to UTC.
+Values must have the same length and row order as the meteorological input
+vectors.}
 
-\item{lon}{value for the longitude of the location.}
+\item{lon}{single numeric longitude for the location, in degrees.}
 
-\item{lat}{value for the latitude of the location.}
+\item{lat}{single numeric latitude for the location, in degrees.}
 
-\item{tolerance}{(optional) tolerance value for the iteration. Default: 1e-4.}
+\item{tolerance}{Legacy tolerance control. When the independent controls are
+not supplied, it maps to root precision \code{tolerance * 0.01}, residual
+acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.}
 
 \item{noNAs}{logical, should NAs be introduced when dewp>tas? If TRUE specify how to deal in those cases (swap argument)}
 
 \item{swap}{logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.}
 
-\item{hour}{logical. If TRUE, allow working with hourly data for zenith angle
-calculation. Default: FALSE (12 UTC is used).}
+\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
+FALSE (12:00 UTC is used for date-only inputs).}
+
+\item{engine}{Numerical solver engine. \code{"scalar"} is the default corrected
+reference implementation. \code{"batch"} uses the experimental vectorized
+safeguarded root solver with automatic scalar fallback for unresolved rows.}
+
+\item{diagnostics}{logical; return solver metadata in addition to the usual result.}
+
+\item{root_tolerance}{numerical precision (K) used to locate heat-balance roots.}
+
+\item{residual_tolerance}{maximum accepted absolute heat-balance residual (K).
+Must be greater than zero and no greater than 0.01.}
+
+\item{dewpoint_tolerance}{permitted dewpoint-versus-air-temperature difference
+(degrees C) used by the dewpoint policy.}
+
+\item{pressure}{atmospheric pressure in hPa. Supply one value or a vector
+aligned with the meteorological inputs; defaults to 1010 hPa.}
+
+\item{surface_albedo}{surface shortwave albedo. Defaults to 0.45, matching
+the original Liljegren C implementation.}
+
+\item{globe_diameter}{black-globe diameter in m. Defaults to 0.0508 m,
+matching the original Liljegren C implementation.}
+
+\item{min_wind_speed}{lower bound applied to wind speed in m/s. Defaults to
+0.13 m/s, matching the original Liljegren C implementation.}
+
+\item{gmt_offset}{optional local-standard-time offset from GMT, in hours
+(`LST - GMT`). Use only when `dates` contains local standard clock times;
+timezone-aware timestamps and ISO 8601 offset strings are normalized to UTC
+automatically. Do not combine it with an offset-bearing ISO 8601 string.}
+
+\item{averaging_period}{averaging interval in minutes. Solar position is
+evaluated at its midpoint; defaults to 0.}
 }
 \value{
 A list of:
@@ -56,6 +107,22 @@ Calculation of wet bulb globe temperature from air temperature, dew point temper
 }
 \details{
 This corresponds to the implementation for outdoors or in the sun conditions (Liljegren et al. 2008). Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA) and Ana Casanueva into R.
+`dates` must have the same length and row order as the meteorological input vectors.
+Root-location precision, residual validation, and dewpoint validation are
+controlled independently. Relaxing \code{residual_tolerance} accepts only
+candidate roots that were found; it cannot recover unbracketed or non-finite
+solves. Complete WBGT requires both validated component roots, but a validated
+Tg or Tnwb value is retained when the other component fails.
+Solar forcing is set to zero when the solar elevation is not positive.
+Diagnostics flag supplied radiation greater than 15 W/m2 at zenith angles
+greater than 1.54 radians as \code{solar_geometry_mismatch}.
+Each component diagnostic includes convergence, evaluations, final residual,
+failure reason, fallback use, initial/final brackets, endpoint residuals, and
+resolved root/residual tolerances. \code{complete_wbgt} identifies rows with
+both validated component roots.
+With \code{diagnostics = TRUE}, all row-level diagnostic vectors match the
+input length. \code{input_status} describes filtering, while per-solver
+\code{converged} and \code{fallback_reason} describe numerical solving.
 }
 \examples{
 \dontrun{ 

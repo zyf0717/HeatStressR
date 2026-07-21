@@ -10,13 +10,19 @@
 #' @details Reference: BSL, page 505.
 #' 
 
-diffusivity <- function(Tk, Pair){
+diffusivity_coefficient <- function(Pair) {
 
   pcrit13 <- (36.4 * 218) ^ (1 / 3)
-  tcrit512 <- (132 * 647.3) ^ (5 / 12)
-  Tcrit12 <- (132 * 647.3) ^ 0.5
   Mmix <- (1 / 28.97 + 1 / 18.015) ^ 0.5
-  diffusivity <- 0.000364 * (Tk / Tcrit12) ^ 2.334 * pcrit13 * tcrit512 * Mmix / (Pair / 1013.25) * 0.0001
-  
-  return(diffusivity)
+  base <- 0.000364 * pcrit13 * (132 * 647.3) ^ (5 / 12) * Mmix /
+    (Pair / 1013.25) * 0.0001
+  base / ((132 * 647.3) ^ 0.5) ^ 2.334
+}
+
+diffusivity_from_coefficient <- function(Tk, coefficient) {
+  coefficient * Tk ^ 2.334
+}
+
+diffusivity <- function(Tk, Pair){
+  diffusivity_from_coefficient(Tk, diffusivity_coefficient(Pair))
 }

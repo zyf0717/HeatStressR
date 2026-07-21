@@ -29,3 +29,12 @@ test_that("test if the wbgt.Bernard function computes WBGTshade properly",{
   expect_equal(WBGTshade.new$Tpwb,Tpwb, tolerance = 1e-3)
 })
 
+test_that("wbgt.Bernard preserves missing input row positions", {
+  result <- wbgt.Bernard(
+    tas = c(25, NA_real_, 30),
+    dewp = c(20, 15, NA_real_)
+  )
+
+  expect_identical(is.na(result$Tpwb), c(FALSE, TRUE, TRUE))
+  expect_identical(is.na(result$data), c(FALSE, TRUE, TRUE))
+})

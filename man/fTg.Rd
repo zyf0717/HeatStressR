@@ -13,8 +13,9 @@ fTg(
   radiation,
   propDirect,
   zenith,
-  SurfAlbedo = 0.4,
-  tolerance = 1e-04
+  SurfAlbedo = 0.45,
+  tolerance = 1e-04,
+  globe_diameter = 0.0508
 )
 }
 \arguments{
@@ -34,9 +35,11 @@ fTg(
 
 \item{zenith}{zenith angle in radians.}
 
-\item{SurfAlbedo}{(optional) albedo in the surface. Default: 0.4.}
+\item{SurfAlbedo}{(optional) surface albedo. Default: 0.45.}
 
 \item{tolerance}{(optional) tolerance value for the iteration. Default: 1e-4.}
+
+\item{globe_diameter}{black-globe diameter in m. Default: 0.0508.}
 }
 \value{
 Globe temperature in degC.
@@ -46,6 +49,7 @@ Calculation of the globe temperature.
 }
 \details{
 Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA).
+Uses an adaptively bracketed signed heat-balance residual.
 }
 \author{
 Ana Casanueva (05.01.2017).

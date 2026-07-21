@@ -15,7 +15,7 @@ fTnwb(
   propDirect,
   zenith,
   irad = 1,
-  SurfAlbedo = 0.4,
+  SurfAlbedo = 0.45,
   tolerance = 1e-04
 )
 }
@@ -40,7 +40,7 @@ fTnwb(
 
 \item{irad}{(optional): include radiation (1) or not (irad=0, psychrometric web bulb temp). Default: 1.}
 
-\item{SurfAlbedo}{(optional) albedo in the surface. Default: 0.4.}
+\item{SurfAlbedo}{(optional) surface albedo. Default: 0.45.}
 
 \item{tolerance}{(optional) tolerance value for the iteration. Default: 1e-4.}
 }

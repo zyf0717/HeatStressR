@@ -4,28 +4,54 @@
 \alias{calZenith}
 \title{Calculate zenith angle in degrees.}
 \usage{
-calZenith(dates, lon, lat, hour = FALSE)
+calZenith(
+  dates,
+  lon,
+  lat,
+  hour = FALSE,
+  gmt_offset = NULL,
+  averaging_period = 0
+)
 }
 \arguments{
-\item{dates}{vector of dates in the format yyyy-mm-dd (or 'yyyy-mm-dd HH:MM:SS').  If format yyyy-mm-dd is provided, the default hour is 12:00:00.}
+\item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
+datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings (for example,
+\code{2024-03-20T20:00:00+08:00} or \code{2024-03-20T12:00:00Z}) are interpreted as
+instants and normalized to UTC. If a date-only value is provided, the default
+time is 12:00 UTC.}
 
-\item{lon}{value for the longitude of the location.}
+\item{lon}{single numeric longitude for the location, in degrees.}
 
-\item{lat}{value for the latitude of the location.}
+\item{lat}{single numeric latitude for the location, in degrees.}
 
-\item{hour}{logical. If TRUE, allow working with hourly data for zenith angle
-calculation. Default: FALSE (12 UTC is used).}
+\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
+FALSE (12:00 UTC is used for date-only inputs).}
+
+\item{gmt_offset}{optional local-standard-time offset from GMT, in hours
+(`LST - GMT`). When supplied, timestamps are interpreted as local standard
+time rather than timezone-aware instants.}
+
+\item{averaging_period}{averaging interval in minutes. Solar position is
+evaluated at the interval midpoint, matching the original C implementation.}
 }
 \value{
-zenith angle in degrees
+Numeric vector of zenith angles in degrees, aligned with `dates`.
 }
 \description{
 Calculate zenith angle in degrees.
+}
+\details{
+`lon` and `lat` must be finite scalar values within their standard
+ranges. Solar time incorporates longitude and the equation of time. Missing
+dates return `NA` in the corresponding output position. Do not combine
+\code{gmt_offset} with an offset-bearing ISO 8601 string: the latter already
+identifies an instant.
 }
 \examples{
 \dontrun{ 
 calZenith("1981-06-15",  -5.66, 40.96)
 calZenith("1981-06-15 10:00:00",  -5.66, 40.96, hour=TRUE)
+calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, hour=TRUE)
 }
 
 }

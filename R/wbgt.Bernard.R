@@ -43,7 +43,7 @@ wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
   
   # pre-allocate output
   ndates <- length(tas)
-  Tpwb <- rep(NA, ndates)
+  Tpwb <- rep(NA_real_, ndates)
   
   
   # **************************************************************************************
@@ -56,7 +56,8 @@ wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
   
   # Filter the case when tas=dewp (RH=100)
   trivial <- abs(tas - dewp) < tolerance
-  Tpwb[which(trivial)] <- tas[which(trivial)]
+  trivial_idx <- which(trivial)
+  Tpwb[trivial_idx] <- tas[trivial_idx]
   
   # Filter data to calculate the WBGT with optimization function
   xmask <- !is.na(tas + dewp) & !trivial 
@@ -69,7 +70,8 @@ wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
   } else if(noNAs & !swap){
     noway <- (dewp - tas) > tolerance
     xmask <- xmask & !noway
-    Tpwb[which(noway)] <- tas[which(noway)]
+    noway_idx <- which(noway)
+    Tpwb[noway_idx] <- tas[noway_idx]
   } else if(!noNAs){
     xmask <- xmask & tas >= dewp
   }
@@ -79,7 +81,8 @@ wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
   # ********************************************************************
   ed <- c1 * exp((c2*dewp)/(c3+dewp))
   
-  for (i in which(xmask)){
+  valid_idx <- which(xmask)
+  for (i in valid_idx){
   
     # ********************
     # *** minimization ***
@@ -97,4 +100,3 @@ wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
   
   return(wbgt)
 }
-

@@ -14,30 +14,31 @@
 #' @details Reference: Bedingfield and Drew, eqn 32.
 
 
-h_cylinder_in_air <- function(Tk, Pair, speed, min.speed, diam.wick){
+h_cylinder_in_air_core <- function(Tk, Pair, speed, min.speed, diam.wick){
   
   # Constants
-  m.air <- 28.97
-  r.gas <- 8314.34
-  r.air <- r.gas / m.air
-  cp <- 1003.5 # heat capaticy at constant pressure of dry air
-  Pr <- cp / (cp + (1.25 * r.air))
+  r.air <- R_DRY_AIR
+  cp <- CP_DRY_AIR
+  Pr <- PRANDTL_AIR
   
   # Calculate the thermal conductivity of air, W/(m K)
-  therm.con <- thermal_cond(Tk)
+  mu <- viscosity(Tk)
+  therm.con <- (cp + 1.25 * r.air) * mu
   
   # Density of the air
   density <- Pair * 100 / (r.air * Tk)
-  if(speed < min.speed) speed <- min.speed
+  speed <- pmax(speed, min.speed)
   
   # Reynolds number
-  Re <- speed * density * diam.wick / viscosity(Tk)
+  Re <- speed * density * diam.wick / mu
   
   # Nusselt number
   Nu <- 0.281 * Re ^ 0.6 * Pr ^ 0.44
   
   # Convective heat transfer coefficient in W/(m2 K) for a long cylinder in cross flow
-  h_cylinder_in_air <- Nu * therm.con / diam.wick  
-  
-  return(h_cylinder_in_air)
+  Nu * therm.con / diam.wick
+}
+
+h_cylinder_in_air <- function(Tk, Pair, speed, min.speed, diam.wick){
+  h_cylinder_in_air_core(Tk, Pair, speed, min.speed, diam.wick)
 }

@@ -16,12 +16,12 @@ indexShow <- function() {
 }
 
 #' @keywords internal
-#' @importFrom magrittr %>%
-#' @importFrom utils read.table
-
 read.master <- function() {
-  system.file("master", package = "HeatStress") %>% read.table(header = TRUE,
-                                                                      sep = ";",
-                                                                      stringsAsFactors = FALSE,
-                                                                      na.strings = "")
+  utils::read.table(
+    system.file("master", package = "HeatStress"),
+    header = TRUE,
+    sep = ";",
+    stringsAsFactors = FALSE,
+    na.strings = ""
+  )
 }

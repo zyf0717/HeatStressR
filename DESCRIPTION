@@ -1,14 +1,25 @@
 Package: HeatStress
 Type: Package
-Title: Calculate heat stress indices
-Version: 1.0.8.1
-Date: 2025-08-13
-Author: A. Casanueva
-Maintainer: A.Casanueva <ana.casanueva@meteoswiss.ch>
-Description: Calculate heat stress indices based on meteorological data.
+Title: Calculate Heat Stress Indices
+Version: 1.1.0
+Date: 2026-07-21
+Authors@R: c(
+    person("Yifei", "Zheng", email = "zyf0717@gmail.com", role = c("aut", "cre"),
+           comment = "Maintainer of this fork"),
+    person("Ana", "Casanueva", role = "aut", comment = "Original package author")
+    )
+Description: Calculate heat stress indices from meteorological observations.
+    This independently maintained fork improves the numerical robustness,
+    diagnostics, solar geometry, and performance of the Liljegren wet-bulb
+    globe temperature implementation.
 License: file LICENSE
+URL: https://github.com/zyf0717/HeatStress
+BugReports: https://github.com/zyf0717/HeatStress/issues
 RoxygenNote: 7.3.2
-Depends: R (>= 2.10.0) 
-Suggests: testthat, assertthat
-Imports: stats, magrittr
+Depends: R (>= 3.4.0)
+Suggests:
+    pkgload,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: stats, assertthat
 Encoding: UTF-8
