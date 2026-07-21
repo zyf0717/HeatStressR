@@ -1,0 +1,2 @@
+"base_rows_per_worker","total_rows","requested_workers","effective_workers","single_core_block_seconds","estimated_single_core_seconds","parallel_seconds","estimated_speedup","rows_per_second","fallback_count","max_final_residual","r_version","platform"
+87600,350400,4,4,1.089,4.356,2.652,1.64253393665158,132126.696832579,0,6.19645567212501e-06,"4.6.1","aarch64-apple-darwin25.4.0"

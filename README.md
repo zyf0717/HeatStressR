@@ -108,6 +108,12 @@ Each batch call creates and stops its own worker cluster. Worker startup and
 data transfer can make small workloads slower; retain `workers = 1` when a
 single process is preferable.
 
+On an Apple M2 Max (macOS arm64, R 4.6.1), a one-worker 87,600-row block took
+1.089 s. Extrapolating that run four times gives 4.356 s; the fixed
+`workers = 4L` benchmark for four repeated blocks (350,400 rows) completed in
+2.652 s, an estimated 1.64x speedup. It had zero scalar fallbacks and a
+maximum final residual of `6.20e-06`; see the [recorded benchmark result](benchmarks/results/liljegren-four-worker-4x87600.csv).
+
 `pressure` accepts one value or a vector aligned with the meteorological rows;
 the default is 1010 hPa. The C-aligned defaults are `surface_albedo = 0.45`,
 `globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.

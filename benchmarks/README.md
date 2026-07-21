@@ -90,6 +90,29 @@ LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 \
 The worker list is filtered to the current system's logical CPU limit. This
 benchmark does not imply automatic worker selection by `wbgt.Liljegren()`.
 
+`benchmark-liljegren-four-worker-4x87600.R` is the fixed four-worker run.
+It constructs one deterministic 87,600-row weather block and repeats it four
+times, yielding 350,400 rows in four contiguous 87,600-row solver chunks. It
+first times the 87,600-row block with one worker, then reports the four-times
+extrapolated sequential duration and estimated speedup:
+
+```bash
+R CMD INSTALL .
+Rscript benchmarks/benchmark-liljegren-four-worker-4x87600.R
+```
+
+It requires four logical CPUs, uses `workers = 4L`, and reports wall time
+including preprocessing and PSOCK startup. Set `BENCHMARK_OUTPUT` to save its
+single-row result as CSV.
+
+Recorded on 2026-07-21 on an Apple M2 Max (macOS arm64, R 4.6.1), the
+87,600-row one-worker block took 1.089 s. Its four-times sequential
+extrapolation is 4.356 s; the 350,400-row four-worker run took 2.652 s, or
+132,127 rows/s, for an estimated 1.64x speedup. It had zero fallbacks and a
+maximum final residual of `6.20e-06`. The machine-readable result is
+[`results/liljegren-four-worker-4x87600.csv`](results/liljegren-four-worker-4x87600.csv).
+
+
 `benchmark-liljegren-three-way.R` measures one arm of the baseline/current
 comparison. Set `BENCHMARK_ROOT` to the checkout under test and
 `BENCHMARK_ENGINE` to `pre`, `scalar`, or `batch`; the `pre` mode supports the
