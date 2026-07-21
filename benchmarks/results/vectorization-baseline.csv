@@ -1,0 +1,7 @@
+"benchmark","rows","scalar_seconds","vector_seconds","speedup","scalar_allocation_bytes","vector_allocation_bytes","equivalent","max_abs_difference","na_count","na_positions","repetitions"
+"calZenith",100,0.005,0.001,5,0,0,TRUE,0,0,"",5
+"calZenith",1000,0.0539999999999998,0.00299999999999989,18.0000000000006,24144,597104,TRUE,0,0,"",5
+"calZenith",10000,0.555,0.0209999999999999,26.4285714285715,240144,6005248,TRUE,0,0,"",5
+"wbgt.Liljegren",10,0.00499999999999989,0.00499999999999989,1,0,0,TRUE,0,6,"data:5,10;Tnwb:5,10;Tg:5,10",5
+"wbgt.Liljegren",100,0.0569999999999995,0.048,1.18749999999999,0,0,TRUE,0,9,"data:13,50,100;Tnwb:13,50,100;Tg:13,50,100",5
+"wbgt.Liljegren",1000,0.571,0.501999999999999,1.13745019920319,205808,810952,TRUE,0,9,"data:13,500,1000;Tnwb:13,500,1000;Tg:13,500,1000",5

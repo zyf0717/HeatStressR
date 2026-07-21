@@ -1,0 +1,13 @@
+revision,engine,rows,repetitions,median_seconds,na_data,na_Tg,na_Tnwb
+pre_fork,pre,100,5,0.056,0,0,0
+pre_fork,pre,1000,5,0.558,0,0,0
+pre_fork,pre,10000,5,5.896,0,0,0
+pre_fork,pre,100000,5,60.490,0,0,0
+head_scalar,scalar,100,5,0.038,0,0,0
+head_scalar,scalar,1000,5,0.383,0,0,0
+head_scalar,scalar,10000,5,4.081,0,0,0
+head_scalar,scalar,100000,5,41.860,0,0,0
+head_batch,batch,100,5,0.005,0,0,0
+head_batch,batch,1000,5,0.014,0,0,0
+head_batch,batch,10000,5,0.124,0,0,0
+head_batch,batch,100000,5,1.283,0,0,0
