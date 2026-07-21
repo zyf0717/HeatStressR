@@ -69,7 +69,9 @@ safeguarded root solver with automatic scalar fallback for unresolved rows.}
 \item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
 Must be an integer from 1 through the detected logical CPU count. The default
 of 1 preserves sequential batch execution; values greater than 1 always use
-the requested number of workers for non-empty batch inputs.}
+the requested number of workers for non-empty batch inputs. Each worker
+preprocesses its own contiguous input chunk, including solar geometry and
+humidity, then solves and assembles its local WBGT results.}
 
 \item{root_tolerance}{numerical precision (K) used to locate heat-balance roots.}
 

@@ -16,7 +16,9 @@
 #' @param workers number of PSOCK worker processes for \code{engine = "batch"}.
 #' Must be an integer from 1 through the detected logical CPU count. The default
 #' of 1 preserves sequential batch execution; values greater than 1 always use
-#' the requested number of workers for non-empty batch inputs.
+#' the requested number of workers for non-empty batch inputs. Each worker
+#' preprocesses its own contiguous input chunk, including solar geometry and
+#' humidity, then solves and assembles its local WBGT results.
 #' @param root_tolerance numerical precision (K) used to locate heat-balance roots.
 #' @param residual_tolerance maximum accepted absolute heat-balance residual (K).
 #' Must be greater than zero and no greater than 0.01.
@@ -140,6 +142,40 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   
   ######################
   ######################
+  if (engine == "batch" && workers > 1L) {
+    parallel_result <- solve_liljegren_parallel(
+      tas = tas, dewp = dewp, wind = wind, radiation = radiation, dates = dates,
+      pressure = pressure, workers = workers,
+      controls = list(
+        lon = lon, lat = lat, hour = hour, gmt_offset = gmt_offset,
+        averaging_period = averaging_period, noNAs = noNAs, swap = swap,
+        dewpoint_tolerance = dewpoint_tolerance, min_wind_speed = min_wind_speed,
+        tolerance = tolerance, root_tolerance = root_tolerance,
+        residual_tolerance = residual_tolerance, surface_albedo = surface_albedo,
+        globe_diameter = globe_diameter, prop_direct = propDirect
+      )
+    )
+    wbgt.value <- parallel_result$data
+    Tg <- parallel_result$Tg
+    Tnwb <- parallel_result$Tnwb
+    input_valid <- parallel_result$input_valid
+    input_status <- parallel_result$input_status
+    solar_geometry_mismatch <- parallel_result$solar_geometry_mismatch
+    valid_idx <- parallel_result$valid_idx
+    Tg.batch <- parallel_result$Tg.batch
+    Tnwb.batch <- parallel_result$Tnwb.batch
+    effective_workers <- parallel_result$workers
+    Tg.converged <- rep(NA, ndates)
+    Tnwb.converged <- rep(NA, ndates)
+    Tg.failure.reason <- rep("not_attempted", ndates)
+    Tnwb.failure.reason <- rep("not_attempted", ndates)
+    if (length(valid_idx)) {
+      Tg.converged[valid_idx] <- attr(Tg.batch, "converged")
+      Tnwb.converged[valid_idx] <- attr(Tnwb.batch, "converged")
+      Tg.failure.reason[valid_idx] <- attr(Tg.batch, "failure_reason")
+      Tnwb.failure.reason[valid_idx] <- attr(Tnwb.batch, "failure_reason")
+    }
+  } else {
   Pair <- rep(pressure, length.out = ndates)
   MinWindSpeed <- min_wind_speed
   Tnwb <- rep(NA_real_, ndates)
@@ -241,6 +277,7 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
       Tnwb.final.residual[valid_idx] <- vapply(Tnwb.solution, `[[`, numeric(1), "residual")
     }
   }
+  }
   Tg.failed <- input_valid & !Tg.converged
   Tnwb.failed <- input_valid & !Tnwb.converged
   if (any(Tg.failed | Tnwb.failed)) {
@@ -259,8 +296,10 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   # *******************************
   # *** Calculation of the WBGT ***
   # *******************************
-  wbgt.value <- ifelse(is.na(Tg) | is.na(Tnwb), NA_real_,
-    0.7 * Tnwb + 0.2 * Tg + 0.1 * tas)
+  if (!(engine == "batch" && workers > 1L)) {
+    wbgt.value <- ifelse(is.na(Tg) | is.na(Tnwb), NA_real_,
+      0.7 * Tnwb + 0.2 * Tg + 0.1 * tas)
+  }
   wbgt <- list(data = wbgt.value,
                Tnwb = Tnwb,
                Tg = Tg)

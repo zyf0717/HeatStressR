@@ -107,29 +107,25 @@ result_parallel <- wbgt.Liljegren(
 Each batch call creates and stops its own worker cluster. Worker startup and
 data transfer can make small workloads slower; retain `workers = 1` when a
 single process is preferable.
+For `workers > 1`, each worker preprocesses its contiguous raw-input chunk
+(solar geometry, pressure, forcing normalization, dewpoint policy, and
+humidity) before solving and assembling its local WBGT values.
 
-On an Apple M2 Max (macOS arm64, R 4.6.1), a one-worker 87,600-row block took
-1.089 s. Extrapolating that run four times gives 4.356 s; the fixed
-`workers = 4L` benchmark for four repeated blocks (350,400 rows) completed in
-2.652 s, an estimated 1.64x speedup. It had zero scalar fallbacks and a
-maximum final residual of `6.20e-06`; see the [recorded benchmark result](benchmarks/results/liljegren-four-worker-4x87600.csv).
+The following one-run sweep used 87,600 rows per worker on an Apple M2 Max
+(macOS arm64, R 4.6.1). Differences near the plateau need repeated runs before
+being treated as durable:
 
-A one-run scaling sweep with 87,600 rows per worker on the same Apple M2 Max
-peaked at five workers: 1.65× estimated speedup for 438,000 rows. Four workers
-was nearly identical at 1.64×; six workers regressed to 1.49×. See the
-[full 1–6 worker results](benchmarks/results/liljegren-workers-1-to-6x87600.csv).
+| Workers | Total rows | Seconds | Estimated speedup |
+| ---: | ---: | ---: | ---: |
+| 1 | 87,600 | 1.100 | 1.00x |
+| 2 | 175,200 | 1.597 | 1.38x |
+| 3 | 262,800 | 1.779 | 1.85x |
+| 4 | 350,400 | 2.083 | 2.11x |
+| 5 | 438,000 | 2.289 | 2.40x |
+| 6 | 525,600 | 2.752 | 2.40x |
 
-`pressure` accepts one value or a vector aligned with the meteorological rows;
-the default is 1010 hPa. The C-aligned defaults are `surface_albedo = 0.45`,
-`globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.
-
-Solar geometry uses latitude, longitude, and timestamp. `POSIXct`/`POSIXlt`
-timestamps and ISO 8601 strings with an offset (for example,
-`2024-06-01T20:00:00+08:00` or `2024-06-01T12:00:00Z`) identify instants and
-are normalized to UTC when `hour = TRUE`. To reproduce the original C timing
-convention for naive local-standard-time input, supply `gmt_offset` (`LST - GMT`) and
-`averaging_period` in minutes; the solar position is evaluated at the interval
-midpoint. Do not combine `gmt_offset` with an offset-bearing ISO 8601 string.
+All runs had zero fallback solves and maximum final residual `6.20e-06`.
+See the [machine-readable sweep result](benchmarks/results/liljegren-workers-1-to-6x87600.csv).
 
 ### Input compatibility
 
@@ -141,6 +137,20 @@ to `calZenith()`, `fTg()`, `fTnwb()`, and `wbgt.Liljegren()` remain valid;
 fork-specific options are trailing optional arguments. Standard date strings
 and `POSIXct` inputs continue to work, while offset-aware ISO 8601 datetimes
 are additionally supported.
+
+### Liljegren physical and time controls
+
+`pressure` accepts one value or a vector aligned with the meteorological rows;
+the default is 1010 hPa. The C-aligned defaults are `surface_albedo = 0.45`,
+`globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.
+
+Solar geometry uses latitude, longitude, and timestamp. `POSIXct`/`POSIXlt`
+timestamps and ISO 8601 strings with an offset (for example,
+`2024-06-01T20:00:00+08:00` or `2024-06-01T12:00:00Z`) identify instants and
+are normalized to UTC when `hour = TRUE`. To reproduce the original C timing
+convention for naive local-standard-time input, supply `gmt_offset` (`LST - GMT`)
+and `averaging_period` in minutes; the solar position is evaluated at the interval
+midpoint. Do not combine `gmt_offset` with an offset-bearing ISO 8601 string.
 
 Input validation is deliberately stricter for the Liljegren path:
 

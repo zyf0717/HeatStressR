@@ -126,3 +126,117 @@ solve_liljegren_batch <- function(tas, dewp, relh, Pair, wind, radiation, zenith
     workers = workers
   )
 }
+
+solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
+  n <- length(chunk$tas)
+  Pair <- rep(chunk$pressure, length.out = n)
+  tas <- chunk$tas
+  dewp <- chunk$dewp
+  wind <- chunk$wind
+  radiation <- chunk$radiation
+  zenith <- if (n) {
+    degToRad(calZenith(chunk$dates, controls$lon, controls$lat,
+      hour = controls$hour, gmt_offset = controls$gmt_offset,
+      averaging_period = controls$averaging_period))
+  } else {
+    numeric()
+  }
+
+  radiation[radiation < 0] <- 0
+  wind[wind < 0] <- 0
+  solar_geometry_mismatch <- !is.na(radiation) & !is.na(zenith) &
+    radiation > 15 & zenith > 1.54
+  radiation[!is.na(zenith) & cos(zenith) <= 0] <- 0
+
+  input_valid <- !is.na(tas + dewp + wind + radiation + Pair) & !is.na(zenith)
+  input_status <- rep("attempted", n)
+  input_status[is.na(tas) | is.na(dewp) | is.na(wind) | is.na(radiation) | is.na(Pair)] <-
+    "missing_input"
+  input_status[input_status == "attempted" & is.na(zenith)] <- "missing_date"
+
+  if (controls$noNAs && controls$swap) {
+    tas_tmp <- pmax(tas, dewp)
+    dewp <- pmin(tas, dewp)
+    tas <- tas_tmp
+  } else if (controls$noNAs) {
+    dewp[(dewp - tas) > controls$dewpoint_tolerance] <-
+      tas[(dewp - tas) > controls$dewpoint_tolerance]
+  } else {
+    input_valid <- input_valid & tas >= dewp
+    input_status[input_status == "attempted" & !is.na(tas) & !is.na(dewp) &
+      dewp > tas] <- "invalid_dewpoint"
+  }
+  relh <- dewp2hurs(tas, dewp)
+  valid_idx <- which(input_valid)
+  Tg <- rep(NA_real_, n)
+  Tnwb <- rep(NA_real_, n)
+  Tg.batch <- NULL
+  Tnwb.batch <- NULL
+  if (length(valid_idx)) {
+    solved <- solve_liljegren_batch_chunk(list(
+      tas = tas[valid_idx], dewp = dewp[valid_idx], relh = relh[valid_idx],
+      Pair = Pair[valid_idx], wind = wind[valid_idx], radiation = radiation[valid_idx],
+      zenith = zenith[valid_idx]
+    ), controls)
+    Tg.batch <- solved$Tg
+    Tnwb.batch <- solved$Tnwb
+    Tg[valid_idx] <- Tg.batch
+    Tnwb[valid_idx] <- Tnwb.batch
+  }
+  list(
+    n = n, data = ifelse(is.na(Tg) | is.na(Tnwb), NA_real_,
+      0.7 * Tnwb + 0.2 * Tg + 0.1 * tas), Tg = Tg, Tnwb = Tnwb,
+    input_valid = input_valid,
+    input_status = input_status, solar_geometry_mismatch = solar_geometry_mismatch,
+    valid_idx = valid_idx, Tg.batch = Tg.batch, Tnwb.batch = Tnwb.batch
+  )
+}
+
+combine_parallel_chunk_field <- function(chunk_results, field) {
+  values <- lapply(chunk_results, `[[`, field)
+  expected_lengths <- vapply(chunk_results, `[[`, integer(1), "n")
+  if (!all(vapply(values, length, integer(1)) == expected_lengths))
+    stop("parallel chunk field has an inconsistent length: ", field)
+  unlist(values, use.names = FALSE)
+}
+
+solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, pressure,
+                                     workers, controls) {
+  n <- length(tas)
+  indices <- split_liljegren_chunks(n, workers)
+  chunks <- lapply(indices, function(index) list(
+    tas = tas[index], dewp = dewp[index], wind = wind[index],
+    radiation = radiation[index], dates = dates[index],
+    pressure = if (length(pressure) == 1L) pressure else pressure[index]
+  ))
+  cluster <- parallel::makePSOCKcluster(workers)
+  on.exit(parallel::stopCluster(cluster), add = TRUE)
+  parallel::clusterCall(cluster, function() {
+    loadNamespace("HeatStressR")
+    NULL
+  })
+  worker <- function(chunk, controls) {
+    utils::getFromNamespace("solve_liljegren_batch_raw_chunk", "HeatStressR")(chunk, controls)
+  }
+  chunk_results <- parallel::parLapply(cluster, chunks, worker, controls = controls)
+  valid_idx <- as.integer(unlist(Map(function(result, index) {
+    index[result$valid_idx]
+  }, chunk_results, indices), use.names = FALSE))
+  tg_chunks <- Filter(Negate(is.null), lapply(chunk_results, `[[`, "Tg.batch"))
+  tnwb_chunks <- Filter(Negate(is.null), lapply(chunk_results, `[[`, "Tnwb.batch"))
+  if (length(tg_chunks) != length(tnwb_chunks))
+    stop("parallel solver chunks are inconsistent")
+  list(
+    data = combine_parallel_chunk_field(chunk_results, "data"),
+    Tg = combine_parallel_chunk_field(chunk_results, "Tg"),
+    Tnwb = combine_parallel_chunk_field(chunk_results, "Tnwb"),
+    input_valid = combine_parallel_chunk_field(chunk_results, "input_valid"),
+    input_status = combine_parallel_chunk_field(chunk_results, "input_status"),
+    solar_geometry_mismatch = combine_parallel_chunk_field(chunk_results,
+      "solar_geometry_mismatch"),
+    valid_idx = valid_idx,
+    Tg.batch = if (length(tg_chunks)) combine_batch_solver_results(tg_chunks) else numeric(),
+    Tnwb.batch = if (length(tnwb_chunks)) combine_batch_solver_results(tnwb_chunks) else numeric(),
+    workers = workers
+  )
+}

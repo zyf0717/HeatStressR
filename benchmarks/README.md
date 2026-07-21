@@ -90,28 +90,6 @@ LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 \
 The worker list is filtered to the current system's logical CPU limit. This
 benchmark does not imply automatic worker selection by `wbgt.Liljegren()`.
 
-`benchmark-liljegren-four-worker-4x87600.R` is the fixed four-worker run.
-It constructs one deterministic 87,600-row weather block and repeats it four
-times, yielding 350,400 rows in four contiguous 87,600-row solver chunks. It
-first times the 87,600-row block with one worker, then reports the four-times
-extrapolated sequential duration and estimated speedup:
-
-```bash
-R CMD INSTALL .
-Rscript benchmarks/benchmark-liljegren-four-worker-4x87600.R
-```
-
-It requires four logical CPUs, uses `workers = 4L`, and reports wall time
-including preprocessing and PSOCK startup. Set `BENCHMARK_OUTPUT` to save its
-single-row result as CSV.
-
-Recorded on 2026-07-21 on an Apple M2 Max (macOS arm64, R 4.6.1), the
-87,600-row one-worker block took 1.089 s. Its four-times sequential
-extrapolation is 4.356 s; the 350,400-row four-worker run took 2.652 s, or
-132,127 rows/s, for an estimated 1.64x speedup. It had zero fallbacks and a
-maximum final residual of `6.20e-06`. The machine-readable result is
-[`results/liljegren-four-worker-4x87600.csv`](results/liljegren-four-worker-4x87600.csv).
-
 `benchmark-liljegren-workers-1-to-6x87600.R` measures scaling from one through
 six workers with a fixed 87,600 rows per worker. Each row compares a repeated
 input parallel run with the corresponding extrapolation of the same one-worker
@@ -128,12 +106,12 @@ measurements before treating small differences as durable:
 
 | Workers | Total rows | Seconds | Estimated speedup |
 | ---: | ---: | ---: | ---: |
-| 1 | 87,600 | 1.067 | 1.00x |
-| 2 | 175,200 | 1.700 | 1.26x |
-| 3 | 262,800 | 2.067 | 1.55x |
-| 4 | 350,400 | 2.603 | 1.64x |
-| 5 | 438,000 | 3.239 | 1.65x |
-| 6 | 525,600 | 4.289 | 1.49x |
+| 1 | 87,600 | 1.100 | 1.00x |
+| 2 | 175,200 | 1.597 | 1.38x |
+| 3 | 262,800 | 1.779 | 1.85x |
+| 4 | 350,400 | 2.083 | 2.11x |
+| 5 | 438,000 | 2.289 | 2.40x |
+| 6 | 525,600 | 2.752 | 2.40x |
 
 All runs had zero fallback solves and maximum final residual `6.20e-06`.
 The full data is in
