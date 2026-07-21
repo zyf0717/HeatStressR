@@ -2,13 +2,24 @@
 #' 
 #' Calculation of wet bulb globe temperature from air temperature, dew point temperature, radiation and wind. 
 #' 
-#' @param dates vector of dates, `POSIXct`/`POSIXlt` instants, or ISO 8601
-#' datetime strings. With `hour = TRUE`, offset-bearing ISO 8601 strings are
+#' @param tas vector of temperature in degC.
+#' @param dewp vector of dewpoint temperature in degC.
+#' @param wind vector of wind speed in m/s.
+#' @param radiation vector of solar shortwave downwelling radiation in W/m2.
+#' @param dates vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
+#' datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
 #' normalized to UTC.
 #' Values must have the same length and row order as the meteorological input
 #' vectors.
+#' @param lon single numeric longitude for the location, in degrees.
+#' @param lat single numeric latitude for the location, in degrees.
+#' @param tolerance Legacy tolerance control. When the independent controls are
+#' not supplied, it maps to root precision \code{tolerance * 0.01}, residual
+#' acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.
 #' @param noNAs logical, should NAs be introduced when dewp>tas? If TRUE specify how to deal in those cases (swap argument)
 #' @param swap logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.
+#' @param hour logical. If TRUE, calculate from the full UTC timestamp. Default:
+#' FALSE (12:00 UTC is used for date-only inputs).
 #' @param engine Numerical solver engine. \code{"scalar"} is the default corrected
 #' reference implementation. \code{"batch"} uses the experimental vectorized
 #' safeguarded root solver with automatic scalar fallback for unresolved rows.
@@ -35,7 +46,7 @@
 #' @param min_wind_speed lower bound applied to wind speed in m/s. Defaults to
 #' 0.13 m/s, matching the original Liljegren C implementation.
 #' @param gmt_offset optional local-standard-time offset from GMT, in hours
-#' (`LST - GMT`). Use only when `dates` contains local standard clock times;
+#' (\code{LST - GMT}). Use only when \code{dates} contains local standard clock times;
 #' timezone-aware timestamps and ISO 8601 offset strings are normalized to UTC
 #' automatically. Do not combine it with an offset-bearing ISO 8601 string.
 #' @param averaging_period averaging interval in minutes. Solar position is
@@ -65,7 +76,7 @@
 #' local-standard-time midpoint controls. Radiation is zeroed when the computed
 #' solar elevation is not positive.
 #'
-#' `dates` must have the same length and row order as the meteorological input vectors.
+#' \code{dates} must have the same length and row order as the meteorological input vectors.
 #' Root-location precision, residual validation, and dewpoint validation are
 #' controlled independently. Relaxing \code{residual_tolerance} accepts only
 #' candidate roots that were found; it cannot recover unbracketed or non-finite

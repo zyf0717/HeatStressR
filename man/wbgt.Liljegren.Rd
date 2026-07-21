@@ -31,15 +31,34 @@ wbgt.Liljegren(
 )
 }
 \arguments{
-\item{dates}{vector of dates, `POSIXct`/`POSIXlt` instants, or ISO 8601
-datetime strings. With `hour = TRUE`, offset-bearing ISO 8601 strings are
+\item{tas}{vector of temperature in degC.}
+
+\item{dewp}{vector of dewpoint temperature in degC.}
+
+\item{wind}{vector of wind speed in m/s.}
+
+\item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
+
+\item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
+datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
 normalized to UTC.
 Values must have the same length and row order as the meteorological input
 vectors.}
 
+\item{lon}{single numeric longitude for the location, in degrees.}
+
+\item{lat}{single numeric latitude for the location, in degrees.}
+
+\item{tolerance}{Legacy tolerance control. When the independent controls are
+not supplied, it maps to root precision \code{tolerance * 0.01}, residual
+acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.}
+
 \item{noNAs}{logical, should NAs be introduced when dewp>tas? If TRUE specify how to deal in those cases (swap argument)}
 
 \item{swap}{logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.}
+
+\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
+FALSE (12:00 UTC is used for date-only inputs).}
 
 \item{engine}{Numerical solver engine. \code{"scalar"} is the default corrected
 reference implementation. \code{"batch"} uses the experimental vectorized
@@ -68,7 +87,7 @@ matching the original Liljegren C implementation.}
 0.13 m/s, matching the original Liljegren C implementation.}
 
 \item{gmt_offset}{optional local-standard-time offset from GMT, in hours
-(`LST - GMT`). Use only when `dates` contains local standard clock times;
+(\code{LST - GMT}). Use only when \code{dates} contains local standard clock times;
 timezone-aware timestamps and ISO 8601 offset strings are normalized to UTC
 automatically. Do not combine it with an offset-bearing ISO 8601 string.}
 
@@ -112,7 +131,7 @@ Solar positions use timestamp, latitude, longitude, and the documented
 local-standard-time midpoint controls. Radiation is zeroed when the computed
 solar elevation is not positive.
 
-`dates` must have the same length and row order as the meteorological input vectors.
+\code{dates} must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are
 controlled independently. Relaxing \code{residual_tolerance} accepts only
 candidate roots that were found; it cannot recover unbracketed or non-finite

@@ -23,12 +23,12 @@ maintains the [HeatStress](https://github.com/anacv/HeatStress) function
 interface while improving the numerical behavior and observability of the
 Liljegren WBGT implementation.
 
-### Installation
+### Development version
 
-The recommended procedure for installing the package is using the devtools package.
+Before CRAN acceptance, install the development version from GitHub:
 
 ```R
-devtools::install_github("zyf0717/HeatStressR")
+remotes::install_github("zyf0717/HeatStressR")
 ```
 
 ### R support

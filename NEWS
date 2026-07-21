@@ -14,9 +14,17 @@
 * Benchmark harnesses for multicore performance evaluation:
   `benchmarks/benchmark-liljegren-workers-1-to-6x87600.R` (sweeping worker
   counts with configurable `ROWS_PER_WORKER`) and
-  `benchmarks/benchmark-liljegren-workers-1-to-6x87600.R` (annual workload
+  `benchmarks/benchmark-liljegren-parallel.R` (annual workload
   profiling). Results recorded on Apple M2 Max.
 * `DESCRIPTION` now lists `parallel` as an explicit import.
+
+### CRAN preparation
+
+* Standardised licence metadata and package authorship.
+* Added package and Liljegren-model citations.
+* Added runnable Liljegren examples and expanded installed documentation.
+* Made worker-limit detection respect CRAN check core limits.
+* Added CRAN submission notes and related regression tests.
 
 ### Changed
 
