@@ -40,7 +40,7 @@ Rscript benchmarks/benchmark-vectorization.R
 Defaults:
 
 - `calZenith()`: 100, 1,000, 10,000, and 87,600 rows;
-- `wbgt.Liljegren()`: 100, 1,000, and 10,000 rows;
+- `wbgt.Liljegren()`: 100, 1,000, 10,000, and 87,600 rows;
 - scalar solvers and `wbgt.Bernard()`: 1, 10, and 100 rows;
 - three repetitions per size.
 

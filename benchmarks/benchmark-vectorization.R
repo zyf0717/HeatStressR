@@ -282,7 +282,7 @@ pkgload::load_all(root, quiet = TRUE)
 source(file.path(root, "tests", "testthat", "helper-reference-calZenith.R"))
 
 cal_zenith_sizes <- parse_sizes("CAL_ZENITH_SIZES", c(100L, 1000L, 10000L, 87600L))
-liljegren_sizes <- parse_sizes("LILJEGREN_SIZES", c(100L, 1000L, 10000L))
+liljegren_sizes <- parse_sizes("LILJEGREN_SIZES", c(100L, 1000L, 10000L, 87600L))
 solver_sizes <- parse_sizes("SOLVER_SIZES", c(1L, 10L, 100L))
 repetitions <- benchmark_repetitions()
 if (is.na(repetitions) || repetitions < 1L) stop("BENCH_REPS must be a positive integer")
