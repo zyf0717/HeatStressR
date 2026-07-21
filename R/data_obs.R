@@ -15,7 +15,7 @@
 #'    grid box from the SARAH satellite dataset (DOI:10.5676/EUM_SAF_CM/SARAH/V001).
 #' }
 #'
-#' @source \url{http://www.ecad.eu/} and DOI:10.5676/EUM_SAF_CM/SARAH/V001
+#' @source \url{https://www.ecad.eu/index.php} and DOI:10.5676/EUM_SAF_CM/SARAH/V001
 #' @usage data(data_obs)
 #' @name "data_obs"
 "data_obs"

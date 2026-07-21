@@ -31,47 +31,21 @@ wbgt.Liljegren(
 )
 }
 \arguments{
-\item{tas}{vector of temperature in degC.}
-
-\item{dewp}{vector of dewpoint temperature in degC.}
-
-\item{wind}{vector of wind speed in m/s.}
-
-\item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
-
-\item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
+\item{dates}{vector of dates, `POSIXct`/`POSIXlt` instants, or ISO 8601
+datetime strings. With `hour = TRUE`, offset-bearing ISO 8601 strings are
 normalized to UTC.
 Values must have the same length and row order as the meteorological input
 vectors.}
 
-\item{lon}{single numeric longitude for the location, in degrees.}
-
-\item{lat}{single numeric latitude for the location, in degrees.}
-
-\item{tolerance}{Legacy tolerance control. When the independent controls are
-not supplied, it maps to root precision \code{tolerance * 0.01}, residual
-acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.}
-
 \item{noNAs}{logical, should NAs be introduced when dewp>tas? If TRUE specify how to deal in those cases (swap argument)}
 
 \item{swap}{logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.}
-
-\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
-FALSE (12:00 UTC is used for date-only inputs).}
 
 \item{engine}{Numerical solver engine. \code{"scalar"} is the default corrected
 reference implementation. \code{"batch"} uses the experimental vectorized
 safeguarded root solver with automatic scalar fallback for unresolved rows.}
 
 \item{diagnostics}{logical; return solver metadata in addition to the usual result.}
-
-\item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
-Must be an integer from 1 through the detected logical CPU count. The default
-of 1 preserves sequential batch execution; values greater than 1 use up to
-the requested number of workers, capped at the number of input rows. Each worker
-preprocesses its own contiguous input chunk, including solar geometry and
-humidity, then solves and assembles its local WBGT results.}
 
 \item{root_tolerance}{numerical precision (K) used to locate heat-balance roots.}
 
@@ -100,6 +74,13 @@ automatically. Do not combine it with an offset-bearing ISO 8601 string.}
 
 \item{averaging_period}{averaging interval in minutes. Solar position is
 evaluated at its midpoint; defaults to 0.}
+
+\item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
+Must be an integer from 1 through the detected logical CPU count. The default
+of 1 preserves sequential batch execution; values greater than 1 use up to
+the requested number of workers, capped at the number of input rows. Each worker
+preprocesses its own contiguous input chunk, including solar geometry and
+humidity, then solves and assembles its local WBGT results.}
 }
 \value{
 A list of:
@@ -114,7 +95,21 @@ $Tg: globe temperature in degC
 Calculation of wet bulb globe temperature from air temperature, dew point temperature, radiation and wind.
 }
 \details{
-This corresponds to the implementation for outdoors or in the sun conditions (Liljegren et al. 2008). Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA) and Ana Casanueva into R.
+This corresponds to the implementation for outdoors or in the sun
+conditions described by Liljegren et al. (2008),
+doi:10.1080/15459620802310770. The original Fortran code was written by
+James C. Liljegren, translated to Visual Basic (VBA) by Bruno Lemke, and
+translated to R by Ana Casanueva. HeatStressR is an independently maintained
+fork and is not affiliated with the original project or its authors.
+
+The scalar engine is the default corrected reference implementation. The
+experimental batch engine is opt-in and uses explicitly requested PSOCK
+workers when \code{workers > 1}; no workers are created by default. Pressure,
+surface albedo, globe diameter, and minimum wind speed are configurable.
+Solar positions use timestamp, latitude, longitude, and the documented
+local-standard-time midpoint controls. Radiation is zeroed when the computed
+solar elevation is not positive.
+
 `dates` must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are
 controlled independently. Relaxing \code{residual_tolerance} accepts only
@@ -133,16 +128,33 @@ input length. \code{input_status} describes filtering, while per-solver
 \code{converged} and \code{fallback_reason} describe numerical solving.
 \code{workers} reports the effective worker count and
 \code{requested_workers} reports the supplied count.
+
+Agreement with another implementation requires matching pressure,
+wind-height treatment, timestamp convention, averaging interval,
+solar-position method, radiation partitioning, and failure semantics. This
+function is not a bitwise-compatible port of the original C implementation.
 }
 \examples{
-\dontrun{ 
-# load the meteorological variables for example data in Salamanca:
-data("data_obs") 
-wbgt.outdoors <- wbgt.Liljegren(tas=data_obs$tasmean, dewp=data_obs$dewp, 
-wind=data_obs$wind, radiation=data_obs$solar, dates= data_obs$Dates, lon=-5.66, lat=40.96)
-}
+times <- as.POSIXct(
+  c("2024-06-01 12:00:00", "2024-06-01 13:00:00"),
+  tz = "UTC"
+)
+result <- wbgt.Liljegren(
+  tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
+  radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE
+)
+result$data
 
+\dontrun{
+result_parallel <- wbgt.Liljegren(
+  tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
+  radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE,
+  engine = "batch", workers = 2
+)
+result_parallel$data
+}
 }
 \author{
-A.Casanueva (21.02.2017).
+Original R translation: Ana Casanueva (2017). Current fork
+maintenance and modifications: Yifei Zheng.
 }

@@ -18,7 +18,7 @@ A data frame with 92 rows (days) and 6 variables. The variables are as follows:
 }
 }
 \source{
-\url{http://www.ecad.eu/} and DOI:10.5676/EUM_SAF_CM/SARAH/V001
+\url{https://www.ecad.eu/index.php} and DOI:10.5676/EUM_SAF_CM/SARAH/V001
 }
 \usage{
 data(data_obs)

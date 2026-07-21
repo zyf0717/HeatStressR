@@ -46,8 +46,23 @@
 #' @return $data: wet bulb globe temperature in degC
 #' @return $Tnwb: natural wet bulb temperature (Tnwb) in degC
 #' @return $Tg: globe temperature in degC
-#' @author A.Casanueva (21.02.2017).
-#' @details This corresponds to the implementation for outdoors or in the sun conditions (Liljegren et al. 2008). Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA) and Ana Casanueva into R.
+#' @author Original R translation: Ana Casanueva (2017). Current fork
+#' maintenance and modifications: Yifei Zheng.
+#' @details This corresponds to the implementation for outdoors or in the sun
+#' conditions described by Liljegren et al. (2008),
+#' doi:10.1080/15459620802310770. The original Fortran code was written by
+#' James C. Liljegren, translated to Visual Basic (VBA) by Bruno Lemke, and
+#' translated to R by Ana Casanueva. HeatStressR is an independently maintained
+#' fork and is not affiliated with the original project or its authors.
+#'
+#' The scalar engine is the default corrected reference implementation. The
+#' experimental batch engine is opt-in and uses explicitly requested PSOCK
+#' workers when \code{workers > 1}; no workers are created by default. Pressure,
+#' surface albedo, globe diameter, and minimum wind speed are configurable.
+#' Solar positions use timestamp, latitude, longitude, and the documented
+#' local-standard-time midpoint controls. Radiation is zeroed when the computed
+#' solar elevation is not positive.
+#'
 #' `dates` must have the same length and row order as the meteorological input vectors.
 #' Root-location precision, residual validation, and dewpoint validation are
 #' controlled independently. Relaxing \code{residual_tolerance} accepts only
@@ -66,15 +81,32 @@
 #' \code{converged} and \code{fallback_reason} describe numerical solving.
 #' \code{workers} reports the effective worker count and
 #' \code{requested_workers} reports the supplied count.
+#'
+#' Agreement with another implementation requires matching pressure,
+#' wind-height treatment, timestamp convention, averaging interval,
+#' solar-position method, radiation partitioning, and failure semantics. This
+#' function is not a bitwise-compatible port of the original C implementation.
 #' @export
-#' 
-#' @examples \dontrun{ 
-#' # load the meteorological variables for example data in Salamanca:
-#' data("data_obs") 
-#' wbgt.outdoors <- wbgt.Liljegren(tas=data_obs$tasmean, dewp=data_obs$dewp, 
-#' wind=data_obs$wind, radiation=data_obs$solar, dates= data_obs$Dates, lon=-5.66, lat=40.96)
+#'
+#' @examples
+#' times <- as.POSIXct(
+#'   c("2024-06-01 12:00:00", "2024-06-01 13:00:00"),
+#'   tz = "UTC"
+#' )
+#' result <- wbgt.Liljegren(
+#'   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
+#'   radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE
+#' )
+#' result$data
+#'
+#' \dontrun{
+#' result_parallel <- wbgt.Liljegren(
+#'   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
+#'   radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE,
+#'   engine = "batch", workers = 2
+#' )
+#' result_parallel$data
 #' }
-#' 
 
 wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, tolerance=1e-4, 
                            noNAs=TRUE, swap=FALSE, hour=FALSE,
