@@ -68,14 +68,15 @@ E2E_SIZES=100 E2E_COORDINATE_MODES=fixed,grouped,unique BENCH_REPS=1 \
   Rscript benchmarks/benchmark-liljegren-e2e.R
 ```
 
-The current 2.1.2 baseline is in
+The current 2.1.2 timestamp-cache baseline is in
 [`results/liljegren-coordinate-aware-2.1.2.md`](results/liljegren-coordinate-aware-2.1.2.md).
 Refresh its full fixed/grouped E2E portion with:
 
 ```bash
 LILJEGREN_BENCHMARK_DATASET=benchmarks/data/liljegren-multi-location-28d.csv \
 E2E_SIZES=129024 E2E_COORDINATE_MODES=fixed,grouped BENCH_REPS=3 \
-BENCHMARK_OUTPUT=benchmarks/results/liljegren-e2e-2.1.2.csv \
+BENCHMARK_LABEL=heatstressr_2_1_2_timestamp_cache \
+BENCHMARK_OUTPUT=benchmarks/results/liljegren-e2e-2.1.2-coordinate-aware.csv \
   Rscript benchmarks/benchmark-liljegren-e2e.R
 ```
 

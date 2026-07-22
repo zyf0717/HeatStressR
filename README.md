@@ -52,20 +52,20 @@ precomputes aligned zenith angles by coordinate pair and reuses timestamp-only
 solar terms for repeated instants. Its default is the scalar R heat-balance
 solver; the vectorized batch solver is an explicit opt-in.
 
-The 2.1.2 coordinate-aware E2E benchmark uses a 192-location, 129,024-row
+The 2.1.2 timestamp-cache E2E benchmark uses a 192-location, 129,024-row
 hourly fixture and three repetitions on macOS arm64 with R 4.6.1:
 
 | Mode | Rows | Coordinate pairs | Scalar | Batch | Speedup |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Fixed | 129,024 | 1 | 32.852 s | 1.476 s | 22.26x |
-| Grouped | 129,024 | 192 | 32.177 s | 1.486 s | 21.65x |
-| Unique | 10,000 | 10,000 | 3.541 s | 1.196 s | 2.96x |
+| Fixed | 129,024 | 1 | 33.323 s | 1.357 s | 24.56x |
+| Grouped | 129,024 | 192 | 33.556 s | 1.314 s | 25.54x |
+| Unique | 10,000 | 10,000 | 2.685 s | 0.248 s | 10.83x |
 
 All component NA positions aligned; no batch root required fallback; and the
 largest scalar/batch component difference was `1.24e-6` °C. The unique mode is
 bounded because constructing a solar-consistent no-reuse input is intentionally
 expensive. Full E2E and PSOCK-worker results, raw CSVs, and reproduction
-commands are in the [coordinate-aware benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
+commands are in the [timestamp-cache benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
 
 ### Selecting the Liljegren solver
 
@@ -107,14 +107,14 @@ fixture with three repetitions on macOS arm64, R 4.6.1:
 
 | Workers | Rows | Median | Speedup vs. 1 worker |
 | ---: | ---: | ---: | ---: |
-| 1 | 129,024 | 1.515 s | 1.00x |
-| 2 | 129,024 | 1.319 s | 1.15x |
-| 4 | 129,024 | 1.124 s | 1.35x |
+| 1 | 129,024 | 1.230 s | 1.00x |
+| 2 | 129,024 | 1.125 s | 1.09x |
+| 4 | 129,024 | 0.833 s | 1.48x |
 
 All runs had aligned NA positions, identical numerical diagnostics after
 worker-count metadata normalization, zero fallbacks, and maximum final
 residual `8.69e-6`. Raw data and the E2E results are in the
-[coordinate-aware benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
+[timestamp-cache benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
 
 ### Input compatibility
 

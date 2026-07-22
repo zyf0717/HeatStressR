@@ -1,2 +1,2 @@
 "revision","rows","repetitions","coordinate_mode","coordinate_pairs","rows_per_coordinate_pair","scalar_seconds","batch_seconds","speedup","max_data_difference","max_Tg_difference","max_Tnwb_difference","batch_fallback_count","batch_max_final_residual","na_aligned"
-"heatstressr_2_1_2_coordinate_aware",10000,3,"unique",10000,1,3.541,1.196,2.96070234113713,9.65071876635193e-07,1.19667174658389e-06,1.17975145030869e-06,0,7.9589878509978e-06,TRUE
+"heatstressr_2_1_2_timestamp_cache",10000,3,"unique",10000,1,2.685,0.247999999999999,10.8266129032258,9.65071876635193e-07,1.19667174658389e-06,1.17975145030869e-06,0,7.9589878509978e-06,TRUE
