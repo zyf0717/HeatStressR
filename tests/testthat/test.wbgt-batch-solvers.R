@@ -140,6 +140,31 @@ test_that("Liljegren groups solar geometry by row-aligned coordinates", {
   }
 })
 
+test_that("Liljegren reuses timestamp solar terms across coordinate groups", {
+  dates <- rep(as.POSIXct(c("2024-03-20 06:00:00", "2024-03-20 18:00:00"),
+    tz = "UTC"), 3)
+  lon <- c(-90, 0, 90, -90, 0, 90)
+  lat <- c(0, 15, -30, 0, 15, -30)
+  expected <- vapply(seq_along(dates), function(i) {
+    HeatStressR:::degToRad(calZenith(dates[i], lon[i], lat[i], hour = TRUE))
+  }, numeric(1))
+
+  actual <- HeatStressR:::calculate_liljegren_zenith(
+    dates, lon, lat, hour = TRUE, gmt_offset = NULL, averaging_period = 0
+  )
+  expect_equal(actual, expected, tolerance = 0)
+
+  local_dates <- rep(c("2024-03-20 01:30:00", "2024-03-20 13:30:00"), 3)
+  expected_local <- vapply(seq_along(local_dates), function(i) {
+    HeatStressR:::degToRad(calZenith(local_dates[i], lon[i], lat[i], hour = TRUE,
+      gmt_offset = -5, averaging_period = 60))
+  }, numeric(1))
+  actual_local <- HeatStressR:::calculate_liljegren_zenith(
+    local_dates, lon, lat, hour = TRUE, gmt_offset = -5, averaging_period = 60
+  )
+  expect_equal(actual_local, expected_local, tolerance = 0)
+})
+
 test_that("diagnostics map batch solver rows to original inputs", {
   x <- engine_fixture()
   result <- suppressWarnings(wbgt.Liljegren(x$tas, x$dewp, x$wind, x$radiation,

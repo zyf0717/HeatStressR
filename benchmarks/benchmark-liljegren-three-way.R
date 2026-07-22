@@ -2,7 +2,9 @@
 
 # Run one arm of the baseline/current Liljegren comparison. Set
 # BENCHMARK_ROOT to the checkout being measured and BENCHMARK_ENGINE to one of
-# pre, scalar, or batch. The baseline API does not accept `engine`.
+# pre, scalar, or batch. The baseline API does not accept `engine` or
+# row-aligned coordinates, so this historical comparison intentionally remains
+# a fixed-coordinate workload.
 
 parse_sizes <- function(variable, defaults) {
   value <- Sys.getenv(variable, unset = "")
@@ -59,6 +61,7 @@ rows <- lapply(sizes, function(n) {
   }, repetitions)
   data.frame(revision = if (engine == "pre") "pre_fork" else paste0("head_", engine),
     engine = engine, rows = n, repetitions = repetitions,
+    coordinate_mode = "fixed", coordinate_pairs = 1L, rows_per_coordinate_pair = n,
     median_seconds = median(result$elapsed), na_data = sum(is.na(result$value$data)),
     na_Tg = sum(is.na(result$value$Tg)), na_Tnwb = sum(is.na(result$value$Tnwb)),
     row.names = NULL)

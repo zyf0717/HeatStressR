@@ -1,10 +1,22 @@
 # HeatStressR NEWS
 
+## 2.1.3 — 2026-07-22
+
+* `wbgt.Liljegren()` now caches timestamp-only solar-time terms and reuses
+  them across coordinate pairs, reducing repeated solar-geometry work while
+  retaining aligned vector results.
+* Refreshed the Liljegren coordinate benchmarks, including isolated
+  fixed/grouped/unique coordinate workloads and timestamp-cache E2E results.
+* The unique-coordinate Liljegren E2E benchmark now uses the full 129,024-row
+  fixture, matching the fixed- and grouped-coordinate workloads. Recorded
+  results and reproduction commands have been updated accordingly.
+
 ## 2.1.2 — 2026-07-22
 
 * `wbgt.Liljegren()` now accepts scalar or row-aligned `lon` and `lat`.
-  Solar geometry is computed once per distinct coordinate pair before either
-  scalar or batch heat-balance solving begins.
+  Solar geometry groups rows by coordinate pair and reuses timestamp-only
+  terms for repeated instants before either scalar or batch heat-balance
+  solving begins.
 
 ## 2.1.1 — 2026-07-21
 

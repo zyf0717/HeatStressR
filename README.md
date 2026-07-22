@@ -48,36 +48,23 @@ indexShow()
 ### Performance and solver scope
 
 `calZenith()` now processes date vectors in one pass. `wbgt.Liljegren()`
-precomputes aligned zenith angles. Its default is the scalar R heat-balance
+precomputes aligned zenith angles by coordinate pair and reuses timestamp-only
+solar terms for repeated instants. Its default is the scalar R heat-balance
 solver; the vectorized batch solver is an explicit opt-in.
 
-Recorded end-to-end benchmarks on deterministic, solar-consistent inputs show
-the following batch-engine speedups over the scalar R engine. Rerun
-the benchmark on the target platform before using these figures for capacity
-planning.
+The 2.1.2 timestamp-cache E2E benchmark uses a 192-location, 129,024-row
+hourly fixture and three repetitions on macOS arm64 with R 4.6.1:
 
-AMD Ryzen 7 7735HS, R 4.3.3, Linux x86_64:
+| Mode | Rows | Coordinate pairs | Scalar | Batch | Speedup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fixed | 129,024 | 1 | 33.323 s | 1.357 s | 24.56x |
+| Grouped | 129,024 | 192 | 33.556 s | 1.314 s | 25.54x |
+| Unique | 129,024 | 129,024 | 36.074 s | 2.922 s | 12.35x |
 
-| Rows | Scalar | Batch | Speedup |
-| ---: | ---: | ---: | ---: |
-| 100 | 0.118 s | 0.077 s | 1.53x |
-| 1,000 | 0.372 s | 0.014 s | 26.57x |
-| 10,000 | 4.026 s | 0.105 s | 38.34x |
-| 87,600 | 36.451 s | 0.909 s | 40.10x |
-
-Apple M2 Max, R 4.6.1, macOS arm64:
-
-| Rows | Scalar | Batch | Speedup |
-| ---: | ---: | ---: | ---: |
-| 100 | 0.090 s | 0.057 s | 1.58x |
-| 1,000 | 0.258 s | 0.014 s | 18.43x |
-| 10,000 | 2.680 s | 0.107 s | 25.05x |
-| 87,600 | 23.708 s | 0.932 s | 25.44x |
-
-Across both recorded environments, component outputs differed by less than
-`1.3e-6` degrees C and had aligned `NA` positions. No batch root required
-scalar fallback; counts and residuals are recorded in the
-[end-to-end benchmark](https://github.com/zyf0717/HeatStressR/blob/v2.1.2/benchmarks/results/liljegren-e2e.md).
+All component NA positions aligned; no batch root required fallback; and the
+largest scalar/batch component difference was `1.23e-6` °C. Full E2E and
+PSOCK-worker results, raw CSVs, and reproduction commands are in the
+[timestamp-cache benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
 
 ### Selecting the Liljegren solver
 
@@ -110,25 +97,23 @@ count, normally the detected logical CPU count. R check environments that set
 Each batch call creates and stops its own worker cluster. Worker startup and
 data transfer can make small workloads slower; retain `workers = 1` when a
 single process is preferable.
-For `workers > 1`, each worker preprocesses its contiguous raw-input chunk
-(solar geometry, pressure, forcing normalization, dewpoint policy, and
-humidity) before solving and assembling its local WBGT values.
+For `workers > 1`, the parent process computes aligned solar geometry once,
+then workers preprocess contiguous pressure, forcing, dewpoint-policy, and
+humidity chunks before solving and assembling local WBGT values.
 
-The following one-run sweep used 87,600 rows per worker on an Apple M2 Max
-(macOS arm64, R 4.6.1). Differences near the plateau need repeated runs before
-being treated as durable:
+The 2.1.2 grouped-coordinate worker sweep used the 192-location, 129,024-row
+fixture with three repetitions on macOS arm64, R 4.6.1:
 
-| Workers | Total rows | Seconds | Estimated speedup |
+| Workers | Rows | Median | Speedup vs. 1 worker |
 | ---: | ---: | ---: | ---: |
-| 1 | 87,600 | 1.100 | 1.00x |
-| 2 | 175,200 | 1.597 | 1.38x |
-| 3 | 262,800 | 1.779 | 1.85x |
-| 4 | 350,400 | 2.083 | 2.11x |
-| 5 | 438,000 | 2.289 | 2.40x |
-| 6 | 525,600 | 2.752 | 2.40x |
+| 1 | 129,024 | 1.230 s | 1.00x |
+| 2 | 129,024 | 1.125 s | 1.09x |
+| 4 | 129,024 | 0.833 s | 1.48x |
 
-All runs had zero fallback solves and maximum final residual `6.20e-06`.
-See the [machine-readable sweep result](https://github.com/zyf0717/HeatStressR/blob/v2.1.2/benchmarks/results/liljegren-workers-1-to-6x87600.csv).
+All runs had aligned NA positions, identical numerical diagnostics after
+worker-count metadata normalization, zero fallbacks, and maximum final
+residual `8.69e-6`. Raw data and the E2E results are in the
+[timestamp-cache benchmark report](benchmarks/results/liljegren-coordinate-aware-2.1.2.md).
 
 ### Input compatibility
 

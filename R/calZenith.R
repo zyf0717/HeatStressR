@@ -72,31 +72,8 @@ parse_iso8601_datetime <- function(x) {
   result
 }
 
-calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
-                      averaging_period = 0) {
-  assertthat::assert_that(
-    is.logical(hour) && length(hour) == 1L && !is.na(hour),
-    msg = "'hour' should be a single non-missing logical value"
-  )
-  assertthat::assert_that(
-    is.numeric(lon) && length(lon) == 1L && is.finite(lon),
-    msg = "'lon' should be a single finite numeric value"
-  )
-  assertthat::assert_that(
-    is.numeric(lat) && length(lat) == 1L && is.finite(lat),
-    msg = "'lat' should be a single finite numeric value"
-  )
-  assertthat::assert_that(lon <= 180 && lon >= -180, msg = "Invalid lon")
-  assertthat::assert_that(lat <= 90 && lat >= -90, msg = "Invalid lat")
-  assertthat::assert_that(is.null(gmt_offset) ||
-    (is.numeric(gmt_offset) && length(gmt_offset) == 1L && is.finite(gmt_offset)),
-    msg = "'gmt_offset' must be NULL or one finite number")
-  assertthat::assert_that(is.numeric(averaging_period) && length(averaging_period) == 1L &&
-    is.finite(averaging_period) && averaging_period >= 0,
-    msg = "'averaging_period' must be one non-negative finite number")
-
-  if (!length(dates)) return(numeric(0))
-
+calculate_solar_time_terms <- function(dates, hour, gmt_offset,
+                                       averaging_period) {
   DECL1 <- 0.006918
   DECL2 <- 0.399912
   DECL3 <- 0.070257
@@ -104,10 +81,10 @@ calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
   DECL5 <- 0.000907
   DECL6 <- 0.002697
   DECL7 <- 0.00148
- 
-  # Parse the complete vector once. Without `gmt_offset`, POSIX timestamps and
-  # ISO 8601 strings with offsets are timezone-aware instants normalized to
-  # UTC. With it, displayed clock fields are local standard time, matching C.
+
+  # Without `gmt_offset`, POSIX timestamps and ISO 8601 strings with offsets
+  # are timezone-aware instants normalized to UTC. With it, displayed clock
+  # fields are local standard time, matching C.
   if (hour) {
     if (is.null(gmt_offset)) {
       if (inherits(dates, "POSIXt")) {
@@ -138,34 +115,65 @@ calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
   if (!is.null(gmt_offset)) timestamp <- timestamp - gmt_offset * 3600
   timestamp <- timestamp - averaging_period * 30
   d1 <- as.POSIXlt(timestamp, tz = "UTC")
-  utc.minutes <- as.numeric(format(d1, "%H")) * 60 +
+  utc_minutes <- as.numeric(format(d1, "%H")) * 60 +
     as.numeric(format(d1, "%M")) + as.numeric(format(d1, "%S")) / 60
-
   year <- as.numeric(format(d1, "%Y"))
   doy <- as.numeric(strftime(d1, format = "%j"))
-
-  # Leap-year and clipping logic must remain element-wise for vector inputs.
   dpy <- ifelse(is.leapyear(year), 366, 365)
-  RadLat <- degToRad(lat)
+  utc_hour <- utc_minutes / 60
+  gamma <- 2 * pi * ((doy - 1) + ((utc_hour - 12) / 24)) / dpy
+  equation_of_time <- 229.18 * (0.000075 + 0.001868 * cos(gamma) -
+    0.032077 * sin(gamma) - 0.014615 * cos(2 * gamma) -
+    0.040849 * sin(2 * gamma))
+  declination <- DECL1 - DECL2 * cos(gamma) + DECL3 * sin(gamma) -
+    DECL4 * cos(2 * gamma) + DECL5 * sin(2 * gamma) -
+    DECL6 * cos(3 * gamma) + DECL7 * sin(3 * gamma)
 
-  utc.hour <- utc.minutes / 60
-  Gamma <- 2 * pi * ((doy - 1) + ((utc.hour - 12) / 24)) / dpy
-  EquTime <- 229.18 * (0.000075 + 0.001868 * cos(Gamma) -
-    0.032077 * sin(Gamma) - 0.014615 * cos(2 * Gamma) -
-    0.040849 * sin(2 * Gamma))
-  Decli <- DECL1 - DECL2 * cos(Gamma) + DECL3 * sin(Gamma) -
-    DECL4 * cos(2 * Gamma) + DECL5 * sin(2 * Gamma) -
-    DECL6 * cos(3 * Gamma) + DECL7 * sin(3 * Gamma)
+  list(
+    utc_minutes = utc_minutes,
+    equation_of_time = equation_of_time,
+    declination = declination
+  )
+}
 
-  # UTC timestamps require a longitude correction to obtain true solar time.
-  # Wrap explicitly so western longitudes before UTC midnight remain valid.
-  TrueSolarTime <- (utc.minutes + EquTime + 4 * lon) %% 1440
-  HaDeg <- (TrueSolarTime / 4) - 180
-  HaRad <- degToRad(HaDeg)
+calculate_zenith_from_solar_terms <- function(utc_minutes, equation_of_time,
+                                              declination, lon, lat) {
+  rad_lat <- degToRad(lat)
+  true_solar_time <- (utc_minutes + equation_of_time + 4 * lon) %% 1440
+  hour_angle_rad <- degToRad((true_solar_time / 4) - 180)
+  cos_zenith <- sin(rad_lat) * sin(declination) +
+    cos(rad_lat) * cos(declination) * cos(hour_angle_rad)
+  cos_zenith <- pmin(1, pmax(-1, cos_zenith))
 
-  CosZen <- sin(RadLat) * sin(Decli) +
-    cos(RadLat) * cos(Decli) * cos(HaRad)
-  CosZen <- pmin(1, pmax(-1, CosZen))
+  radToDeg(acos(cos_zenith))
+}
 
-  radToDeg(acos(CosZen))
+calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
+                      averaging_period = 0) {
+  assertthat::assert_that(
+    is.logical(hour) && length(hour) == 1L && !is.na(hour),
+    msg = "'hour' should be a single non-missing logical value"
+  )
+  assertthat::assert_that(
+    is.numeric(lon) && length(lon) == 1L && is.finite(lon),
+    msg = "'lon' should be a single finite numeric value"
+  )
+  assertthat::assert_that(
+    is.numeric(lat) && length(lat) == 1L && is.finite(lat),
+    msg = "'lat' should be a single finite numeric value"
+  )
+  assertthat::assert_that(lon <= 180 && lon >= -180, msg = "Invalid lon")
+  assertthat::assert_that(lat <= 90 && lat >= -90, msg = "Invalid lat")
+  assertthat::assert_that(is.null(gmt_offset) ||
+    (is.numeric(gmt_offset) && length(gmt_offset) == 1L && is.finite(gmt_offset)),
+    msg = "'gmt_offset' must be NULL or one finite number")
+  assertthat::assert_that(is.numeric(averaging_period) && length(averaging_period) == 1L &&
+    is.finite(averaging_period) && averaging_period >= 0,
+    msg = "'averaging_period' must be one non-negative finite number")
+
+  if (!length(dates)) return(numeric(0))
+  terms <- calculate_solar_time_terms(dates, hour, gmt_offset, averaging_period)
+  calculate_zenith_from_solar_terms(
+    terms$utc_minutes, terms$equation_of_time, terms$declination, lon, lat
+  )
 }

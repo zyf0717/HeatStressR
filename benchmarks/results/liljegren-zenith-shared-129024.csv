@@ -1,0 +1,2 @@
+"benchmark","rows","repetitions","coordinate_mode","coordinate_pairs","rows_per_coordinate_pair","unique_triplets","timestamp_frequency","median_seconds","triplets_per_second","r_version","platform"
+"shared_timestamp_longitude_latitude",129024,3,"shared",1,129024,129024,"hourly",0.289,446449.826989619,"R version 4.6.1 (2026-06-24)","aarch64-apple-darwin25.4.0"

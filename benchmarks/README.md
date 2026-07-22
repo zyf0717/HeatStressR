@@ -1,97 +1,36 @@
-# Solver benchmarks
+# Coordinate-aware Liljegren benchmarks
 
-These benchmarks validate this fork's solver behavior and performance. A
-`baseline` is a fixed historical revision used only for comparison; it does not
-identify a supported upstream dependency.
+The Liljegren benchmark suite measures the public `wbgt.Liljegren()` path as
+implemented in HeatStressR 2.1.2. Every current benchmark uses the shared
+[`liljegren-benchmark-utils.R`](liljegren-benchmark-utils.R) workload contract
+and reports these fields with its timing results:
 
-`benchmark-vectorization.R` compares corrected scalar and explicit batch WBGT
-solver paths.
+- `coordinate_mode`: `fixed`, `grouped`, or `unique`;
+- `coordinate_pairs`: distinct `(lon, lat)` pairs in the call; and
+- `rows_per_coordinate_pair`: the reuse available to solar-geometry grouping.
 
-It reports, for every input size:
+`fixed` holds one coordinate pair for all rows. `grouped` preserves the
+multi-location fixture’s pairs. `unique` assigns every row a distinct valid
+coordinate pair. The modes distinguish the original fixed-station workload
+from the new coordinate-grouping path and its no-reuse limit.
 
-- median elapsed time;
-- sampled allocation bytes from `Rprofmem` (allocations of at least 1 KiB);
-- scalar/reference speedup;
-- output-equivalence status and maximum absolute difference for WBGT, globe,
-  and natural wet-bulb temperatures;
-- count and positions of `NA` outputs for every component.
+Benchmark setup—CSV loading, coordinate assignment, and radiation construction
+from solar geometry—is outside the timed `wbgt.Liljegren()` call. Timings thus
+measure wrapper preprocessing, grouped zenith evaluation with timestamp-term
+reuse, and numerical solving. All scalar-versus-batch benchmarks fail when NA
+locations differ or a component differs by more than `1e-4` °C.
 
-It covers `calZenith()`, scalar and batch `wbgt.Liljegren()`, scalar `fTg()`, scalar `fTnwb()`,
-and `wbgt.Bernard()`.
+## Datasets
 
-The synthetic inputs are deterministic. Radiation is derived from positive solar
-elevation (`850 * max(cos(zenith), 0)`) at the benchmark location, so nighttime
-rows cannot carry solar forcing. They include hourly UTC timestamps across leap
-and non-leap years, low and moderate winds, equal/below-air dew points, and
-known missing meteorological rows.
-
-Current Liljegren benchmarks use the public C-aligned defaults: surface albedo
-`0.45`, globe diameter `0.0508 m`, and minimum wind speed `0.13 m/s`. Solar
-geometry is calculated from the UTC timestamp plus benchmark latitude and
-longitude; `gmt_offset` and `averaging_period` can instead reproduce the
-original C local-standard-time midpoint convention.
-
-Run from the package root:
-
-```bash
-Rscript benchmarks/benchmark-vectorization.R
-```
-
-Defaults:
-
-- `calZenith()`: 100, 1,000, 10,000, and 87,600 rows;
-- `wbgt.Liljegren()`: 100, 1,000, 10,000, and 87,600 rows;
-- scalar solvers and `wbgt.Bernard()`: 1, 10, and 100 rows;
-- three repetitions per size.
-
-The current recorded default run is documented in
-[`results/environment.md`](results/environment.md), with machine-readable
-measurements in `results/vectorization-baseline.csv` and
-`results/solver-baseline.csv`. Timings are platform-specific and should not be
-used as capacity estimates for another machine.
-
-Liljegren benchmarks can take substantial time because they deliberately retain the numerical solvers. Use environment variables to reduce a smoke run or adjust repetitions:
-
-```bash
-BENCH_REPS=1 CAL_ZENITH_SIZES=100 LILJEGREN_SIZES=10 SOLVER_SIZES=10 Rscript benchmarks/benchmark-vectorization.R
-```
-
-Set `BENCHMARK_OUTPUT_DIR` to write the two CSV result files. This is used only
-when intentionally refreshing a recorded baseline; ordinary local runs and CI
-do not modify the working tree.
-
-```bash
-BENCHMARK_OUTPUT_DIR=benchmarks/results Rscript benchmarks/benchmark-vectorization.R
-```
-
-The script exits non-zero if corrected scalar and batch outputs differ beyond
-`1e-4`, if `NA` positions differ for any WBGT component, or if a scalar solver
-returns a non-finite value.
-
-`benchmark-liljegren-e2e.R` times complete corrected-scalar and explicit batch
-calls in the same measured region. It records runtime, all three output
-differences, fallback count, final residual, and `NA` alignment.
-Its default sizes are 100, 1,000, 10,000, and 87,600 rows; the last represents
-one year of hourly observations. Override them with `E2E_SIZES` when needed.
-
-`data/liljegren-multi-location-e2e.csv` is a deterministic 2,304-row fixture:
-48 distinct longitude-latitude pairs, each with 48 hourly UTC observations.
-It exercises solar-geometry grouping and row-aligned coordinates. Regenerate
-it, then run the E2E benchmark with repeated fixture rows for larger sizes:
+[`data/liljegren-multi-location-e2e.csv`](data/liljegren-multi-location-e2e.csv)
+contains 2,304 rows: 48 coordinate pairs × 48 hourly UTC observations.
+[`data/liljegren-multi-location-28d.csv`](data/liljegren-multi-location-28d.csv)
+contains 129,024 rows: 192 coordinate pairs × 28 days × 24 hours. Both use a
+fixed seed and bounded weather fields. Regenerate either with:
 
 ```bash
 Rscript benchmarks/generate-liljegren-multi-location-data.R
-E2E_DATASET=benchmarks/data/liljegren-multi-location-e2e.csv \
-  Rscript benchmarks/benchmark-liljegren-e2e.R
-```
 
-`data/liljegren-multi-location-28d.csv` extends this to 192 locations over 28
-days at hourly frequency (129,024 rows). Inputs are seeded, bounded stochastic
-weather fields: air temperature -10--42 °C, dew point 0.5--12 °C below air
-temperature, wind 0.2--6.5 m/s, and daylight radiation attenuated to 35--100%
-of 950 W/m². Regenerate it with:
-
-```bash
 MULTI_LOCATION_LON_COUNT=24 \
 MULTI_LOCATION_LATITUDES=-70,-50,-30,-10,10,30,50,70 \
 MULTI_LOCATION_DAYS=28 \
@@ -99,12 +38,67 @@ MULTI_LOCATION_DATASET=benchmarks/data/liljegren-multi-location-28d.csv \
   Rscript benchmarks/generate-liljegren-multi-location-data.R
 ```
 
-`benchmark-liljegren-parallel.R` compares explicit batch worker counts and
-records startup-inclusive wall time, speedup, throughput, output/diagnostic
-equivalence, `NA` alignment, fallback count, and final residual. Its default
-sizes are 87,600, 250,000, 1,000,000, and 5,000,000 rows. It requires an
-installed HeatStressR package because PSOCK workers load the installed
-namespace; use a smaller smoke run as follows:
+Set `LILJEGREN_BENCHMARK_DATASET` to use either fixture in any current
+benchmark. The default is the 2,304-row fixture, repeated deterministically for
+larger row counts.
+
+## Runners
+
+| Runner | Purpose | Default coordinate modes |
+| --- | --- | --- |
+| `benchmark-liljegren-e2e.R` | Scalar-versus-batch correctness and end-to-end timing | fixed, grouped, unique |
+| `benchmark-liljegren-parallel.R` | Batch PSOCK-worker parity and throughput | fixed, grouped |
+| `benchmark-liljegren-workers-1-to-6x87600.R` | Strong-scaling workload sweep | fixed, grouped |
+| `benchmark-liljegren-tolerance-sensitivity.R` | Residual-tolerance behavior | grouped |
+| `benchmark-liljegren-unresolved.R` | Failure and solar-geometry diagnostics | grouped |
+| `benchmark-liljegren-zenith-unique.R` | Isolated zenith timing with unique or shared coordinates | unique, shared |
+| `benchmark-vectorization.R` | Allocation/timing comparison plus component benchmarks | fixed, grouped, unique for Liljegren |
+| `benchmark-liljegren-three-way.R` | Historical pre-fork comparison | fixed only |
+
+The three-way benchmark cannot represent row-aligned coordinates because the
+pre-fork API did not support them. It remains useful only as a fixed-location
+historical reference.
+
+## Commands
+
+Smoke test all coordinate modes:
+
+```bash
+E2E_SIZES=100 E2E_COORDINATE_MODES=fixed,grouped,unique BENCH_REPS=1 \
+  Rscript benchmarks/benchmark-liljegren-e2e.R
+```
+
+The current 2.1.2 timestamp-cache baseline is in
+[`results/liljegren-coordinate-aware-2.1.2.md`](results/liljegren-coordinate-aware-2.1.2.md).
+Refresh its full fixed/grouped E2E portion with:
+
+```bash
+LILJEGREN_BENCHMARK_DATASET=benchmarks/data/liljegren-multi-location-28d.csv \
+E2E_SIZES=129024 E2E_COORDINATE_MODES=fixed,grouped BENCH_REPS=3 \
+BENCHMARK_LABEL=heatstressr_2_1_2_timestamp_cache \
+BENCHMARK_OUTPUT=benchmarks/results/liljegren-e2e-2.1.2-coordinate-aware.csv \
+  Rscript benchmarks/benchmark-liljegren-e2e.R
+```
+
+Measure the no-reuse solar-geometry limit (129,024 unique hourly
+timestamp-longitude-latitude triplets):
+
+```bash
+BENCH_REPS=3 \
+BENCHMARK_OUTPUT=benchmarks/results/liljegren-zenith-unique-129024.csv \
+  Rscript benchmarks/benchmark-liljegren-zenith-unique.R
+```
+
+For one shared coordinate pair across the same distinct hourly timestamps:
+
+```bash
+ZENITH_COORDINATE_MODE=shared BENCH_REPS=3 \
+BENCHMARK_OUTPUT=benchmarks/results/liljegren-zenith-shared-129024.csv \
+  Rscript benchmarks/benchmark-liljegren-zenith-unique.R
+```
+
+Parallel runners require an installed package because PSOCK workers load the
+installed namespace:
 
 ```bash
 R CMD INSTALL .
@@ -112,63 +106,10 @@ LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 \
   Rscript benchmarks/benchmark-liljegren-parallel.R
 ```
 
-The worker list is filtered to the current system's logical CPU limit. This
-benchmark does not imply automatic worker selection by `wbgt.Liljegren()`.
+## Historical results
 
-`benchmark-liljegren-workers-1-to-6x87600.R` measures scaling from one through
-six workers with a fixed 87,600 rows per worker. Each row compares a repeated
-input parallel run with the corresponding extrapolation of the same one-worker
-87,600-row block:
-
-```bash
-R CMD INSTALL .
-Rscript benchmarks/benchmark-liljegren-workers-1-to-6x87600.R
-```
-
-Set `ROWS_PER_WORKER` to benchmark a larger equal-sized chunk per worker. For
-the recorded 10x sweep:
-
-```bash
-ROWS_PER_WORKER=876000 \
-  BENCHMARK_OUTPUT=benchmarks/results/liljegren-workers-1-to-6x876000.csv \
-  Rscript benchmarks/benchmark-liljegren-workers-1-to-6x87600.R
-```
-
-The 2026-07-21 Apple M2 Max sweep (macOS arm64, R 4.6.1) peaked at five
-workers. Times are one measurement per configuration; rerun with repeated
-measurements before treating small differences as durable:
-
-| Workers | Total rows | Seconds | Estimated speedup |
-| ---: | ---: | ---: | ---: |
-| 1 | 87,600 | 1.100 | 1.00x |
-| 2 | 175,200 | 1.597 | 1.38x |
-| 3 | 262,800 | 1.779 | 1.85x |
-| 4 | 350,400 | 2.083 | 2.11x |
-| 5 | 438,000 | 2.289 | 2.40x |
-| 6 | 525,600 | 2.752 | 2.40x |
-
-All runs had zero fallback solves and maximum final residual `6.20e-06`.
-The full data is in
-[`results/liljegren-workers-1-to-6x87600.csv`](results/liljegren-workers-1-to-6x87600.csv).
-
-
-`benchmark-liljegren-three-way.R` measures one arm of the baseline/current
-comparison. Set `BENCHMARK_ROOT` to the checkout under test and
-`BENCHMARK_ENGINE` to `pre`, `scalar`, or `batch`; the `pre` mode supports the
-baseline API without an `engine` argument.
-
-`benchmark-liljegren-unresolved.R` runs the deterministic 100,000-row dataset
-with diagnostics enabled. It prints failure-reason tables and residual
-summaries, and can write one row per unresolved component plus every
-high-radiation/high-zenith solar-geometry flag with bracket and fallback
-metadata:
-
-```bash
-BENCHMARK_OUTPUT=benchmarks/results/liljegren-unresolved.csv \
-  Rscript benchmarks/benchmark-liljegren-unresolved.R
-```
-
-`benchmark-liljegren-tolerance-sensitivity.R` evaluates residual limits
-`1e-4`, `3e-4`, `1e-3`, `3e-3`, and `1e-2` with `root_tolerance = 1e-6`.
-It records acceptance, failure categories, residuals, baseline differences,
-runtime, and batch fallback counts.
+Files in `results/` produced before this revamp are archival fixed-coordinate
+recordings, not 2.1.2 multi-location performance baselines. Refresh results
+with the runners above before citing current performance; record R version,
+platform, dataset, coordinate modes, row counts, repetitions, and commit SHA
+alongside any published timing table.

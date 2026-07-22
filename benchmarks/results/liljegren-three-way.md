@@ -1,8 +1,9 @@
 # Three-way Liljegren benchmark
 
 > Historical snapshot: this comparison predates the longitude-aware solar-time,
-> C-aligned-default, and pressure-input changes. Use
-> [`liljegren-e2e.md`](liljegren-e2e.md) for current scalar-versus-batch results.
+> C-aligned-default, and pressure-input changes. It is not a current
+> performance reference. Coordinate-aware runs are documented in
+> [`../README.md`](../README.md).
 
 This records complete `wbgt.Liljegren()` calls over the same deterministic
 weather series at three revisions/engines:

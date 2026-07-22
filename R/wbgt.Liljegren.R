@@ -15,15 +15,24 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour, gmt_offset,
                                        averaging_period) {
   n <- length(dates)
   coordinates <- normalize_liljegren_coordinates(lon, lat, n)
+  date_key <- if (inherits(dates, "POSIXt")) as.numeric(dates) else as.character(dates)
+  unique_date_index <- !duplicated(date_key)
+  date_index <- match(date_key, date_key[unique_date_index])
+  terms <- calculate_solar_time_terms(
+    dates[unique_date_index], hour, gmt_offset, averaging_period
+  )
   coordinate_id <- paste(sprintf("%a", coordinates$lon),
     sprintf("%a", coordinates$lat), sep = "\r")
   groups <- split(seq_len(n), match(coordinate_id, unique(coordinate_id)))
   zenith <- rep(NA_real_, n)
 
   for (index in groups) {
-    zenith[index] <- degToRad(calZenith(dates[index], coordinates$lon[index[1L]],
-      coordinates$lat[index[1L]], hour = hour, gmt_offset = gmt_offset,
-      averaging_period = averaging_period))
+    term_index <- date_index[index]
+    zenith[index] <- degToRad(calculate_zenith_from_solar_terms(
+      terms$utc_minutes[term_index], terms$equation_of_time[term_index],
+      terms$declination[term_index], coordinates$lon[index[1L]],
+      coordinates$lat[index[1L]]
+    ))
   }
   zenith
 }
@@ -107,7 +116,8 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour, gmt_offset,
 #' positions use timestamp, latitude, longitude, and the documented
 #' local-standard-time midpoint controls. Radiation is zeroed when the computed
 #' solar elevation is not positive. When coordinates are row-aligned, solar
-#' geometry is calculated once for each distinct longitude-latitude pair.
+#' geometry groups rows by longitude-latitude pair and reuses timestamp-only
+#' solar terms for repeated instants.
 #'
 #' \code{dates} must have the same length and row order as the meteorological input vectors.
 #' Root-location precision, residual validation, and dewpoint validation are
@@ -221,8 +231,8 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   coordinates <- normalize_liljegren_coordinates(lon, lat, ndates)
   lon <- coordinates$lon
   lat <- coordinates$lat
-  # Solar geometry depends only on aligned timestamps and coordinates. Compute
-  # it once for every distinct coordinate pair before either solver path.
+  # Solar geometry depends only on aligned timestamps and coordinates. Reuse
+  # timestamp-only terms and calculate each coordinate group before solving.
   zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour,
     gmt_offset = gmt_offset, averaging_period = averaging_period)
   
