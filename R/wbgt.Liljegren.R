@@ -1,3 +1,33 @@
+normalize_liljegren_coordinates <- function(lon, lat, n) {
+  assertthat::assert_that(is.numeric(lon) && length(lon) %in% c(1L, n) &&
+    all(is.finite(lon)),
+  msg = "'lon' must be one finite number or match the meteorological input length")
+  assertthat::assert_that(is.numeric(lat) && length(lat) %in% c(1L, n) &&
+    all(is.finite(lat)),
+  msg = "'lat' must be one finite number or match the meteorological input length")
+  assertthat::assert_that(all(lon <= 180 & lon >= -180), msg = "Invalid lon")
+  assertthat::assert_that(all(lat <= 90 & lat >= -90), msg = "Invalid lat")
+
+  list(lon = rep(lon, length.out = n), lat = rep(lat, length.out = n))
+}
+
+calculate_liljegren_zenith <- function(dates, lon, lat, hour, gmt_offset,
+                                       averaging_period) {
+  n <- length(dates)
+  coordinates <- normalize_liljegren_coordinates(lon, lat, n)
+  coordinate_id <- paste(sprintf("%a", coordinates$lon),
+    sprintf("%a", coordinates$lat), sep = "\r")
+  groups <- split(seq_len(n), match(coordinate_id, unique(coordinate_id)))
+  zenith <- rep(NA_real_, n)
+
+  for (index in groups) {
+    zenith[index] <- degToRad(calZenith(dates[index], coordinates$lon[index[1L]],
+      coordinates$lat[index[1L]], hour = hour, gmt_offset = gmt_offset,
+      averaging_period = averaging_period))
+  }
+  zenith
+}
+
 #' Calculation of wet bulb globe temperature, following Liljegren's method.
 #' 
 #' Calculation of wet bulb globe temperature from air temperature, dew point temperature, radiation and wind. 
@@ -11,8 +41,10 @@
 #' normalized to UTC.
 #' Values must have the same length and row order as the meteorological input
 #' vectors.
-#' @param lon single numeric longitude for the location, in degrees.
-#' @param lat single numeric latitude for the location, in degrees.
+#' @param lon numeric longitude in degrees. Supply one value for a fixed
+#' location or a vector aligned with the meteorological inputs.
+#' @param lat numeric latitude in degrees. Supply one value for a fixed
+#' location or a vector aligned with the meteorological inputs.
 #' @param tolerance Legacy tolerance control. When the independent controls are
 #' not supplied, it maps to root precision \code{tolerance * 0.01}, residual
 #' acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.
@@ -74,7 +106,8 @@
 #' albedo, globe diameter, and minimum wind speed are configurable. Solar
 #' positions use timestamp, latitude, longitude, and the documented
 #' local-standard-time midpoint controls. Radiation is zeroed when the computed
-#' solar elevation is not positive.
+#' solar elevation is not positive. When coordinates are row-aligned, solar
+#' geometry is calculated once for each distinct longitude-latitude pair.
 #'
 #' \code{dates} must have the same length and row order as the meteorological input vectors.
 #' Root-location precision, residual validation, and dewpoint validation are
@@ -185,22 +218,22 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
     is.finite(min_wind_speed) && min_wind_speed >= 0,
     msg="'min_wind_speed' must be one non-negative finite value")
   assertthat::assert_that(propDirect < 1, msg="'propDirect' should be [0,1]")  
-  assertthat::assert_that(is.numeric(lon) && length(lon) == 1 && is.finite(lon),
-    msg="'lon' should be one finite number")
-  assertthat::assert_that(is.numeric(lat) && length(lat) == 1 && is.finite(lat),
-    msg="'lat' should be one finite number")
-  assertthat::assert_that(lon <= 180 & lon >=-180, msg="Invalid lon")
-  assertthat::assert_that(lat <= 90 & lat >=-90, msg="Invalid lat")
+  coordinates <- normalize_liljegren_coordinates(lon, lat, ndates)
+  lon <- coordinates$lon
+  lat <- coordinates$lat
+  # Solar geometry depends only on aligned timestamps and coordinates. Compute
+  # it once for every distinct coordinate pair before either solver path.
+  zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour,
+    gmt_offset = gmt_offset, averaging_period = averaging_period)
   
   ######################
   ######################
   if (engine == "batch" && effective_workers > 1L) {
     parallel_result <- solve_liljegren_parallel(
-      tas = tas, dewp = dewp, wind = wind, radiation = radiation, dates = dates,
-      pressure = pressure, workers = effective_workers,
+      tas = tas, dewp = dewp, wind = wind, radiation = radiation,
+      zenith = zenith_rad, pressure = pressure, workers = effective_workers,
       controls = list(
-        lon = lon, lat = lat, hour = hour, gmt_offset = gmt_offset,
-        averaging_period = averaging_period, noNAs = noNAs, swap = swap,
+        noNAs = noNAs, swap = swap,
         dewpoint_tolerance = dewpoint_tolerance, min_wind_speed = min_wind_speed,
         tolerance = tolerance, root_tolerance = root_tolerance,
         residual_tolerance = residual_tolerance, surface_albedo = surface_albedo,
@@ -233,11 +266,6 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   Tnwb <- rep(NA_real_, ndates)
   Tg <- rep(NA_real_, ndates)
 
-  # Solar geometry depends only on the aligned timestamps and coordinates.
-  # Compute it once before entering the numerical solver loop.
-  zenith_rad <- degToRad(calZenith(dates, lon, lat, hour = hour,
-    gmt_offset = gmt_offset, averaging_period = averaging_period))
-  
   # Do not allow negative wind and radiation
   radiation[radiation<0] <- 0
   wind[wind<0] <- 0

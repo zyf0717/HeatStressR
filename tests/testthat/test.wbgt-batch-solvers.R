@@ -114,6 +114,32 @@ test_that("Liljegren batch engine is explicit and agrees with scalar", {
   }
 })
 
+test_that("Liljegren groups solar geometry by row-aligned coordinates", {
+  x <- engine_fixture()
+  lon <- c(-5.66, -5.66, 0, 0, -5.66, 0, 0, -5.66)
+  lat <- c(40.96, 40.96, 15, 15, 40.96, 15, 15, 40.96)
+  expected_zenith <- vapply(seq_along(x$dates), function(i) {
+    HeatStressR:::degToRad(calZenith(x$dates[i], lon[i], lat[i], hour = TRUE))
+  }, numeric(1))
+  actual_zenith <- HeatStressR:::calculate_liljegren_zenith(
+    x$dates, lon, lat, hour = TRUE, gmt_offset = NULL, averaging_period = 0
+  )
+  expect_equal(actual_zenith, expected_zenith, tolerance = 0)
+
+  scalar <- suppressWarnings(wbgt.Liljegren(
+    x$tas, x$dewp, x$wind, x$radiation, x$dates, lon = lon, lat = lat,
+    hour = TRUE, engine = "scalar"
+  ))
+  batch <- suppressWarnings(wbgt.Liljegren(
+    x$tas, x$dewp, x$wind, x$radiation, x$dates, lon = lon, lat = lat,
+    hour = TRUE, engine = "batch"
+  ))
+  for (component in c("data", "Tg", "Tnwb")) {
+    expect_identical(is.na(batch[[component]]), is.na(scalar[[component]]))
+    expect_equal(batch[[component]], scalar[[component]], tolerance = 1e-4)
+  }
+})
+
 test_that("diagnostics map batch solver rows to original inputs", {
   x <- engine_fixture()
   result <- suppressWarnings(wbgt.Liljegren(x$tas, x$dewp, x$wind, x$radiation,

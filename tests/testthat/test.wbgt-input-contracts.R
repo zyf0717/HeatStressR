@@ -12,10 +12,10 @@ test_that("wbgt.Liljegren rejects malformed wrapper controls", {
       "single logical")
   }
   expect_error(do.call(wbgt.Liljegren, c(args, list(engine = "invalid"))), "should be one of")
-  invalid <- args; invalid$lon <- c(0, 1)
-  expect_error(do.call(wbgt.Liljegren, invalid), "one finite")
-  invalid <- args; invalid$lat <- c(0, 1)
-  expect_error(do.call(wbgt.Liljegren, invalid), "one finite")
+  invalid <- args; invalid$lon <- c(0, 1, 2)
+  expect_error(do.call(wbgt.Liljegren, invalid), "meteorological input length")
+  invalid <- args; invalid$lat <- c(0, 1, 2)
+  expect_error(do.call(wbgt.Liljegren, invalid), "meteorological input length")
   invalid <- args; invalid$lon <- Inf
   expect_error(do.call(wbgt.Liljegren, invalid), "one finite")
   invalid <- args; invalid$lat <- NaN

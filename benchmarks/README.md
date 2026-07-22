@@ -74,6 +74,31 @@ differences, fallback count, final residual, and `NA` alignment.
 Its default sizes are 100, 1,000, 10,000, and 87,600 rows; the last represents
 one year of hourly observations. Override them with `E2E_SIZES` when needed.
 
+`data/liljegren-multi-location-e2e.csv` is a deterministic 2,304-row fixture:
+48 distinct longitude-latitude pairs, each with 48 hourly UTC observations.
+It exercises solar-geometry grouping and row-aligned coordinates. Regenerate
+it, then run the E2E benchmark with repeated fixture rows for larger sizes:
+
+```bash
+Rscript benchmarks/generate-liljegren-multi-location-data.R
+E2E_DATASET=benchmarks/data/liljegren-multi-location-e2e.csv \
+  Rscript benchmarks/benchmark-liljegren-e2e.R
+```
+
+`data/liljegren-multi-location-28d.csv` extends this to 192 locations over 28
+days at hourly frequency (129,024 rows). Inputs are seeded, bounded stochastic
+weather fields: air temperature -10--42 °C, dew point 0.5--12 °C below air
+temperature, wind 0.2--6.5 m/s, and daylight radiation attenuated to 35--100%
+of 950 W/m². Regenerate it with:
+
+```bash
+MULTI_LOCATION_LON_COUNT=24 \
+MULTI_LOCATION_LATITUDES=-70,-50,-30,-10,10,30,50,70 \
+MULTI_LOCATION_DAYS=28 \
+MULTI_LOCATION_DATASET=benchmarks/data/liljegren-multi-location-28d.csv \
+  Rscript benchmarks/generate-liljegren-multi-location-data.R
+```
+
 `benchmark-liljegren-parallel.R` compares explicit batch worker counts and
 records startup-inclusive wall time, speedup, throughput, output/diagnostic
 equivalence, `NA` alignment, fallback count, and final residual. Its default

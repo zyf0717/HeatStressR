@@ -1,5 +1,11 @@
 # HeatStressR NEWS
 
+## 2.1.2 — 2026-07-22
+
+* `wbgt.Liljegren()` now accepts scalar or row-aligned `lon` and `lat`.
+  Solar geometry is computed once per distinct coordinate pair before either
+  scalar or batch heat-balance solving begins.
+
 ## 2.1.1 — 2026-07-21
 
 * Replaced benchmark-relative README links with permanent, versioned GitHub

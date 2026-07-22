@@ -77,7 +77,7 @@ Apple M2 Max, R 4.6.1, macOS arm64:
 Across both recorded environments, component outputs differed by less than
 `1.3e-6` degrees C and had aligned `NA` positions. No batch root required
 scalar fallback; counts and residuals are recorded in the
-[end-to-end benchmark](https://github.com/zyf0717/HeatStressR/blob/v2.1.1/benchmarks/results/liljegren-e2e.md).
+[end-to-end benchmark](https://github.com/zyf0717/HeatStressR/blob/v2.1.2/benchmarks/results/liljegren-e2e.md).
 
 ### Selecting the Liljegren solver
 
@@ -128,7 +128,7 @@ being treated as durable:
 | 6 | 525,600 | 2.752 | 2.40x |
 
 All runs had zero fallback solves and maximum final residual `6.20e-06`.
-See the [machine-readable sweep result](https://github.com/zyf0717/HeatStressR/blob/v2.1.1/benchmarks/results/liljegren-workers-1-to-6x87600.csv).
+See the [machine-readable sweep result](https://github.com/zyf0717/HeatStressR/blob/v2.1.2/benchmarks/results/liljegren-workers-1-to-6x87600.csv).
 
 ### Input compatibility
 
@@ -159,7 +159,9 @@ Input validation is deliberately stricter for the Liljegren path:
 
 - meteorological vectors must be non-empty and have identical lengths, and
   `dates` must be row-aligned with them;
-- `lon` and `lat` must be finite scalars in their geographic ranges;
+- `lon` and `lat` must be finite values in their geographic ranges, supplied
+  either as scalars or vectors aligned with the meteorological rows. Repeated
+  coordinate pairs share one solar-geometry calculation;
 - `hour`, `noNAs`, `swap`, and `diagnostics` must be single, non-missing
   logical values; and
 - tolerance controls and physical parameters must be finite and within their

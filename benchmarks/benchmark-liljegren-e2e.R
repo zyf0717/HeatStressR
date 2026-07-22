@@ -28,7 +28,31 @@ make_weather <- function(n, lon = -5.66, lat = 40.96) {
     dewp = 22 + 8 * sin(phase - pi / 2) - rep(c(0, 2, 4, 6), length.out = n),
     wind = rep(c(0, 0.05, 0.2, 0.8, 1.5, 2.5), length.out = n),
     radiation = 850 * pmax(cos(zenith), 0),
-    dates = dates
+    dates = dates,
+    lon = rep(lon, n),
+    lat = rep(lat, n)
+  )
+}
+
+read_weather <- function(path, n) {
+  required <- c("date", "lon", "lat", "tas", "dewp", "wind", "radiation")
+  dataset <- utils::read.csv(path, stringsAsFactors = FALSE)
+  if (!all(required %in% names(dataset))) {
+    stop("E2E_DATASET must contain: ", paste(required, collapse = ", "))
+  }
+  if (!nrow(dataset)) stop("E2E_DATASET must contain at least one row")
+  numeric_columns <- setdiff(required, "date")
+  if (any(!vapply(dataset[numeric_columns], is.numeric, logical(1))) ||
+      any(!is.finite(as.matrix(dataset[numeric_columns])))) {
+    stop("E2E_DATASET numeric columns must be finite")
+  }
+  dates <- as.POSIXct(dataset$date, format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+  if (any(is.na(dates))) stop("E2E_DATASET date must use ISO 8601 UTC timestamps")
+  index <- rep(seq_len(nrow(dataset)), length.out = n)
+  list(
+    tas = dataset$tas[index], dewp = dataset$dewp[index], wind = dataset$wind[index],
+    radiation = dataset$radiation[index], dates = dates[index], lon = dataset$lon[index],
+    lat = dataset$lat[index]
   )
 }
 
@@ -49,17 +73,19 @@ pkgload::load_all(root, quiet = TRUE)
 sizes <- parse_sizes("E2E_SIZES", c(100L, 1000L, 10000L, 87600L))
 repetitions <- as.integer(Sys.getenv("BENCH_REPS", unset = "5"))
 label <- Sys.getenv("BENCHMARK_LABEL", unset = "c_aligned_defaults")
+dataset_path <- Sys.getenv("E2E_DATASET", unset = "")
 if (is.na(repetitions) || repetitions < 1L) stop("BENCH_REPS must be positive")
+if (nzchar(dataset_path) && !file.exists(dataset_path)) stop("E2E_DATASET does not exist: ", dataset_path)
 
 rows <- lapply(sizes, function(n) {
-  weather <- make_weather(n)
+  weather <- if (nzchar(dataset_path)) read_weather(dataset_path, n) else make_weather(n)
   scalar <- measure(function() suppressWarnings(wbgt.Liljegren(
     weather$tas, weather$dewp, weather$wind, weather$radiation, weather$dates,
-    lon = -5.66, lat = 40.96, hour = TRUE, engine = "scalar"
+    lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "scalar"
   )), repetitions)
   batch <- measure(function() suppressWarnings(wbgt.Liljegren(
     weather$tas, weather$dewp, weather$wind, weather$radiation, weather$dates,
-    lon = -5.66, lat = 40.96, hour = TRUE, engine = "batch", diagnostics = TRUE
+    lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "batch", diagnostics = TRUE
   )), repetitions)
   if (!all(vapply(batch$result[c("data", "Tnwb", "Tg")], length, integer(1)) == n))
     stop("Invalid output length")

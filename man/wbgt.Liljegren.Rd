@@ -45,9 +45,11 @@ normalized to UTC.
 Values must have the same length and row order as the meteorological input
 vectors.}
 
-\item{lon}{single numeric longitude for the location, in degrees.}
+\item{lon}{numeric longitude in degrees. Supply one value for a fixed
+location or a vector aligned with the meteorological inputs.}
 
-\item{lat}{single numeric latitude for the location, in degrees.}
+\item{lat}{numeric latitude in degrees. Supply one value for a fixed
+location or a vector aligned with the meteorological inputs.}
 
 \item{tolerance}{Legacy tolerance control. When the independent controls are
 not supplied, it maps to root precision \code{tolerance * 0.01}, residual
@@ -129,7 +131,8 @@ engine is opt-in and uses explicitly requested PSOCK workers when
 albedo, globe diameter, and minimum wind speed are configurable. Solar
 positions use timestamp, latitude, longitude, and the documented
 local-standard-time midpoint controls. Radiation is zeroed when the computed
-solar elevation is not positive.
+solar elevation is not positive. When coordinates are row-aligned, solar
+geometry is calculated once for each distinct longitude-latitude pair.
 
 \code{dates} must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are

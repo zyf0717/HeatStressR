@@ -119,13 +119,7 @@ solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
   dewp <- chunk$dewp
   wind <- chunk$wind
   radiation <- chunk$radiation
-  zenith <- if (n) {
-    degToRad(calZenith(chunk$dates, controls$lon, controls$lat,
-      hour = controls$hour, gmt_offset = controls$gmt_offset,
-      averaging_period = controls$averaging_period))
-  } else {
-    numeric()
-  }
+  zenith <- chunk$zenith
 
   radiation[radiation < 0] <- 0
   wind[wind < 0] <- 0
@@ -185,8 +179,8 @@ combine_parallel_chunk_field <- function(chunk_results, field) {
   unlist(values, use.names = FALSE)
 }
 
-solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, pressure,
-                                     workers, controls) {
+solve_liljegren_parallel <- function(tas, dewp, wind, radiation, zenith,
+                                     pressure, workers, controls) {
   n <- length(tas)
   effective_workers <- min(workers, n)
   if (effective_workers < 1L)
@@ -194,8 +188,9 @@ solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, pressure
   indices <- split_liljegren_chunks(n, effective_workers)
   chunks <- lapply(indices, function(index) list(
     tas = tas[index], dewp = dewp[index], wind = wind[index],
-    radiation = radiation[index], dates = dates[index],
-    pressure = if (length(pressure) == 1L) pressure else pressure[index]
+    radiation = radiation[index],
+    pressure = if (length(pressure) == 1L) pressure else pressure[index],
+    zenith = zenith[index]
   ))
   cluster <- parallel::makePSOCKcluster(effective_workers)
   on.exit(parallel::stopCluster(cluster), add = TRUE)
