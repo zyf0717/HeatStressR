@@ -1,8 +1,10 @@
-# End-to-end Liljegren benchmark
+# Historical fixed-coordinate Liljegren benchmark
 
-This benchmark compares complete corrected-scalar and explicit batch
+This historical benchmark compares complete corrected-scalar and explicit batch
 `wbgt.Liljegren()` calls, including solar geometry, input handling, globe and
-natural-wet-bulb solving, and WBGT assembly. Both recorded runs use
+natural-wet-bulb solving, and WBGT assembly. Both recorded runs use one fixed
+longitude-latitude pair for every row, so they do not measure row-aligned
+coordinates or coordinate-grouping performance. They use
 longitude-aware solar time, C-aligned sensor defaults, row-aligned pressure
 support, 100, 1,000, 10,000, and 87,600 rows, and three repetitions per size.
 
@@ -35,10 +37,13 @@ R 4.6.1, macOS arm64. Raw data:
 | 10,000 | 2.680 s | 0.107 s | 25.05x |
 | 87,600 | 23.708 s | 0.932 s | 25.44x |
 
-Reproduce the Apple M2 Max recording with:
+The historical generator has been superseded and these figures should be
+treated as read-only. To run the new fixed-coordinate scenario (which uses the
+current fixture and is not numerically comparable to this table), use the
+coordinate-aware runner in [`../README.md`](../README.md):
 
 ```sh
-BENCH_REPS=3 BENCHMARK_LABEL=apple_m2_max_r_4_6_1 \
-  BENCHMARK_OUTPUT=benchmarks/results/liljegren-e2e-m2-max.csv \
+E2E_COORDINATE_MODES=fixed BENCH_REPS=3 \
+  BENCHMARK_OUTPUT=benchmarks/results/liljegren-e2e-current-fixed.csv \
   Rscript benchmarks/benchmark-liljegren-e2e.R
 ```

@@ -20,7 +20,7 @@ Command (the benchmark defaults, with result persistence enabled):
 BENCHMARK_OUTPUT_DIR=benchmarks/results Rscript benchmarks/benchmark-vectorization.R
 ```
 
-`vectorization-baseline.csv` covers `calZenith()` and total
+`vectorization-baseline.csv` covers the historical fixed-coordinate `calZenith()` and total
 `wbgt.Liljegren()`. `solver-baseline.csv` covers scalar `fTg()`, scalar
 `fTnwb()`, and total `wbgt.Bernard()`.
 

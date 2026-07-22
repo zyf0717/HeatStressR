@@ -130,24 +130,24 @@ benchmark_cal_zenith <- function(sizes, repetitions) {
   do.call(rbind, rows)
 }
 
-benchmark_liljegren <- function(sizes, repetitions) {
-  rows <- vector("list", length(sizes))
+benchmark_liljegren <- function(sizes, repetitions, modes) {
+  rows <- vector("list", length(sizes) * length(modes))
+  row <- 0L
 
-  for (j in seq_along(sizes)) {
-    n <- sizes[j]
-    dates <- make_dates(n)
-    weather <- make_weather(n, dates)
+  for (mode in modes) for (n in sizes) {
+    row <- row + 1L
+    weather <- liljegren_workload(n, mode = mode, path = liljegren_dataset_path(root))
     scalar <- measure(
       function() wbgt.Liljegren(
         weather$tas, weather$dewp, weather$wind, weather$radiation,
-        dates, lon = -5.66, lat = 40.96, hour = TRUE, engine = "scalar"
+        weather$dates, lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "scalar"
       ),
       repetitions
     )
     batch <- measure(
       function() wbgt.Liljegren(
         weather$tas, weather$dewp, weather$wind, weather$radiation,
-        dates, lon = -5.66, lat = 40.96, hour = TRUE, engine = "batch"
+        weather$dates, lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "batch"
       ),
       repetitions
     )
@@ -157,9 +157,10 @@ benchmark_liljegren <- function(sizes, repetitions) {
       function(component) compare_numeric(scalar$value[[component]], batch$value[[component]], 1e-4)
     ), components)
 
-    rows[[j]] <- data.frame(
+    rows[[row]] <- data.frame(
       benchmark = "wbgt.Liljegren",
       rows = n,
+      liljegren_workload_metadata(weather),
       scalar_seconds = scalar$median_seconds,
       vector_seconds = batch$median_seconds,
       speedup = scalar$median_seconds / batch$median_seconds,
@@ -279,10 +280,12 @@ write_benchmark_results <- function(output_dir, vectorization, solvers, repetiti
 
 root <- benchmark_root()
 pkgload::load_all(root, quiet = TRUE)
+source(file.path(root, "benchmarks", "liljegren-benchmark-utils.R"))
 source(file.path(root, "tests", "testthat", "helper-reference-calZenith.R"))
 
 cal_zenith_sizes <- parse_sizes("CAL_ZENITH_SIZES", c(100L, 1000L, 10000L, 87600L))
 liljegren_sizes <- parse_sizes("LILJEGREN_SIZES", c(100L, 1000L, 10000L, 87600L))
+liljegren_modes <- liljegren_coordinate_modes("LILJEGREN_COORDINATE_MODES")
 solver_sizes <- parse_sizes("SOLVER_SIZES", c(1L, 10L, 100L))
 repetitions <- benchmark_repetitions()
 if (is.na(repetitions) || repetitions < 1L) stop("BENCH_REPS must be a positive integer")
@@ -292,7 +295,7 @@ cat("repetitions:", repetitions, "\n")
 cat("allocation bytes: Rprofmem allocations >= 1024 bytes\n\n")
 
 cal_zenith_results <- benchmark_cal_zenith(cal_zenith_sizes, repetitions)
-liljegren_results <- benchmark_liljegren(liljegren_sizes, repetitions)
+liljegren_results <- benchmark_liljegren(liljegren_sizes, repetitions, liljegren_modes)
 solver_results <- benchmark_solvers(solver_sizes, repetitions)
 
 print(cal_zenith_results, row.names = FALSE)

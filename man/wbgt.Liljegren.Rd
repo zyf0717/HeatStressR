@@ -132,7 +132,8 @@ albedo, globe diameter, and minimum wind speed are configurable. Solar
 positions use timestamp, latitude, longitude, and the documented
 local-standard-time midpoint controls. Radiation is zeroed when the computed
 solar elevation is not positive. When coordinates are row-aligned, solar
-geometry is calculated once for each distinct longitude-latitude pair.
+geometry groups rows by longitude-latitude pair and reuses timestamp-only
+solar terms for repeated instants.
 
 \code{dates} must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are

@@ -1,123 +1,53 @@
 #!/usr/bin/env Rscript
 
-benchmark_root <- function() {
-  script_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
-  candidate <- if (length(script_arg)) {
-    file.path(dirname(sub("^--file=", "", script_arg[1])), "..")
-  } else {
-    getwd()
-  }
-  normalizePath(candidate)
-}
-
-parse_sizes <- function(variable, defaults) {
-  value <- Sys.getenv(variable, unset = "")
-  if (!nzchar(value)) return(defaults)
-  sizes <- suppressWarnings(as.integer(strsplit(value, ",", fixed = TRUE)[[1]]))
-  if (any(is.na(sizes) | sizes < 1L)) stop(variable, " must be positive integers")
-  sizes
-}
-
-make_weather <- function(n, lon = -5.66, lat = 40.96) {
-  index <- seq_len(n)
-  phase <- 2 * pi * ((index - 1) %% 24) / 24
-  dates <- as.POSIXct("2020-01-01 00:00:00", tz = "UTC") + (index - 1) * 3600
-  zenith <- HeatStressR:::degToRad(calZenith(dates, lon, lat, hour = TRUE))
-  list(
-    tas = 22 + 8 * sin(phase - pi / 2),
-    dewp = 22 + 8 * sin(phase - pi / 2) - rep(c(0, 2, 4, 6), length.out = n),
-    wind = rep(c(0, 0.05, 0.2, 0.8, 1.5, 2.5), length.out = n),
-    radiation = 850 * pmax(cos(zenith), 0),
-    dates = dates,
-    lon = rep(lon, n),
-    lat = rep(lat, n)
-  )
-}
-
-read_weather <- function(path, n) {
-  required <- c("date", "lon", "lat", "tas", "dewp", "wind", "radiation")
-  dataset <- utils::read.csv(path, stringsAsFactors = FALSE)
-  if (!all(required %in% names(dataset))) {
-    stop("E2E_DATASET must contain: ", paste(required, collapse = ", "))
-  }
-  if (!nrow(dataset)) stop("E2E_DATASET must contain at least one row")
-  numeric_columns <- setdiff(required, "date")
-  if (any(!vapply(dataset[numeric_columns], is.numeric, logical(1))) ||
-      any(!is.finite(as.matrix(dataset[numeric_columns])))) {
-    stop("E2E_DATASET numeric columns must be finite")
-  }
-  dates <- as.POSIXct(dataset$date, format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-  if (any(is.na(dates))) stop("E2E_DATASET date must use ISO 8601 UTC timestamps")
-  index <- rep(seq_len(nrow(dataset)), length.out = n)
-  list(
-    tas = dataset$tas[index], dewp = dataset$dewp[index], wind = dataset$wind[index],
-    radiation = dataset$radiation[index], dates = dates[index], lon = dataset$lon[index],
-    lat = dataset$lat[index]
-  )
-}
-
-measure <- function(work, repetitions) {
-  elapsed <- numeric(repetitions)
-  result <- NULL
-  for (i in seq_len(repetitions)) {
-    gc()
-    started <- proc.time()[["elapsed"]]
-    result <- work()
-    elapsed[i] <- proc.time()[["elapsed"]] - started
-  }
-  list(elapsed = elapsed, result = result)
-}
-
-root <- benchmark_root()
+script_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+root <- normalizePath(if (length(script_arg)) {
+  file.path(dirname(sub("^--file=", "", script_arg[1])), "..")
+} else {
+  getwd()
+})
+source(file.path(root, "benchmarks", "liljegren-benchmark-utils.R"))
 pkgload::load_all(root, quiet = TRUE)
-sizes <- parse_sizes("E2E_SIZES", c(100L, 1000L, 10000L, 87600L))
-repetitions <- as.integer(Sys.getenv("BENCH_REPS", unset = "5"))
-label <- Sys.getenv("BENCHMARK_LABEL", unset = "c_aligned_defaults")
-dataset_path <- Sys.getenv("E2E_DATASET", unset = "")
-if (is.na(repetitions) || repetitions < 1L) stop("BENCH_REPS must be positive")
-if (nzchar(dataset_path) && !file.exists(dataset_path)) stop("E2E_DATASET does not exist: ", dataset_path)
 
-rows <- lapply(sizes, function(n) {
-  weather <- if (nzchar(dataset_path)) read_weather(dataset_path, n) else make_weather(n)
-  scalar <- measure(function() suppressWarnings(wbgt.Liljegren(
+sizes <- liljegren_parse_positive_integers("E2E_SIZES", c(100L, 1000L, 10000L, 87600L))
+modes <- liljegren_coordinate_modes("E2E_COORDINATE_MODES")
+repetitions <- liljegren_parse_positive_integers("BENCH_REPS", 3L)
+if (length(repetitions) != 1L) stop("BENCH_REPS must be one positive integer")
+label <- Sys.getenv("BENCHMARK_LABEL", unset = "coordinate_aware")
+dataset <- liljegren_dataset_path(root)
+
+rows <- lapply(modes, function(mode) lapply(sizes, function(n) {
+  weather <- liljegren_workload(n, mode = mode, path = dataset)
+  scalar <- liljegren_measure(function() suppressWarnings(wbgt.Liljegren(
     weather$tas, weather$dewp, weather$wind, weather$radiation, weather$dates,
     lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "scalar"
   )), repetitions)
-  batch <- measure(function() suppressWarnings(wbgt.Liljegren(
+  batch <- liljegren_measure(function() suppressWarnings(wbgt.Liljegren(
     weather$tas, weather$dewp, weather$wind, weather$radiation, weather$dates,
     lon = weather$lon, lat = weather$lat, hour = TRUE, engine = "batch", diagnostics = TRUE
   )), repetitions)
-  if (!all(vapply(batch$result[c("data", "Tnwb", "Tg")], length, integer(1)) == n))
-    stop("Invalid output length")
-  components <- c("data", "Tg", "Tnwb")
-  same_na <- all(vapply(components, function(component) identical(
-    is.na(scalar$result[[component]]), is.na(batch$result[[component]])
-  ), logical(1)))
-  max_difference <- vapply(components, function(component) {
-    valid <- !is.na(scalar$result[[component]]) & !is.na(batch$result[[component]])
-    if (any(valid)) max(abs(scalar$result[[component]][valid] -
-      batch$result[[component]][valid])) else 0
-  }, numeric(1))
-  batch.diagnostics <- batch$result$diagnostics
+  comparison <- liljegren_compare_results(scalar$value, batch$value)
   data.frame(
-    revision = label,
-    rows = n,
-    repetitions = repetitions,
-    scalar_seconds = median(scalar$elapsed),
-    batch_seconds = median(batch$elapsed),
-    speedup = median(scalar$elapsed) / median(batch$elapsed),
-    max_data_difference = max_difference[["data"]],
-    max_Tg_difference = max_difference[["Tg"]],
-    max_Tnwb_difference = max_difference[["Tnwb"]],
-    batch_fallback_count = sum(batch.diagnostics$Tg$used_fallback, na.rm = TRUE) +
-      sum(batch.diagnostics$Tnwb$used_fallback, na.rm = TRUE),
-    batch_max_final_residual = max(abs(c(batch.diagnostics$Tg$final_residual,
-      batch.diagnostics$Tnwb$final_residual)), na.rm = TRUE),
-    na_aligned = same_na,
+    revision = label, rows = n, repetitions = repetitions,
+    liljegren_workload_metadata(weather),
+    scalar_seconds = scalar$seconds, batch_seconds = batch$seconds,
+    speedup = scalar$seconds / batch$seconds,
+    max_data_difference = comparison$max_data_difference,
+    max_Tg_difference = comparison$max_Tg_difference,
+    max_Tnwb_difference = comparison$max_Tnwb_difference,
+    batch_fallback_count = sum(batch$value$diagnostics$Tg$used_fallback, na.rm = TRUE) +
+      sum(batch$value$diagnostics$Tnwb$used_fallback, na.rm = TRUE),
+    batch_max_final_residual = liljegren_maximum_residual(batch$value$diagnostics),
+    na_aligned = comparison$na_aligned,
     row.names = NULL
   )
-})
-result <- do.call(rbind, rows)
+}))
+result <- do.call(rbind, unlist(rows, recursive = FALSE))
 print(result, row.names = FALSE)
+
 output <- Sys.getenv("BENCHMARK_OUTPUT", unset = "")
 if (nzchar(output)) utils::write.csv(result, output, row.names = FALSE)
+if (!all(result$na_aligned) || any(result[, c("max_data_difference", "max_Tg_difference",
+  "max_Tnwb_difference")] > 1e-4)) {
+  stop("Scalar and batch results diverged")
+}
