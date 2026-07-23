@@ -1,5 +1,3 @@
-context("Liljegren batch solvers")
-
 batch_fixture <- function() {
   list(
     tas = c(20, 30, 35), dewp = c(15, 20, 25), relh = c(70, 55, 50),
@@ -121,9 +119,7 @@ test_that("Liljegren groups solar geometry by row-aligned coordinates", {
   expected_zenith <- vapply(seq_along(x$dates), function(i) {
     HeatStressR:::degToRad(calZenith(x$dates[i], lon[i], lat[i], hour = TRUE))
   }, numeric(1))
-  actual_zenith <- HeatStressR:::calculate_liljegren_zenith(
-    x$dates, lon, lat, hour = TRUE, averaging_period = 0
-  )
+  actual_zenith <- HeatStressR:::calculate_liljegren_zenith(x$dates, lon, lat, hour = TRUE)
   expect_equal(actual_zenith, expected_zenith, tolerance = 0)
 
   scalar <- suppressWarnings(wbgt.Liljegren(
@@ -149,20 +145,8 @@ test_that("Liljegren reuses timestamp solar terms across coordinate groups", {
     HeatStressR:::degToRad(calZenith(dates[i], lon[i], lat[i], hour = TRUE))
   }, numeric(1))
 
-  actual <- HeatStressR:::calculate_liljegren_zenith(
-    dates, lon, lat, hour = TRUE, averaging_period = 0
-  )
+  actual <- HeatStressR:::calculate_liljegren_zenith(dates, lon, lat, hour = TRUE)
   expect_equal(actual, expected, tolerance = 0)
-
-  interval_end_dates <- rep(c("2024-03-20 06:30:00", "2024-03-20 18:30:00"), 3)
-  expected_midpoint <- vapply(seq_along(interval_end_dates), function(i) {
-    HeatStressR:::degToRad(calZenith(interval_end_dates[i], lon[i], lat[i], hour = TRUE,
-      averaging_period = 60))
-  }, numeric(1))
-  actual_midpoint <- HeatStressR:::calculate_liljegren_zenith(
-    interval_end_dates, lon, lat, hour = TRUE, averaging_period = 60
-  )
-  expect_equal(actual_midpoint, expected_midpoint, tolerance = 0)
 })
 
 test_that("diagnostics map batch solver rows to original inputs", {

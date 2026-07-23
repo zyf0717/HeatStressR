@@ -4,29 +4,20 @@
 \alias{calZenith}
 \title{Calculate zenith angle in degrees.}
 \usage{
-calZenith(
-  dates,
-  lon,
-  lat,
-  hour = FALSE,
-  averaging_period = 0,
-  solar_time = NULL
-)
+calZenith(dates, lon, lat, hour = FALSE, solar_time = NULL)
 }
 \arguments{
 \item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-datetime strings. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601
-strings are interpreted as instants and normalized to UTC. \code{solar_time =
-"date_noon"} evaluates each date at 12:00 UTC.}
+datetime strings. Use timezone-aware \code{POSIXct} for high-throughput
+calls. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601 strings
+are interpreted as instants and normalized to UTC; strings are parsed on
+every call. \code{solar_time = "date_noon"} evaluates each date at 12:00 UTC.}
 
 \item{lon}{single numeric longitude for the location, in degrees.}
 
 \item{lat}{single numeric latitude for the location, in degrees.}
 
 \item{hour}{legacy logical solar-time selector. Use \code{solar_time} in new code.}
-
-\item{averaging_period}{averaging interval in minutes. Solar position is
-evaluated at the interval midpoint, matching the original C implementation.}
 
 \item{solar_time}{\code{"timestamp"} uses each full timestamp;
 \code{"date_noon"} evaluates each date at 12:00 UTC. \code{NULL} preserves

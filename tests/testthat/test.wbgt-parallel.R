@@ -1,5 +1,3 @@
-context("Liljegren parallel batch execution")
-
 parallel_fixture <- function() {
   list(
     tas = c(20, 35, 30, NA_real_, 25),

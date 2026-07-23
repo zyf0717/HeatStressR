@@ -4,8 +4,6 @@
 #
 ####################################################################
 
-context("Globe-temperature boundary behaviour")
-
 test_that("adaptive fTg bracketing corrects the former upper-bound clipping", {
   globe_temperature <- HeatStressR:::fTg(
     tas = 30,

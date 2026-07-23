@@ -1,5 +1,3 @@
-context("Natural wet-bulb bracketing")
-
 test_that("fTnwb returns residual-validated roots beyond its initial interval", {
   solution <- HeatStressR:::fTnwb_solution(
     tas = 35, dewp = 10, relh = 20, Pair = 1010, wind = 0,

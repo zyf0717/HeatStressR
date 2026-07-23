@@ -6,8 +6,6 @@
 #
 ###################################################################
 library("HeatStressR")
-context("Heat Stress indices computation: WBGT Bernard")
-
 
 test_that("test if the wbgt.Bernard function computes WBGTshade properly",{
   data("data_obs", envir = environment())

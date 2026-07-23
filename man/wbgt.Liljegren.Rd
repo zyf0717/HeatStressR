@@ -25,7 +25,6 @@ wbgt.Liljegren(
   surface_albedo = 0.45,
   globe_diameter = 0.0508,
   min_wind_speed = 0.13,
-  averaging_period = 0,
   workers = 1L,
   solar_time = NULL
 )
@@ -40,8 +39,9 @@ wbgt.Liljegren(
 \item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
 
 \item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-datetime strings. With \code{solar_time = "timestamp"}, offset-bearing ISO
-8601 strings are normalized to UTC.
+datetime strings. Use timezone-aware \code{POSIXct} for high-throughput
+calls. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601 strings
+are normalized to UTC; strings are parsed on every call.
 Values must have the same length and row order as the meteorological input
 vectors.}
 
@@ -87,9 +87,6 @@ matching the original Liljegren C implementation.}
 \item{min_wind_speed}{lower bound applied to wind speed in m/s. Defaults to
 0.13 m/s, matching the original Liljegren C implementation.}
 
-\item{averaging_period}{averaging interval in minutes. Solar position is
-evaluated at its midpoint; defaults to 0.}
-
 \item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
 Must be an integer from 1 through the currently permitted logical CPU count.
 The default of 1 preserves sequential batch execution; values greater than 1
@@ -127,11 +124,14 @@ The batch engine is the default implementation. It uses explicitly requested
 PSOCK workers when \code{workers > 1}; no workers are created by default.
 The scalar engine remains available as a reference implementation. Pressure, surface
 albedo, globe diameter, and minimum wind speed are configurable. Solar
-positions use timestamp, latitude, longitude, and the documented
-local-standard-time midpoint controls. Radiation is zeroed when the computed
+positions use the supplied timestamp, latitude, longitude, and the equation
+of time. Radiation is zeroed when the computed
 solar elevation is not positive. When coordinates are row-aligned, solar
 geometry groups rows by longitude-latitude pair and reuses timestamp-only
 solar terms for repeated instants.
+The function evaluates aligned instantaneous meteorological states; interval
+alignment, timestamp conversion, wind-height adjustment, and radiation
+preparation remain caller responsibilities.
 
 \code{dates} must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are
@@ -153,7 +153,7 @@ input length. \code{input_status} describes filtering, while per-solver
 \code{requested_workers} reports the supplied count.
 
 Agreement with another implementation requires matching pressure,
-wind-height treatment, timestamp convention, averaging interval,
+wind-height treatment, timestamp convention,
 solar-position method, radiation partitioning, and failure semantics. This
 function is not a bitwise-compatible port of the original C implementation,
 and differences from other implementations are expected. These differences

@@ -6,8 +6,6 @@
 #
 ###################################################################
 library("HeatStressR")
-context("Heat Stress indices computation: WBT")
-
 test_that("test if the wbt.Stull function computes WBT properly",{
   data("data_obs", envir = environment())
   tas <- data_obs$tasmean

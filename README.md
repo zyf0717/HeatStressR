@@ -74,26 +74,37 @@ temperature (`Tnwb`). The vectorized batch engine is the default; select
 the default is 1010 hPa. Other defaults are `surface_albedo = 0.45`,
 `globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.
 
-Solar geometry uses latitude, longitude, and timestamp. `POSIXct`/`POSIXlt`
+Solar geometry uses latitude, longitude, and timestamp. Use UTC or
+timezone-aware `POSIXct` for high-throughput calculations. `POSIXlt`
 timestamps and ISO 8601 strings with an offset—for example,
 `2024-06-01T20:00:00+08:00` or `2024-06-01T12:00:00Z`—identify instants and
 are normalized to UTC when `solar_time = "timestamp"`. For this recommended
 timestamp mode, provide timezone-aware datetimes or convert local observations
-to UTC before calling the function.
+to UTC before calling the function. ISO 8601 strings are accepted for
+convenience but parsed on every call; convert them to `POSIXct` upstream when
+performance matters.
 
-`averaging_period` optionally recenters interval observations before computing
-solar position. It shifts each supplied timestamp backward by half the stated
-interval; leave it at its default of `0` for instantaneous observations:
+HeatStressR evaluates all inputs at the supplied instant; it does not infer or
+apply an interval-average convention. For interval-mean or accumulated source
+data, choose the appropriate representative instant from the source metadata,
+align every meteorological input to it, and supply that timestamp before
+calling `wbgt.Liljegren()`.
 
-```r
-# A 60-minute observation timestamped at 12:30 UTC is evaluated at 12:00 UTC.
-result <- wbgt.Liljegren(
-  tas, dewp, wind, radiation, utc_dates,
-  lon = lon, lat = lat, pressure = pressure_hpa,
-  solar_time = "timestamp",
-  averaging_period = 60  # measurement interval, in minutes
-)
-```
+### Scope boundary
+
+HeatStressR evaluates aligned meteorological states; it does not perform
+meteorological pre-processing. The caller is responsible for:
+
+- choosing the representative instant for interval-mean or accumulated data;
+- converting timestamps to UTC or constructing timezone-aware `POSIXct`;
+- adjusting wind to the model reference height; and
+- partitioning, quality-controlling, and otherwise preparing supplied
+  shortwave radiation.
+
+The wrapper returns WBGT, globe temperature, and natural wet-bulb temperature;
+it does not expose the original C program's psychrometric wet-bulb or estimated
+wind-speed outputs. This keeps the public interface limited to the
+heat-balance calculation and leaves source-specific processing upstream.
 
 Inputs are deliberately validated before solving:
 
@@ -206,10 +217,15 @@ bitwise-compatible port of the
 The following expected differences describe HeatStressR behavior and do not
 claim it improves on or supersedes the original implementation.
 
+Unlike the original program, HeatStressR supports instantaneous inputs only.
+It does not use an averaging-period argument to shift solar time. For interval
+data, the caller must choose a representative instant and align all inputs
+before calculation.
+
 | Area | HeatStressR | Original C program | Consequence |
 | --- | --- | --- | --- |
 | Wind-height adjustment | Accepts scalar or row-aligned pressure; supplied wind is assumed to be at the reference height. | Can transform wind from another height using stability, temperature gradient, and urban/rural inputs. | Adjust non-reference-height wind externally before calling the wrapper. |
-| Solar geometry and time | Uses timezone-aware timestamps, latitude, longitude, equation of time, and optional interval midpoint adjustment. | Uses local standard time, GMT offset, input averaging period, and its own solar-position routine. | Convert local observations to UTC or provide timezone-aware timestamps before calculation. |
+| Solar geometry and time | Uses the supplied instant, timezone-aware timestamps, latitude, longitude, and equation of time. | Uses local standard time, GMT offset, input averaging period, and its own solar-position routine. | Convert local observations to UTC or provide timezone-aware timestamps; align interval data externally before calculation. |
 | Irradiance partitioning | Retains supplied daytime radiation and assumes direct fraction `0.8`. | Caps irradiance against top-of-atmosphere solar flux and derives direct fraction from normalized irradiance. | Cloudy, miscalibrated, and near-horizon forcing can produce different `Tg` and `Tnwb`. |
 | Root solving and failures | Uses adaptive bracketing, residual validation, `NA` failures, preserved valid components, and optional diagnostics/batch fallback. | Uses damped fixed-point iteration (50-iteration limit, `0.02 K` convergence test) and reports `-9999` when a component fails. | Numerical behavior, failure boundaries, and error outputs deliberately differ. |
 | Output surface | Returns WBGT, `Tg`, and `Tnwb`. | Also returns psychrometric wet-bulb temperature and estimated wind speed. | The wrapper does not expose the full original-program output set. |
@@ -242,5 +258,5 @@ HeatStressR maintains an R implementation of the Liljegren model with:
 - adaptive root bracketing, residual validation, and independent numerical
   tolerances;
 - configurable pressure and sensor properties;
-- timezone-aware solar geometry and interval midpoint adjustment; and
+- timezone-aware solar geometry for instantaneous inputs; and
 - row-aligned diagnostics for input filtering and solver failures.

@@ -10,6 +10,9 @@
   alias.
 * Removed the fork-only `gmt_offset` option. Supply timezone-aware timestamps
   or convert local observations to UTC before calculating solar geometry.
+* Removed the fork-only `averaging_period` option. HeatStressR evaluates the
+  supplied timestamp as an instantaneous observation; callers align
+  interval-mean or accumulated data before calculation.
 
 ## 2.1.4 — 2026-07-22
 

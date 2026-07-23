@@ -6,8 +6,6 @@
 #
 ###################################################################
 library("HeatStressR")
-context("Heat Stress indices computation: WBGT Liljegren")
-
 
 test_that("wbgt.Liljegren retains the fork regression fixture",{
   data("data_obs", envir = environment())

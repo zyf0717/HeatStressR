@@ -7,8 +7,6 @@
 #
 ####################################################################
 
-context("Solar zenith calculation")
-
 cal_zenith_reference_cases <- list(
   list(
     dates = as.Date(c("2019-01-01", "2020-02-29", "2020-12-31", "2021-01-01")),
@@ -104,13 +102,6 @@ test_that("calZenith applies longitude and preserves UTC instants", {
   expect_equal(calZenith(new_york, lon = 0, lat = 0, hour = TRUE), zenith[2],
     tolerance = 1e-12)
 
-  # A 60-minute observation timestamped at 12:30 UTC is evaluated at its
-  # 12:00 UTC interval midpoint.
-  expect_equal(
-    calZenith("2024-03-20 12:30:00", lon = 0, lat = 0, hour = TRUE,
-      averaging_period = 60),
-    zenith[2], tolerance = 1e-12
-  )
 })
 
 test_that("solar_time is a clear alias for the legacy hour selector", {
