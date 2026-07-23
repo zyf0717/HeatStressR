@@ -1,5 +1,15 @@
 # HeatStressR NEWS
 
+## 2.1.6 — 2026-07-23
+
+* Multi-worker `wbgt.Liljegren()` execution now uses a temporary
+  `foreach`/`doParallel` PSOCK backend. Each worker calculates solar geometry
+  and completes its WBGT shard end-to-end; the caller's existing `foreach`
+  backend is restored after the call.
+* Parallel benchmark runners now compare a fixed total row count across worker
+  counts. The worker sweep accepts `LILJEGREN_PARALLEL_ROWS` (default
+  1,000,000) rather than increasing rows per worker.
+
 ## 2.1.5 — 2026-07-23
 
 * `wbgt.Liljegren()` now defaults to `engine = "batch"`; select

@@ -27,6 +27,8 @@ repetitions <- liljegren_parse_positive_integers("BENCH_REPS", 3L)
 if (length(repetitions) != 1L) stop("BENCH_REPS must be one positive integer")
 dataset <- liljegren_dataset_path(root)
 
+# Each worker comparison below reuses one fixed n-row workload. Multiple values
+# in LILJEGREN_PARALLEL_SIZES produce independent fixed-workload comparisons.
 rows <- lapply(modes, function(mode) lapply(sizes, function(n) {
   weather <- liljegren_workload(n, mode = mode, path = dataset)
   runs <- lapply(workers, function(worker_count) liljegren_measure(function() suppressWarnings(

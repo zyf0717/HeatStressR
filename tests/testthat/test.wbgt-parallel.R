@@ -50,6 +50,25 @@ test_that("check core limit constrains the permitted worker maximum", {
     "permitted worker count")
 })
 
+test_that("parallel execution restores the foreach backend", {
+  skip_if(HeatStressR:::max_liljegren_workers() < 2L,
+    "requires at least two logical CPUs")
+  previous_cluster <- parallel::makePSOCKcluster(1L)
+  doParallel::registerDoParallel(previous_cluster)
+  on.exit({
+    foreach::registerDoSEQ()
+    parallel::stopCluster(previous_cluster)
+  }, add = TRUE)
+  x <- parallel_fixture()
+  suppressWarnings(wbgt.Liljegren(
+    x$tas, x$dewp, x$wind, x$radiation, x$dates,
+    lon = -5.66, lat = 40.96, hour = TRUE, engine = "batch",
+    workers = 2L, diagnostics = FALSE
+  ))
+  expect_identical(foreach::getDoParName(), "doParallelSNOW")
+  expect_identical(foreach::getDoParWorkers(), 1L)
+})
+
 test_that("parallel batch execution preserves results and diagnostics", {
   skip_if(HeatStressR:::max_liljegren_workers() < 2L,
     "requires at least two logical CPUs")

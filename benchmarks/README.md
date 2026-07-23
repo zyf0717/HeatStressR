@@ -1,7 +1,7 @@
 # Coordinate-aware Liljegren benchmarks
 
 The Liljegren benchmark suite measures the public `wbgt.Liljegren()` path as
-implemented in HeatStressR 2.1.2. Every current benchmark uses the shared
+implemented in HeatStressR 2.1.6. Every current benchmark uses the shared
 [`liljegren-benchmark-utils.R`](liljegren-benchmark-utils.R) workload contract
 and reports these fields with its timing results:
 
@@ -23,6 +23,14 @@ locations differ or a component differs by more than `1e-4` °C.
 Timed `wbgt.Liljegren()` calls use `diagnostics = FALSE`, matching the public
 default. Runners that publish fallback, residual, or worker-diagnostic fields
 perform a separate untimed `diagnostics = TRUE` call for validation.
+
+## Parallel comparison contract
+
+Every worker-count comparison holds the total number of input rows fixed. A
+worker sweep therefore reports strong scaling for one workload; it never gives
+additional workers additional rows. `rows` is identical across the worker
+counts in each result group, and `speedup_vs_one_worker` uses that group's
+one-worker measurement as its denominator.
 
 ## Datasets
 
@@ -51,8 +59,8 @@ larger row counts.
 | Runner | Purpose | Default coordinate modes |
 | --- | --- | --- |
 | `benchmark-liljegren-e2e.R` | Scalar-versus-batch correctness and end-to-end timing | fixed, grouped, unique |
-| `benchmark-liljegren-parallel.R` | Batch PSOCK-worker parity and throughput | fixed, grouped |
-| `benchmark-liljegren-workers-1-to-6x87600.R` | Strong-scaling workload sweep | fixed, grouped |
+| `benchmark-liljegren-parallel.R` | Batch parallel-worker parity and throughput | fixed, grouped |
+| `benchmark-liljegren-workers-1-to-6x87600.R` | Fixed-workload worker-count sweep | fixed, grouped |
 | `benchmark-liljegren-tolerance-sensitivity.R` | Residual-tolerance behavior | grouped |
 | `benchmark-liljegren-unresolved.R` | Failure and solar-geometry diagnostics | grouped |
 | `benchmark-liljegren-zenith-unique.R` | Isolated zenith timing with unique or shared coordinates | unique, shared |
@@ -108,6 +116,9 @@ installed namespace:
 R CMD INSTALL .
 LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 \
   Rscript benchmarks/benchmark-liljegren-parallel.R
+
+LILJEGREN_PARALLEL_ROWS=1000000 LILJEGREN_WORKERS=1,2,4,6 BENCH_REPS=3 \
+  Rscript benchmarks/benchmark-liljegren-workers-1-to-6x87600.R
 ```
 
 ## Historical results

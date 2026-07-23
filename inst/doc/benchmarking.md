@@ -20,6 +20,10 @@ Rscript benchmarks/benchmark-liljegren-parallel.R
 Rscript benchmarks/benchmark-liljegren-tolerance-sensitivity.R
 ```
 
+Worker-count benchmarks hold total input rows fixed for every comparison. They
+measure strong scaling across parallel-process counts rather than throughput
+under increasing work.
+
 Timed benchmarks use `diagnostics = FALSE`; diagnostic validation is run
 separately when required. See the [benchmark documentation](https://github.com/zyf0717/HeatStressR/blob/master/benchmarks/README.md)
 for workload definitions, result locations, and interpretation.
