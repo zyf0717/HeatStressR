@@ -29,8 +29,8 @@ The following calculation methods are implemented:
 
 \code{wbgt.Liljegren()} implements the outdoor Liljegren wet-bulb globe
 temperature model in R. Its vectorized batch engine is the default and can
-use explicitly requested PSOCK workers; the scalar engine remains available
-as a reference implementation. Pressure and
+use explicitly requested `foreach`/`doParallel` PSOCK workers;
+the scalar engine remains available as a reference implementation. Pressure and
 documented physical constants are configurable. Set
 \code{diagnostics = TRUE} to obtain row-aligned input and solver metadata.
 This is not a bitwise-compatible port of the original Liljegren program, and

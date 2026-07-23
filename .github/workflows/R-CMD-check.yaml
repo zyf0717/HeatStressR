@@ -32,5 +32,5 @@ jobs:
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         run: |
           R CMD INSTALL .
-          BENCH_REPS=1 CAL_ZENITH_SIZES=100 LILJEGREN_SIZES=10 SOLVER_SIZES=10 Rscript benchmarks/benchmark-vectorization.R
-          LILJEGREN_PARALLEL_SIZES=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-parallel.R
+          BENCHMARK_ROOT=$PWD BENCHMARK_ENGINE=batch E2E_SIZES=100 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-three-way.R
+          LILJEGREN_PARALLEL_ROWS=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-workers.R

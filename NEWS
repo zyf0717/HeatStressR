@@ -1,5 +1,17 @@
 # HeatStressR NEWS
 
+## 2.1.6 — 2026-07-23
+
+* Multi-worker `wbgt.Liljegren()` execution now uses a temporary
+  `foreach`/`doParallel` PSOCK backend. Each worker calculates solar geometry
+  and completes its WBGT shard end-to-end; the caller's existing `foreach`
+  backend is restored after the call.
+* Parallel benchmark runners now compare a fixed total row count across worker
+  counts. The worker sweep accepts `LILJEGREN_PARALLEL_ROWS` (default
+  1,000,000) rather than increasing rows per worker.
+* Reduced the benchmark suite to the maintained three-way pre-fork comparison
+  and fixed-workload internal-worker sweep, with refreshed result records.
+
 ## 2.1.5 — 2026-07-23
 
 * `wbgt.Liljegren()` now defaults to `engine = "batch"`; select
@@ -66,11 +78,8 @@
 * New internal parallel execution layer (`R/wbgt-parallel.R`) providing
   `max_liljegren_workers()`, `validate_workers()`, `split_liljegren_chunks()`,
   `solve_liljegren_batch_raw_chunk()`, and `solve_liljegren_parallel()`.
-* Benchmark harnesses for multicore performance evaluation:
-  `benchmarks/benchmark-liljegren-workers-1-to-6x87600.R` (sweeping worker
-  counts with configurable `ROWS_PER_WORKER`) and
-  `benchmarks/benchmark-liljegren-parallel.R` (annual workload
-  profiling). Results recorded on Apple M2 Max.
+* Added the initial multicore benchmark harnesses and recorded results on
+  Apple M2 Max. The benchmark suite was subsequently consolidated in 2.1.6.
 * `DESCRIPTION` now lists `parallel` as an explicit import.
 
 ### CRAN preparation

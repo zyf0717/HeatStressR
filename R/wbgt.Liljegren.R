@@ -71,14 +71,15 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' vectorized safeguarded root solver with automatic scalar fallback for
 #' unresolved rows. \code{"scalar"} selects the reference R implementation.
 #' @param diagnostics logical; return solver metadata in addition to the usual result.
-#' @param workers number of PSOCK worker processes for \code{engine = "batch"}.
+#' @param workers number of \code{foreach}/PSOCK worker processes for
+#' \code{engine = "batch"}.
 #' Must be an integer from 1 through the currently permitted logical CPU count.
 #' The default of 1 preserves sequential batch execution; values greater than 1
 #' use up to the requested number of workers, capped at the number of input
 #' rows. In an R check environment with \code{_R_CHECK_LIMIT_CORES_ = "true"},
-#' no more than two workers are permitted. The parent computes solar geometry
-#' once; each worker preprocesses its own contiguous meteorological chunk,
-#' including humidity, then solves and assembles its local WBGT results.
+#' no more than two workers are permitted. Workers calculate solar geometry,
+#' preprocess their own coordinate-aware meteorological chunk, including
+#' humidity, then solve and assemble local WBGT results.
 #' @param root_tolerance numerical precision (K) used to locate heat-balance roots.
 #' @param residual_tolerance maximum accepted absolute heat-balance residual (K).
 #' Must be greater than zero and no greater than 0.01.
@@ -114,7 +115,8 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' fork and is not affiliated with the original project or its authors.
 #'
 #' The batch engine is the default implementation. It uses explicitly requested
-#' PSOCK workers when \code{workers > 1}; no workers are created by default.
+#' \code{foreach}/\code{doParallel} PSOCK workers when \code{workers > 1}; no
+#' workers are created by default.
 #' The scalar engine remains available as a reference implementation. Pressure, surface
 #' albedo, globe diameter, minimum wind speed, and direct-radiation fraction
 #' are configurable. Solar
@@ -246,16 +248,11 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   coordinates <- normalize_liljegren_coordinates(lon, lat, ndates)
   lon <- coordinates$lon
   lat <- coordinates$lat
-  # Solar geometry depends only on aligned timestamps and coordinates. Reuse
-  # timestamp-only terms and calculate each coordinate group before solving.
-  zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour)
-  
-  ######################
-  ######################
   if (engine == "batch" && effective_workers > 1L) {
     parallel_result <- solve_liljegren_parallel(
       tas = tas, dewp = dewp, wind = wind, radiation = radiation,
-      zenith = zenith_rad, pressure = pressure, direct_fraction = direct_fraction,
+      dates = dates, lon = lon, lat = lat, hour = hour,
+      pressure = pressure, direct_fraction = direct_fraction,
       workers = effective_workers,
       diagnostics = diagnostics,
       controls = list(
@@ -291,6 +288,9 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
       parallel_failure_summary <- parallel_result$failure_summary
     }
   } else {
+  # Solar geometry depends only on aligned timestamps and coordinates. Reuse
+  # timestamp-only terms and calculate each coordinate group before solving.
+  zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour)
   Pair <- rep(pressure, length.out = ndates)
   MinWindSpeed <- min_wind_speed
   Tnwb <- rep(NA_real_, ndates)

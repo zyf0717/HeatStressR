@@ -257,8 +257,40 @@ combine_parallel_chunk_field <- function(chunk_results, field) {
   unlist(values, use.names = FALSE)
 }
 
-solve_liljegren_parallel <- function(tas, dewp, wind, radiation, zenith,
-                                     pressure, direct_fraction, workers, controls, diagnostics) {
+solve_liljegren_parallel_worker <- function(chunk, controls, diagnostics) {
+  chunk$zenith <- calculate_liljegren_zenith(
+    chunk$dates, chunk$lon, chunk$lat, hour = chunk$hour
+  )
+  result <- solve_liljegren_batch_raw_chunk(chunk, controls)
+  if (diagnostics) result else compact_liljegren_chunk_result(result)
+}
+
+capture_foreach_backend <- function() {
+  globals <- utils::getFromNamespace(".foreachGlobals", "foreach")
+  names <- c("fun", "data", "info")
+  present <- vapply(names, exists, logical(1), envir = globals, inherits = FALSE)
+  list(
+    globals = globals,
+    present = present,
+    values = stats::setNames(lapply(names[present], get, envir = globals,
+      inherits = FALSE), names[present])
+  )
+}
+
+restore_foreach_backend <- function(backend) {
+  names <- names(backend$present)
+  for (name in names) {
+    if (backend$present[[name]]) {
+      assign(name, backend$values[[name]], envir = backend$globals)
+    } else if (exists(name, envir = backend$globals, inherits = FALSE)) {
+      rm(list = name, envir = backend$globals)
+    }
+  }
+}
+
+solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, lon, lat,
+                                     hour, pressure, direct_fraction, workers,
+                                     controls, diagnostics) {
   n <- length(tas)
   effective_workers <- min(workers, n)
   if (effective_workers < 1L)
@@ -269,22 +301,20 @@ solve_liljegren_parallel <- function(tas, dewp, wind, radiation, zenith,
     radiation = radiation[index],
     pressure = if (length(pressure) == 1L) pressure else pressure[index],
     direct_fraction = direct_fraction[index],
-    zenith = zenith[index]
+    dates = dates[index], lon = lon[index], lat = lat[index], hour = hour
   ))
+  backend <- capture_foreach_backend()
+  on.exit(restore_foreach_backend(backend), add = TRUE)
   cluster <- parallel::makePSOCKcluster(effective_workers)
   on.exit(parallel::stopCluster(cluster), add = TRUE)
-  parallel::clusterCall(cluster, function() {
-    loadNamespace("HeatStressR")
-    NULL
-  })
-  worker <- function(chunk, controls, diagnostics) {
-    result <- utils::getFromNamespace("solve_liljegren_batch_raw_chunk", "HeatStressR")(chunk,
-      controls)
-    if (diagnostics) result else
-      utils::getFromNamespace("compact_liljegren_chunk_result", "HeatStressR")(result)
-  }
-  chunk_results <- parallel::parLapply(cluster, chunks, worker, controls = controls,
-    diagnostics = diagnostics)
+  doParallel::registerDoParallel(cluster)
+  chunk <- NULL
+  chunk_results <- foreach::`%dopar%`(
+    foreach::foreach(chunk = chunks, .packages = "HeatStressR", .inorder = TRUE),
+    utils::getFromNamespace("solve_liljegren_parallel_worker", "HeatStressR")(
+      chunk, controls, diagnostics
+    )
+  )
   if (!diagnostics) {
     return(list(
       data = combine_parallel_chunk_field(chunk_results, "data"),

@@ -1,38 +1,26 @@
 # Three-way Liljegren benchmark
 
-> Historical snapshot: this comparison predates the longitude-aware solar-time,
-> C-aligned-default, and pressure-input changes. It is not a current
-> performance reference. Coordinate-aware runs are documented in
-> [`../README.md`](../README.md).
+Recorded 2026-07-23 on macOS arm64 (`aarch64-apple-darwin25.4.0`) with R
+4.6.1. This benchmark holds latitude/longitude fixed while using unique
+timestamps, so every `(timestamp, lon, lat)` triplet is distinct. It compares
+complete `wbgt.Liljegren()` calls at three implementations:
 
-This records complete `wbgt.Liljegren()` calls over the same deterministic
-weather series at three revisions/engines:
+- pre-fork commit `f77a263ba6820a79b7092518ff4376c787ac45b2`;
+- HeatStressR 2.1.6 scalar engine; and
+- HeatStressR 2.1.6 batch engine.
 
-- baseline: `f77a263ba6820a79b7092518ff4376c787ac45b2`;
-- head scalar: `2f9e2d3` with `engine = "scalar"`;
-- head batch: `2f9e2d3` with `engine = "batch"`.
+Each value is the median of three repetitions over the same deterministic
+weather series. Radiation is derived from solar elevation before timing.
 
-Runtime was R 4.3.3 on Linux x86_64 (AMD Ryzen 7 7735HS), using the median of
-five repetitions at 100, 1,000, 10,000, and 100,000 rows. The raw measurements are in
-[`liljegren-three-way.csv`](liljegren-three-way.csv).
-
-| Rows | Baseline | Head scalar | Head batch | Batch / scalar speedup |
+| Rows | Pre-fork | Current scalar | Current batch | Batch / scalar speedup |
 | ---: | ---: | ---: | ---: | ---: |
-| 100 | 0.056 s | 0.038 s | 0.005 s | 7.60x |
-| 1,000 | 0.558 s | 0.383 s | 0.014 s | 27.36x |
-| 10,000 | 5.896 s | 4.081 s | 0.124 s | 32.91x |
-| 100,000 | 60.490 s | 41.860 s | 1.283 s | 32.63x |
+| 100 | 0.064 s | 0.113 s | 0.087 s | 1.30x |
+| 1,000 | 0.438 s | 0.274 s | 0.020 s | 13.70x |
+| 10,000 | 4.411 s | 2.933 s | 0.114 s | 25.73x |
+| 100,000 | 44.826 s | 27.897 s | 1.052 s | 26.52x |
 
-The workload derives radiation from positive solar elevation. All three arms
-produced finite Tg, Tnwb, and WBGT values for every benchmark row. The scalar
-and batch head engines retain aligned output positions; their numerical
-equivalence is covered by the end-to-end benchmark and test suite.
+Every measured output had finite Tg, Tnwb, and WBGT values. The pre-fork arm
+uses the historical fixed-coordinate API; it is included only for performance
+comparison and is not a numerical-equivalence claim.
 
-Reproduce each arm with the maintained runner. For the baseline, point
-`BENCHMARK_ROOT` at a detached worktree for the reference commit:
-
-```sh
-BENCHMARK_ROOT=$PWD BENCHMARK_ENGINE=batch BENCH_REPS=5 \
-  E2E_SIZES=100,1000,10000,100000 \
-  Rscript benchmarks/benchmark-liljegren-three-way.R
-```
+Raw data: [`liljegren-three-way.csv`](liljegren-three-way.csv).

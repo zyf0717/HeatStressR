@@ -82,6 +82,6 @@ See the generated R help for the complete parameter reference:
 ## Fork scope
 
 HeatStressR maintains an R implementation of the Liljegren model with
-vectorized batch solving, optional PSOCK workers, configurable sensor and
+vectorized batch solving, optional `foreach`/PSOCK workers, configurable sensor and
 radiation controls, timezone-aware solar geometry, and row-aligned solver
 diagnostics.

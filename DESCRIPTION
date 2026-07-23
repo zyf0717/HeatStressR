@@ -1,7 +1,7 @@
 Package: HeatStressR
 Type: Package
 Title: Calculate Heat Stress Indices
-Version: 2.1.5
+Version: 2.1.6
 Date: 2026-07-23
 Authors@R: c(
     person("Yifei", "Zheng", email = "zyf0717@gmail.com", role = c("aut", "cre"),
@@ -24,5 +24,5 @@ Suggests:
     pkgload,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Imports: stats, assertthat, parallel
+Imports: stats, assertthat, parallel, foreach, doParallel
 Encoding: UTF-8

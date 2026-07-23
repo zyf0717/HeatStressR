@@ -1,6 +1,0 @@
-"residual_tolerance","accepted_rows","rejected_rows","Tg_failures","Tnwb_failures","both_component_failures","unbracketed_failures","non_finite_failures","residual_validation_failures","maximum_accepted_residual","median_accepted_residual","maximum_Tg_difference_from_baseline","maximum_Tnwb_difference_from_baseline","maximum_WBGT_difference_from_baseline","runtime_seconds","fallback_count","scalar_batch_decisions_match"
-1e-04,100000,0,0,0,0,0,0,0,7.73987846969248e-06,1.13686837721616e-13,0,0,0,1.521,0,TRUE
-3e-04,100000,0,0,0,0,0,0,0,7.73987846969248e-06,1.13686837721616e-13,0,0,0,1.619,0,TRUE
-0.001,100000,0,0,0,0,0,0,0,7.73987846969248e-06,1.13686837721616e-13,0,0,0,1.224,0,TRUE
-0.003,100000,0,0,0,0,0,0,0,7.73987846969248e-06,1.13686837721616e-13,0,0,0,1.25,0,TRUE
-0.01,100000,0,0,0,0,0,0,0,7.73987846969248e-06,1.13686837721616e-13,0,0,0,1.199,0,TRUE

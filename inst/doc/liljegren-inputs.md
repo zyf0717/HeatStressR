@@ -66,9 +66,9 @@ solar-geometry calculation.
 
 Use `diagnostics = TRUE` to investigate invalid inputs or solver failures.
 Diagnostic vectors match input length, and `input_status` separates filtered
-rows from heat-balance solver failures. Diagnostics are disabled by default to
-avoid transferring row-level metadata from PSOCK workers during normal batch
-calculations.
+rows from heat-balance solver failures. Diagnostics are disabled by default so
+parallel calls return compact chunk summaries rather than row-level diagnostic
+metadata from every worker.
 
 Relaxing `residual_tolerance` only accepts an already located finite root; it
 does not recover unbracketed or non-finite rows. WBGT is `NA` unless both `Tg`

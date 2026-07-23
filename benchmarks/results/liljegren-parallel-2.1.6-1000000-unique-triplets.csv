@@ -1,0 +1,7 @@
+"rows","requested_workers","effective_workers","repetitions","coordinate_mode","coordinate_pairs","unique_timestamp_coordinate_triplets","seconds","speedup_vs_one_worker","rows_per_second","peak_aggregate_rss_mib","rss_sample_interval_milliseconds","rss_samples","r_version","platform"
+1000000,1,1,1,"timestamp_unique",48,1000000,10.941,1,91399.3,1844.8,50,176,"4.6.1","aarch64-apple-darwin25.4.0"
+1000000,2,2,1,"timestamp_unique",48,1000000,5.933,1.844,168548.8,2601.4,50,93,"4.6.1","aarch64-apple-darwin25.4.0"
+1000000,3,3,1,"timestamp_unique",48,1000000,4.189,2.612,238720.5,2625.6,50,65,"4.6.1","aarch64-apple-darwin25.4.0"
+1000000,4,4,1,"timestamp_unique",48,1000000,3.400,3.218,294117.6,2426.0,50,53,"4.6.1","aarch64-apple-darwin25.4.0"
+1000000,5,5,1,"timestamp_unique",48,1000000,2.857,3.830,350017.5,2865.4,50,45,"4.6.1","aarch64-apple-darwin25.4.0"
+1000000,6,6,1,"timestamp_unique",48,1000000,2.514,4.352,397772.5,3003.4,50,39,"4.6.1","aarch64-apple-darwin25.4.0"

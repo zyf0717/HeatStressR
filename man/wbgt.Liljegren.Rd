@@ -88,14 +88,15 @@ matching the original Liljegren C implementation.}
 \item{min_wind_speed}{lower bound applied to wind speed in m/s. Defaults to
 0.13 m/s, matching the original Liljegren C implementation.}
 
-\item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
+\item{workers}{number of \code{foreach}/PSOCK worker processes for
+\code{engine = "batch"}.
 Must be an integer from 1 through the currently permitted logical CPU count.
 The default of 1 preserves sequential batch execution; values greater than 1
 use up to the requested number of workers, capped at the number of input
 rows. In an R check environment with \code{_R_CHECK_LIMIT_CORES_ = "true"},
-no more than two workers are permitted. The parent computes solar geometry
-once; each worker preprocesses its own contiguous meteorological chunk,
-including humidity, then solves and assembles its local WBGT results.}
+no more than two workers are permitted. Workers calculate solar geometry,
+preprocess their own coordinate-aware meteorological chunk, including
+humidity, then solve and assemble local WBGT results.}
 
 \item{solar_time}{\code{"timestamp"} (the default) uses each full timestamp;
 \code{"date_noon"} evaluates each date at 12:00 UTC. The legacy \code{hour}
@@ -126,7 +127,8 @@ translated to R by Ana Casanueva. HeatStressR is an independently maintained
 fork and is not affiliated with the original project or its authors.
 
 The batch engine is the default implementation. It uses explicitly requested
-PSOCK workers when \code{workers > 1}; no workers are created by default.
+\code{foreach}/\code{doParallel} PSOCK workers when \code{workers > 1}; no
+workers are created by default.
 The scalar engine remains available as a reference implementation. Pressure, surface
 albedo, globe diameter, minimum wind speed, and direct-radiation fraction
 are configurable. Solar
