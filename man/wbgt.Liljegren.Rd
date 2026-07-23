@@ -175,6 +175,7 @@ times <- as.POSIXct(
 result <- wbgt.Liljegren(
   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
   radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+  direct_fraction = c(0.6, 0.8),
   solar_time = "timestamp"
 )
 result$data
@@ -183,6 +184,7 @@ result$data
 result_parallel <- wbgt.Liljegren(
   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
   radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+  direct_fraction = c(0.6, 0.8),
   solar_time = "timestamp",
   engine = "batch", workers = 2
 )

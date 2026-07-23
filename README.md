@@ -17,252 +17,76 @@ bitwise-compatible port of the original C program.
 
 ## Install and load
 
-HeatStressR requires R 3.4 or later. The test suite is supported from R 4.1;
-CI also covers release, oldrel-1, and devel.
-
-Install from GitHub:
+HeatStressR requires R 3.4 or later. The test suite is supported from R 4.1.
 
 ```r
 remotes::install_github("zyf0717/HeatStressR")
 library(HeatStressR)
-```
-
-List the available indices and their atomic functions with:
-
-```r
 indexShow()
 ```
 
 ## Calculate Liljegren WBGT
 
 `wbgt.Liljegren()` expects aligned vectors for air temperature (`tas`, °C),
-dewpoint (`dewp`, °C), wind speed (`wind`, m/s), solar shortwave radiation
-(`radiation`, W/m²), and timestamps (`dates`). Longitude (`lon`, degrees),
-latitude (`lat`, degrees), and atmospheric pressure (`pressure`, hPa) may each
-be a scalar or a vector aligned with the meteorological inputs.
+dewpoint (`dewp`, °C), wind speed (`wind`, m/s), total downwelling shortwave
+radiation (`radiation`, W/m²), and timestamps (`dates`). Longitude (`lon`,
+degrees), latitude (`lat`, degrees), and pressure (`pressure`, hPa) may each be
+a scalar or row-aligned vector.
 
 ```r
-# Default vectorized batch solver
-# `dates` should be timezone-aware when solar_time = "timestamp".
-# `pressure_hpa` is measured atmospheric pressure in hPa.
+# Default vectorized batch solver.
+# `dates` is timezone-aware; `direct_fraction` is direct / (direct + diffuse).
 result <- wbgt.Liljegren(
   tas, dewp, wind, radiation, dates,
   lon = lon, lat = lat,
   pressure = pressure_hpa,
+  direct_fraction = direct_fraction,
   solar_time = "timestamp"
 )
 
-# Scalar reference solver
+# Scalar reference solver.
 result_scalar <- wbgt.Liljegren(
   tas, dewp, wind, radiation, dates,
   lon = lon, lat = lat,
   pressure = pressure_hpa,
+  direct_fraction = direct_fraction,
   solar_time = "timestamp",
   engine = "scalar"
 )
 ```
 
 The result contains WBGT, globe temperature (`Tg`), and natural wet-bulb
-temperature (`Tnwb`). The vectorized batch engine is the default; select
-`engine = "scalar"` for reference comparisons or debugging.
+temperature (`Tnwb`). Batch is the default engine; use scalar only for
+reference comparisons or debugging.
 
-## Configure the Liljegren calculation
+## Liljegren contract
 
-### Physical and time controls
+HeatStressR evaluates aligned, instantaneous meteorological states. It does
+not infer interval conventions or perform meteorological preprocessing. Use
+timezone-aware `POSIXct` timestamps for high-throughput calls; ISO-8601
+strings remain a convenience input.
 
-`pressure` accepts one value or a vector aligned with the meteorological rows;
-the default is 1010 hPa. Other defaults are `surface_albedo = 0.45`,
-`globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.
+`direct_fraction` accepts one value or a row-aligned vector and defaults to
+`0.8`. Supply an externally derived value when direct and diffuse radiation
+are available.
 
-`radiation` is total downwelling shortwave radiation. `direct_fraction`
-specifies the direct share, `direct / (direct + diffuse)`, and accepts one
-value or a row-aligned vector. It defaults to `0.8`; retain that default when
-only total shortwave radiation is available, or supply a measured or
-externally derived fraction when direct and diffuse radiation are known.
-
-Solar geometry uses latitude, longitude, and timestamp. Use UTC or
-timezone-aware `POSIXct` for high-throughput calculations. `POSIXlt`
-timestamps and ISO 8601 strings with an offset—for example,
-`2024-06-01T20:00:00+08:00` or `2024-06-01T12:00:00Z`—identify instants and
-are normalized to UTC when `solar_time = "timestamp"`. For this recommended
-timestamp mode, provide timezone-aware datetimes or convert local observations
-to UTC before calling the function. ISO 8601 strings are accepted for
-convenience but parsed on every call; convert them to `POSIXct` upstream when
-performance matters.
-
-HeatStressR evaluates all inputs at the supplied instant; it does not infer or
-apply an interval-average convention. For interval-mean or accumulated source
-data, choose the appropriate representative instant from the source metadata,
-align every meteorological input to it, and supply that timestamp before
-calling `wbgt.Liljegren()`.
-
-### Scope boundary
-
-HeatStressR evaluates aligned meteorological states; it does not perform
-meteorological pre-processing. The caller is responsible for:
-
-- choosing the representative instant for interval-mean or accumulated data;
-- converting timestamps to UTC or constructing timezone-aware `POSIXct`;
-- adjusting wind to the model reference height; and
-- deriving and quality-controlling shortwave radiation from cloud cover or
-  other source data.
-
-The wrapper returns WBGT, globe temperature, and natural wet-bulb temperature;
-it does not expose the original C program's psychrometric wet-bulb or estimated
-wind-speed outputs. This keeps the public interface limited to the
-heat-balance calculation and leaves source-specific processing upstream.
-
-Inputs are deliberately validated before solving:
-
-- meteorological vectors must be non-empty, equal length, and row-aligned with
-  `dates`;
-- `lon` and `lat` must be finite geographic coordinates, supplied as scalars
-  or row-aligned vectors; repeated coordinate pairs share one solar-geometry
-  calculation;
-- `solar_time = "timestamp"` uses each full timestamp, while
-  `solar_time = "date_noon"` evaluates each date at 12:00 UTC; `noNAs`,
-  `swap`, and `diagnostics` must be single, non-missing logical values; and
-- tolerance controls and physical parameters must be finite and within their
-  documented domains.
-
-### Numerical controls and diagnostics
-
-`wbgt.Liljegren()` exposes three numerical controls:
-
-- `root_tolerance` controls root-location precision (default `1e-6 K`);
-- `residual_tolerance` controls the accepted absolute heat-balance residual
-  (default `1e-4 K`; `0 < value <= 0.01`); and
-- `dewpoint_tolerance` controls the dewpoint-versus-air-temperature policy
-  (default `1e-4 °C`).
-
-Use `diagnostics = TRUE` when investigating invalid inputs or solver failures.
-Diagnostic vectors always match the input length, and `input_status`
-distinguishes filtered rows from rows whose heat-balance solver failed.
-Diagnostics are disabled by default to avoid transferring row-level metadata
-from PSOCK workers during normal batch calculations.
-
-Relaxing `residual_tolerance` only accepts an already located finite root; it
-does not recover unbracketed or non-finite rows. WBGT is `NA` unless both `Tg`
-and `Tnwb` validate, while an independently validated component is retained.
-
-## Scale a calculation
-
-### In-package PSOCK workers
-
-The batch engine is single-process by default. Set `workers` explicitly to
-split one large `wbgt.Liljegren()` call across local PSOCK R processes. The
-effective count is capped at the number of rows, so small inputs do not launch
-empty workers.
+See the generated R help for the complete parameter reference:
 
 ```r
-result_parallel <- wbgt.Liljegren(
-  tas, dewp, wind, radiation, dates, lon = lon, lat = lat,
-  solar_time = "timestamp", workers = 4
-)
+?wbgt.Liljegren
 ```
 
-`workers` must be an integer between 1 and the currently permitted worker
-count, normally the detected logical CPU count. R check environments that set
-`_R_CHECK_LIMIT_CORES_` permit no more than two workers. Each batch call
-creates and stops its own cluster; startup and transfer overhead can make
-small workloads slower, so retain `workers = 1L` when a single process is
-preferable.
+## Guides
 
-The parent process computes aligned solar geometry once. Workers preprocess
-contiguous pressure, forcing, dewpoint-policy, and humidity chunks before
-solving and assembling local WBGT values.
-
-### External `foreach` versus in-package workers
-
-Use one parallel layer per calculation:
-
-- Set `workers > 1` for one large `wbgt.Liljegren()` call. HeatStressR creates
-  a temporary PSOCK cluster and divides that call's rows.
-- Use an external `foreach` backend for many independent locations, files, or
-  time partitions. Its worker pool can remain alive across calls; set
-  `workers = 1L` within each task.
-
-```r
-results <- foreach::foreach(
-  shard = weather_shards,
-  .packages = "HeatStressR"
-) %dopar% {
-  wbgt.Liljegren(
-    shard$tas, shard$dewp, shard$wind, shard$radiation, shard$dates,
-    lon = shard$lon, lat = shard$lat, solar_time = "timestamp",
-    workers = 1L
-  )
-}
-```
-
-Do not use `workers > 1` inside an externally parallel `foreach` task unless
-you deliberately provision nested worker pools. Nested processes oversubscribe
-CPUs, multiply memory use, and repeatedly pay PSOCK startup and serialization
-costs. HeatStressR must be installed on each external worker; `.packages`
-loads it in the example above.
-
-## Performance and solver scope
-
-`calZenith()` processes date vectors in one pass.
-`wbgt.Liljegren()` precomputes aligned zenith angles by coordinate pair and
-reuses timestamp-only solar terms for repeated instants. The batch engine
-is the default because it vectorizes the dominant numerical solves. It remains
-single-process unless `workers > 1`; PSOCK startup can still outweigh the
-benefit of additional workers for small inputs.
-
-Performance depends on input size, coordinate reuse, worker count, and local
-hardware. Use the reproducible benchmark harness to measure the current
-release on the target workload; its scenarios and commands are documented in
-the [benchmark README](https://github.com/zyf0717/HeatStressR/blob/master/benchmarks/README.md).
-
-## Differences from the original Liljegren C implementation
-
-This package implements the Liljegren heat-balance model; it is not a
-bitwise-compatible port of the
-[original C source](https://raw.githubusercontent.com/mdljts/wbgt/master/src/wbgt.c.original).
-The following expected differences describe HeatStressR behavior and do not
-claim it improves on or supersedes the original implementation.
-
-Unlike the original program, HeatStressR supports instantaneous inputs only.
-It does not use an averaging-period argument to shift solar time. For interval
-data, the caller must choose a representative instant and align all inputs
-before calculation.
-
-| Area | HeatStressR | Original C program | Consequence |
-| --- | --- | --- | --- |
-| Wind-height adjustment | Accepts scalar or row-aligned pressure; supplied wind is assumed to be at the reference height. | Can transform wind from another height using stability, temperature gradient, and urban/rural inputs. | Adjust non-reference-height wind externally before calling the wrapper. |
-| Solar geometry and time | Uses the supplied instant, timezone-aware timestamps, latitude, longitude, and equation of time. | Uses local standard time, GMT offset, input averaging period, and its own solar-position routine. | Convert local observations to UTC or provide timezone-aware timestamps; align interval data externally before calculation. |
-| Irradiance partitioning | Retains supplied daytime radiation and accepts a scalar or row-aligned `direct_fraction` (default `0.8`). | Caps irradiance against top-of-atmosphere solar flux and derives direct fraction from normalized irradiance. | Cloudy, miscalibrated, and near-horizon forcing can produce different `Tg` and `Tnwb`; supply an externally derived fraction when available. |
-| Root solving and failures | Uses adaptive bracketing, residual validation, `NA` failures, preserved valid components, and optional diagnostics/batch fallback. | Uses damped fixed-point iteration (50-iteration limit, `0.02 K` convergence test) and reports `-9999` when a component fails. | Numerical behavior, failure boundaries, and error outputs deliberately differ. |
-| Output surface | Returns WBGT, `Tg`, and `Tnwb`. | Also returns psychrometric wet-bulb temperature and estimated wind speed. | The wrapper does not expose the full original-program output set. |
-
-For cross-implementation validation, match pressure, wind height, time
-convention, and radiation treatment. Agreement on one weather series does not
-establish interchangeability.
-
-## Benchmarking
-
-The reproducible benchmark harness lives in the source repository. Timed
-benchmarks use `diagnostics = FALSE`; diagnostic validation is run separately
-when required.
-
-```sh
-Rscript benchmarks/benchmark-vectorization.R
-Rscript benchmarks/benchmark-liljegren-e2e.R
-Rscript benchmarks/benchmark-liljegren-parallel.R
-Rscript benchmarks/benchmark-liljegren-tolerance-sensitivity.R
-```
-
-See the [benchmark documentation](https://github.com/zyf0717/HeatStressR/blob/master/benchmarks/README.md) for workload definitions, result locations,
-and interpretation.
+- [Liljegren inputs and scope](inst/doc/liljegren-inputs.md)
+- [Parallel execution](inst/doc/parallelism.md)
+- [Differences from the original C implementation](inst/doc/original-c-differences.md)
+- [Benchmarking](inst/doc/benchmarking.md)
+- [Documentation index](inst/doc/README.md)
 
 ## Fork scope
 
-HeatStressR maintains an R implementation of the Liljegren model with:
-
-- vectorized batch solving and optional PSOCK workers;
-- adaptive root bracketing, residual validation, and independent numerical
-  tolerances;
-- configurable pressure and sensor properties;
-- timezone-aware solar geometry for instantaneous inputs; and
-- row-aligned diagnostics for input filtering and solver failures.
+HeatStressR maintains an R implementation of the Liljegren model with
+vectorized batch solving, optional PSOCK workers, configurable sensor and
+radiation controls, timezone-aware solar geometry, and row-aligned solver
+diagnostics.

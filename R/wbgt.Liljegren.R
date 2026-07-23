@@ -34,6 +34,15 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour) {
   zenith
 }
 
+format_liljegren_failure_counts <- function(counts) sprintf(
+  "  unbracketed: %d\n  non-finite: %d\n  residual-invalid: %d",
+  counts[["unbracketed"]], counts[["non_finite"]], counts[["residual_validation"]]
+)
+
+liljegren_failure_counts <- function(reasons, failed) {
+  table(factor(reasons[failed], levels = c("unbracketed", "non_finite", "residual_validation")))
+}
+
 #' Calculation of wet bulb globe temperature, following Liljegren's method.
 #' 
 #' Calculation of wet bulb globe temperature from air temperature, dew point temperature, radiation and wind. 
@@ -155,6 +164,7 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour) {
 #' result <- wbgt.Liljegren(
 #'   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
 #'   radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+#'   direct_fraction = c(0.6, 0.8),
 #'   solar_time = "timestamp"
 #' )
 #' result$data
@@ -163,6 +173,7 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour) {
 #' result_parallel <- wbgt.Liljegren(
 #'   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
 #'   radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+#'   direct_fraction = c(0.6, 0.8),
 #'   solar_time = "timestamp",
 #'   engine = "batch", workers = 2
 #' )
@@ -379,22 +390,17 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
     Tnwb.failed <- input_valid & !Tnwb.converged
     failed_rows <- sum(Tg.failed | Tnwb.failed)
     attempted_rows <- sum(input_valid)
-    reason_counts <- function(reasons, failed) {
-      counts <- table(factor(reasons[failed], levels = c("unbracketed", "non_finite", "residual_validation")))
-      sprintf("  unbracketed: %d\n  non-finite: %d\n  residual-invalid: %d",
-        counts[["unbracketed"]], counts[["non_finite"]], counts[["residual_validation"]])
-    }
-    tg_reason_counts <- reason_counts(Tg.failure.reason, Tg.failed)
-    tnwb_reason_counts <- reason_counts(Tnwb.failure.reason, Tnwb.failed)
+    tg_reason_counts <- format_liljegren_failure_counts(
+      liljegren_failure_counts(Tg.failure.reason, Tg.failed)
+    )
+    tnwb_reason_counts <- format_liljegren_failure_counts(
+      liljegren_failure_counts(Tnwb.failure.reason, Tnwb.failed)
+    )
   } else {
     failed_rows <- parallel_failure_summary$failed_rows
     attempted_rows <- parallel_failure_summary$attempted_rows
-    reason_counts <- function(counts) sprintf(
-      "  unbracketed: %d\n  non-finite: %d\n  residual-invalid: %d",
-      counts[["unbracketed"]], counts[["non_finite"]], counts[["residual_validation"]]
-    )
-    tg_reason_counts <- reason_counts(parallel_failure_summary$Tg)
-    tnwb_reason_counts <- reason_counts(parallel_failure_summary$Tnwb)
+    tg_reason_counts <- format_liljegren_failure_counts(parallel_failure_summary$Tg)
+    tnwb_reason_counts <- format_liljegren_failure_counts(parallel_failure_summary$Tnwb)
   }
   if (failed_rows) {
     warning(sprintf(
