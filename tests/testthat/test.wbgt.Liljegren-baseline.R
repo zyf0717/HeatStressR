@@ -7,8 +7,6 @@
 #
 ####################################################################
 
-context("Liljegren scalar-zenith baseline")
-
 liljegren_baseline_fixture <- local({
   dates <- c(
     seq(as.POSIXct("2020-02-28 00:00:00", tz = "UTC"), by = "hour", length.out = 12),

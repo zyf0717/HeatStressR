@@ -67,7 +67,7 @@ test_that("numerical failures emit one counted warning with aligned batch diagno
   result <- withCallingHandlers(wbgt.Liljegren(
     tas = 22, dewp = 10, wind = 0, radiation = Inf,
     dates = as.POSIXct("2024-06-01", tz = "UTC"), lon = 0, lat = 0,
-    engine = "batch", diagnostics = TRUE
+    engine = "batch", diagnostics = TRUE, solar_time = "date_noon"
   ), warning = function(w) {
     warnings <<- c(warnings, conditionMessage(w))
     invokeRestart("muffleWarning")

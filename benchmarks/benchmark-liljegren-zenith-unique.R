@@ -43,8 +43,7 @@ if (coordinate_mode == "shared" && coordinate_pairs != 1L) {
 
 measurement <- liljegren_measure(function() {
   HeatStressR:::calculate_liljegren_zenith(
-    dates, coordinates$lon, coordinates$lat, hour = TRUE,
-    gmt_offset = NULL, averaging_period = 0
+    dates, coordinates$lon, coordinates$lat, hour = TRUE
   )
 }, repetitions)
 if (length(measurement$value) != rows || any(!is.finite(measurement$value))) {

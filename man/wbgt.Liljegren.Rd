@@ -16,7 +16,7 @@ wbgt.Liljegren(
   noNAs = TRUE,
   swap = FALSE,
   hour = FALSE,
-  engine = c("scalar", "batch"),
+  engine = c("batch", "scalar"),
   diagnostics = FALSE,
   root_tolerance = NULL,
   residual_tolerance = NULL,
@@ -25,9 +25,9 @@ wbgt.Liljegren(
   surface_albedo = 0.45,
   globe_diameter = 0.0508,
   min_wind_speed = 0.13,
-  gmt_offset = NULL,
-  averaging_period = 0,
-  workers = 1L
+  workers = 1L,
+  solar_time = "timestamp",
+  direct_fraction = 0.8
 )
 }
 \arguments{
@@ -40,8 +40,9 @@ wbgt.Liljegren(
 \item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
 
 \item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
-normalized to UTC.
+datetime strings. Use timezone-aware \code{POSIXct} for high-throughput
+calls. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601 strings
+are normalized to UTC; strings are parsed on every call.
 Values must have the same length and row order as the meteorological input
 vectors.}
 
@@ -59,12 +60,11 @@ acceptance \code{tolerance}, and dewpoint validation \code{tolerance}.}
 
 \item{swap}{logical, should \code{tas >= dewp} be enforced by swapping? Otherwise, dewp is set to tas. This argument is needed when noNAs=T.}
 
-\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
-FALSE (12:00 UTC is used for date-only inputs).}
+\item{hour}{legacy logical solar-time selector. Use \code{solar_time} in new code.}
 
-\item{engine}{Numerical solver engine. \code{"scalar"} is the default R
-implementation. \code{"batch"} uses the experimental vectorized safeguarded
-root solver with automatic scalar fallback for unresolved rows.}
+\item{engine}{Numerical solver engine. \code{"batch"} is the default
+vectorized safeguarded root solver with automatic scalar fallback for
+unresolved rows. \code{"scalar"} selects the reference R implementation.}
 
 \item{diagnostics}{logical; return solver metadata in addition to the usual result.}
 
@@ -88,14 +88,6 @@ matching the original Liljegren C implementation.}
 \item{min_wind_speed}{lower bound applied to wind speed in m/s. Defaults to
 0.13 m/s, matching the original Liljegren C implementation.}
 
-\item{gmt_offset}{optional local-standard-time offset from GMT, in hours
-(\code{LST - GMT}). Use only when \code{dates} contains local standard clock times;
-timezone-aware timestamps and ISO 8601 offset strings are normalized to UTC
-automatically. Do not combine it with an offset-bearing ISO 8601 string.}
-
-\item{averaging_period}{averaging interval in minutes. Solar position is
-evaluated at its midpoint; defaults to 0.}
-
 \item{workers}{number of PSOCK worker processes for \code{engine = "batch"}.
 Must be an integer from 1 through the currently permitted logical CPU count.
 The default of 1 preserves sequential batch execution; values greater than 1
@@ -104,6 +96,14 @@ rows. In an R check environment with \code{_R_CHECK_LIMIT_CORES_ = "true"},
 no more than two workers are permitted. The parent computes solar geometry
 once; each worker preprocesses its own contiguous meteorological chunk,
 including humidity, then solves and assembles its local WBGT results.}
+
+\item{solar_time}{\code{"timestamp"} (the default) uses each full timestamp;
+\code{"date_noon"} evaluates each date at 12:00 UTC. The legacy \code{hour}
+argument remains supported when \code{solar_time} is omitted.}
+
+\item{direct_fraction}{proportion of supplied shortwave radiation treated as
+direct, `direct / (direct + diffuse)`. Supply one value or a vector aligned
+with the meteorological inputs; defaults to 0.8.}
 }
 \value{
 A list of:
@@ -125,15 +125,20 @@ James C. Liljegren, translated to Visual Basic (VBA) by Bruno Lemke, and
 translated to R by Ana Casanueva. HeatStressR is an independently maintained
 fork and is not affiliated with the original project or its authors.
 
-The scalar engine is the default R implementation. The experimental batch
-engine is opt-in and uses explicitly requested PSOCK workers when
-\code{workers > 1}; no workers are created by default. Pressure, surface
-albedo, globe diameter, and minimum wind speed are configurable. Solar
-positions use timestamp, latitude, longitude, and the documented
-local-standard-time midpoint controls. Radiation is zeroed when the computed
+The batch engine is the default implementation. It uses explicitly requested
+PSOCK workers when \code{workers > 1}; no workers are created by default.
+The scalar engine remains available as a reference implementation. Pressure, surface
+albedo, globe diameter, minimum wind speed, and direct-radiation fraction
+are configurable. Solar
+positions use the supplied timestamp, latitude, longitude, and the equation
+of time. Radiation is zeroed when the computed
 solar elevation is not positive. When coordinates are row-aligned, solar
 geometry groups rows by longitude-latitude pair and reuses timestamp-only
 solar terms for repeated instants.
+The function evaluates aligned instantaneous meteorological states; interval
+alignment, timestamp conversion, wind-height adjustment, and radiation
+quality control remain caller responsibilities. When direct and diffuse
+radiation are available, supply their direct share with \code{direct_fraction}.
 
 \code{dates} must have the same length and row order as the meteorological input vectors.
 Root-location precision, residual validation, and dewpoint validation are
@@ -155,7 +160,7 @@ input length. \code{input_status} describes filtering, while per-solver
 \code{requested_workers} reports the supplied count.
 
 Agreement with another implementation requires matching pressure,
-wind-height treatment, timestamp convention, averaging interval,
+wind-height treatment, timestamp convention,
 solar-position method, radiation partitioning, and failure semantics. This
 function is not a bitwise-compatible port of the original C implementation,
 and differences from other implementations are expected. These differences
@@ -169,14 +174,18 @@ times <- as.POSIXct(
 )
 result <- wbgt.Liljegren(
   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
-  radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE
+  radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+  direct_fraction = c(0.6, 0.8),
+  solar_time = "timestamp"
 )
 result$data
 
 \dontrun{
 result_parallel <- wbgt.Liljegren(
   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
-  radiation = c(700, 750), dates = times, lon = 0, lat = 15, hour = TRUE,
+  radiation = c(700, 750), dates = times, lon = 0, lat = 15,
+  direct_fraction = c(0.6, 0.8),
+  solar_time = "timestamp",
   engine = "batch", workers = 2
 )
 result_parallel$data

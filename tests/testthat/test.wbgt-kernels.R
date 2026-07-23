@@ -1,5 +1,3 @@
-context("Vectorized WBGT kernels")
-
 test_that("heat-transfer and diffusivity kernels preserve scalar values", {
   temperature <- c(270, 300, 340)
   speed <- c(0, 0.1, 2)

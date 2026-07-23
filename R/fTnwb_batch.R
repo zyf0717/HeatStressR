@@ -37,7 +37,7 @@ fTnwb_batch <- function(tas, dewp, relh, Pair, wind, min.speed, radiation,
     function(value, idx) fTnwb_residual(value, Tair[idx], Pair[idx], wind[idx],
       eair[idx], density[idx], viscosity.air[idx], diffusivity.coefficient[idx],
       longwave[idx], solar[idx], irad[idx], diam.wick, emis.wick),
-    lower = Tdew - 1, upper = Tair + 1, lower_limit = Tair - 100,
+    lower = Tdew - 1, upper = Tair + 1, lower_limit = pmin(Tair - 100, Tdew - 1),
     upper_limit = Tair + 100, tolerance = root_tolerance, max_iterations = max_iterations
   )
   twb <- solve$root

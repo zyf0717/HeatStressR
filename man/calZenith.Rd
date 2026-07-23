@@ -4,34 +4,24 @@
 \alias{calZenith}
 \title{Calculate zenith angle in degrees.}
 \usage{
-calZenith(
-  dates,
-  lon,
-  lat,
-  hour = FALSE,
-  gmt_offset = NULL,
-  averaging_period = 0
-)
+calZenith(dates, lon, lat, hour = FALSE, solar_time = "timestamp")
 }
 \arguments{
 \item{dates}{vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
-interpreted as instants and normalized to UTC. If a date-only value is
-provided, the default time is 12:00 UTC.}
+datetime strings. Use timezone-aware \code{POSIXct} for high-throughput
+calls. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601 strings
+are interpreted as instants and normalized to UTC; strings are parsed on
+every call. \code{solar_time = "date_noon"} evaluates each date at 12:00 UTC.}
 
 \item{lon}{single numeric longitude for the location, in degrees.}
 
 \item{lat}{single numeric latitude for the location, in degrees.}
 
-\item{hour}{logical. If TRUE, calculate from the full UTC timestamp. Default:
-FALSE (12:00 UTC is used for date-only inputs).}
+\item{hour}{legacy logical solar-time selector. Use \code{solar_time} in new code.}
 
-\item{gmt_offset}{optional local-standard-time offset from GMT, in hours
-(\code{LST - GMT}). When supplied, timestamps are interpreted as local standard
-time rather than timezone-aware instants.}
-
-\item{averaging_period}{averaging interval in minutes. Solar position is
-evaluated at the interval midpoint, matching the original C implementation.}
+\item{solar_time}{\code{"timestamp"} (the default) uses each full timestamp;
+\code{"date_noon"} evaluates each date at 12:00 UTC. The legacy \code{hour}
+argument remains supported when \code{solar_time} is omitted.}
 }
 \value{
 Numeric vector of zenith angles in degrees, aligned with \code{dates}.
@@ -42,15 +32,13 @@ Calculate zenith angle in degrees.
 \details{
 \code{lon} and \code{lat} must be finite scalar values within their standard
 ranges. Solar time incorporates longitude and the equation of time. Missing
-dates return \code{NA} in the corresponding output position. Do not combine
-\code{gmt_offset} with an offset-bearing ISO 8601 string: the latter already
-identifies an instant.
+dates return \code{NA} in the corresponding output position.
 }
 \examples{
 \dontrun{
 calZenith("1981-06-15", -5.66, 40.96)
-calZenith("1981-06-15 10:00:00", -5.66, 40.96, hour = TRUE)
-calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, hour = TRUE)
+calZenith("1981-06-15 10:00:00", -5.66, 40.96, solar_time = "timestamp")
+calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
 }
 }
 \author{

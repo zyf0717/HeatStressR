@@ -152,11 +152,13 @@ solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
   Tg.batch <- NULL
   Tnwb.batch <- NULL
   if (length(valid_idx)) {
+    chunk_controls <- controls
+    chunk_controls$prop_direct <- chunk$direct_fraction[valid_idx]
     solved <- solve_liljegren_batch_chunk(list(
       tas = tas[valid_idx], dewp = dewp[valid_idx], relh = relh[valid_idx],
       Pair = Pair[valid_idx], wind = wind[valid_idx], radiation = radiation[valid_idx],
       zenith = zenith[valid_idx]
-    ), controls)
+    ), chunk_controls)
     Tg.batch <- solved$Tg
     Tnwb.batch <- solved$Tnwb
     Tg[valid_idx] <- Tg.batch
@@ -256,7 +258,7 @@ combine_parallel_chunk_field <- function(chunk_results, field) {
 }
 
 solve_liljegren_parallel <- function(tas, dewp, wind, radiation, zenith,
-                                     pressure, workers, controls, diagnostics) {
+                                     pressure, direct_fraction, workers, controls, diagnostics) {
   n <- length(tas)
   effective_workers <- min(workers, n)
   if (effective_workers < 1L)
@@ -266,6 +268,7 @@ solve_liljegren_parallel <- function(tas, dewp, wind, radiation, zenith,
     tas = tas[index], dewp = dewp[index], wind = wind[index],
     radiation = radiation[index],
     pressure = if (length(pressure) == 1L) pressure else pressure[index],
+    direct_fraction = direct_fraction[index],
     zenith = zenith[index]
   ))
   cluster <- parallel::makePSOCKcluster(effective_workers)

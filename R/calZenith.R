@@ -3,41 +3,41 @@
 #' Calculate zenith angle in degrees.
 #' 
 #' @param dates vector of dates, `POSIXct`/`POSIXlt` instants, or ISO 8601
-#' datetime strings. With `hour = TRUE`, offset-bearing ISO 8601 strings (for example,
+#' datetime strings. With `solar_time = "timestamp"`, offset-bearing ISO 8601 strings (for example,
 #' `2024-03-20T20:00:00+08:00` or `2024-03-20T12:00:00Z`) are interpreted as
-#' instants and normalized to UTC. If a date-only value is provided, the
-#' default time is 12:00 UTC.
+#' instants and normalized to UTC. `solar_time = "date_noon"` evaluates each
+#' date at 12:00 UTC.
 #' @param lon single numeric longitude for the location, in degrees.
 #' @param lat single numeric latitude for the location, in degrees.
-#' @param hour logical. If TRUE, calculate from the full UTC timestamp. Default:
-#'  FALSE (12:00 UTC is used for date-only inputs).
-#' @param gmt_offset optional local-standard-time offset from GMT, in hours
-#' (`LST - GMT`). When supplied, timestamps are interpreted as local standard
-#' time rather than timezone-aware instants.
-#' @param averaging_period averaging interval in minutes. Solar position is
-#' evaluated at the interval midpoint, matching the original C implementation.
+#' @param hour legacy logical solar-time selector. Use `solar_time` in new code.
+#' @param solar_time `"timestamp"` (the default) uses each full timestamp;
+#' `"date_noon"` evaluates each date at 12:00 UTC. The legacy `hour`
+#' argument remains supported when `solar_time` is omitted.
 #' 
 #' @return Numeric vector of zenith angles in degrees, aligned with `dates`.
 #' @details `lon` and `lat` must be finite scalar values within their standard
 #' ranges. Solar time incorporates longitude and the equation of time. Missing
-#' dates return `NA` in the corresponding output position. Do not combine
-#' `gmt_offset` with an offset-bearing ISO 8601 string: the latter already
-#' identifies an instant.
+#' dates return `NA` in the corresponding output position.
 #' @author Anke Duguay-Tetzlaff, Translated to R by Ana Casanueva (17.01.2017)
-#' @export
 #' 
 #' @examples \dontrun{ 
 #' calZenith("1981-06-15",  -5.66, 40.96)
-#' calZenith("1981-06-15 10:00:00",  -5.66, 40.96, hour=TRUE)
-#' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, hour=TRUE)
+#' calZenith("1981-06-15 10:00:00",  -5.66, 40.96, solar_time = "timestamp")
+#' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
 #' }
 #' @noRd
 parse_wall_datetime <- function(x) {
   result <- rep(NA_real_, length(x))
   x <- sub("T", " ", x, fixed = TRUE)
+  has_date <- grepl("^\\d{4}-\\d{2}-\\d{2}$", x)
   has_seconds <- grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?$", x)
   has_minutes <- grepl("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$", x)
 
+  if (any(has_date)) {
+    result[has_date] <- as.numeric(as.POSIXct(strptime(
+      x[has_date], format = "%Y-%m-%d", tz = "UTC"
+    )))
+  }
   if (any(has_seconds)) {
     parsed <- as.POSIXct(strptime(x[has_seconds], format = "%Y-%m-%d %H:%M:%OS", tz = "UTC"))
     result[has_seconds] <- as.numeric(parsed)
@@ -72,8 +72,23 @@ parse_iso8601_datetime <- function(x) {
   result
 }
 
-calculate_solar_time_terms <- function(dates, hour, gmt_offset,
-                                       averaging_period) {
+resolve_solar_time <- function(hour, solar_time, hour_supplied, solar_time_supplied) {
+  if (!solar_time_supplied) {
+    if (hour_supplied) return(hour)
+    return(TRUE)
+  }
+  if (!is.character(solar_time) || length(solar_time) != 1L ||
+      is.na(solar_time) || !solar_time %in% c("timestamp", "date_noon")) {
+    stop("'solar_time' must be one of \"timestamp\" or \"date_noon\"")
+  }
+  timestamp <- identical(solar_time, "timestamp")
+  if (hour_supplied && !identical(hour, timestamp)) {
+    stop("'hour' and 'solar_time' specify conflicting solar-time modes")
+  }
+  timestamp
+}
+
+calculate_solar_time_terms <- function(dates, hour) {
   DECL1 <- 0.006918
   DECL2 <- 0.399912
   DECL3 <- 0.070257
@@ -82,43 +97,25 @@ calculate_solar_time_terms <- function(dates, hour, gmt_offset,
   DECL6 <- 0.002697
   DECL7 <- 0.00148
 
-  # Without `gmt_offset`, POSIX timestamps and ISO 8601 strings with offsets
-  # are timezone-aware instants normalized to UTC. With it, displayed clock
-  # fields are local standard time, matching C.
+  # POSIX timestamps and ISO 8601 strings with offsets are timezone-aware
+  # instants normalized to UTC.
   if (hour) {
-    if (is.null(gmt_offset)) {
-      if (inherits(dates, "POSIXt")) {
-        timestamp <- as.POSIXct(dates, tz = "UTC")
-      } else {
-        d0 <- as.character(dates)
-        timestamp <- parse_wall_datetime(d0)
-        offset_timestamp <- parse_iso8601_datetime(d0)
-        timestamp[!is.na(offset_timestamp)] <- offset_timestamp[!is.na(offset_timestamp)]
-      }
-    } else if (inherits(dates, "POSIXt")) {
-      display_tz <- attr(dates, "tzone")
-      if (!length(display_tz) || is.na(display_tz[1]) || !nzchar(display_tz[1])) display_tz <- ""
-      d0 <- format(dates, format = "%Y-%m-%d %H:%M:%S", tz = display_tz[1])
-      timestamp <- parse_wall_datetime(d0)
+    if (inherits(dates, "POSIXt")) {
+      timestamp <- as.POSIXct(dates, tz = "UTC")
     } else {
       d0 <- as.character(dates)
-      has_offset <- grepl("(?:Z|[+-]\\d{2}:?\\d{2})$", d0)
-      if (any(has_offset, na.rm = TRUE)) {
-        stop("'gmt_offset' must not be combined with offset-bearing ISO 8601 dates")
-      }
       timestamp <- parse_wall_datetime(d0)
+      offset_timestamp <- parse_iso8601_datetime(d0)
+      timestamp[!is.na(offset_timestamp)] <- offset_timestamp[!is.na(offset_timestamp)]
     }
   } else {
     d0 <- if (inherits(dates, "POSIXt")) format(dates, format = "%Y-%m-%d", tz = "UTC") else as.character(dates)
     timestamp <- as.POSIXct(strptime(d0, format = "%Y-%m-%d", tz = "UTC")) + 12 * 3600
   }
-  if (!is.null(gmt_offset)) timestamp <- timestamp - gmt_offset * 3600
-  timestamp <- timestamp - averaging_period * 30
   d1 <- as.POSIXlt(timestamp, tz = "UTC")
-  utc_minutes <- as.numeric(format(d1, "%H")) * 60 +
-    as.numeric(format(d1, "%M")) + as.numeric(format(d1, "%S")) / 60
-  year <- as.numeric(format(d1, "%Y"))
-  doy <- as.numeric(strftime(d1, format = "%j"))
+  utc_minutes <- d1$hour * 60 + d1$min + d1$sec / 60
+  year <- d1$year + 1900
+  doy <- d1$yday + 1
   dpy <- ifelse(is.leapyear(year), 366, 365)
   utc_hour <- utc_minutes / 60
   gamma <- 2 * pi * ((doy - 1) + ((utc_hour - 12) / 24)) / dpy
@@ -151,35 +148,33 @@ calculate_zenith_from_solar_terms <- function(utc_minutes, equation_of_time,
 #' Calculate zenith angle in degrees.
 #'
 #' @param dates vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
-#' datetime strings. With \code{hour = TRUE}, offset-bearing ISO 8601 strings are
-#' interpreted as instants and normalized to UTC. If a date-only value is
-#' provided, the default time is 12:00 UTC.
+#' datetime strings. Use timezone-aware \code{POSIXct} for high-throughput
+#' calls. With \code{solar_time = "timestamp"}, offset-bearing ISO 8601 strings
+#' are interpreted as instants and normalized to UTC; strings are parsed on
+#' every call. \code{solar_time = "date_noon"} evaluates each date at 12:00 UTC.
 #' @param lon single numeric longitude for the location, in degrees.
 #' @param lat single numeric latitude for the location, in degrees.
-#' @param hour logical. If TRUE, calculate from the full UTC timestamp. Default:
-#' FALSE (12:00 UTC is used for date-only inputs).
-#' @param gmt_offset optional local-standard-time offset from GMT, in hours
-#' (\code{LST - GMT}). When supplied, timestamps are interpreted as local standard
-#' time rather than timezone-aware instants.
-#' @param averaging_period averaging interval in minutes. Solar position is
-#' evaluated at the interval midpoint, matching the original C implementation.
+#' @param hour legacy logical solar-time selector. Use \code{solar_time} in new code.
+#' @param solar_time \code{"timestamp"} (the default) uses each full timestamp;
+#' \code{"date_noon"} evaluates each date at 12:00 UTC. The legacy \code{hour}
+#' argument remains supported when \code{solar_time} is omitted.
 #'
 #' @return Numeric vector of zenith angles in degrees, aligned with \code{dates}.
 #' @details \code{lon} and \code{lat} must be finite scalar values within their standard
 #' ranges. Solar time incorporates longitude and the equation of time. Missing
-#' dates return \code{NA} in the corresponding output position. Do not combine
-#' \code{gmt_offset} with an offset-bearing ISO 8601 string: the latter already
-#' identifies an instant.
+#' dates return \code{NA} in the corresponding output position.
 #' @author Anke Duguay-Tetzlaff, Translated to R by Ana Casanueva (17.01.2017)
 #' @export
 #'
 #' @examples \dontrun{
 #' calZenith("1981-06-15", -5.66, 40.96)
-#' calZenith("1981-06-15 10:00:00", -5.66, 40.96, hour = TRUE)
-#' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, hour = TRUE)
+#' calZenith("1981-06-15 10:00:00", -5.66, 40.96, solar_time = "timestamp")
+#' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
 #' }
-calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
-                      averaging_period = 0) {
+calZenith <- function(dates, lon, lat, hour = FALSE, solar_time = "timestamp") {
+  hour_supplied <- !missing(hour)
+  solar_time_supplied <- !missing(solar_time)
+  hour <- resolve_solar_time(hour, solar_time, hour_supplied, solar_time_supplied)
   assertthat::assert_that(
     is.logical(hour) && length(hour) == 1L && !is.na(hour),
     msg = "'hour' should be a single non-missing logical value"
@@ -194,15 +189,8 @@ calZenith <- function(dates, lon, lat, hour = FALSE, gmt_offset = NULL,
   )
   assertthat::assert_that(lon <= 180 && lon >= -180, msg = "Invalid lon")
   assertthat::assert_that(lat <= 90 && lat >= -90, msg = "Invalid lat")
-  assertthat::assert_that(is.null(gmt_offset) ||
-    (is.numeric(gmt_offset) && length(gmt_offset) == 1L && is.finite(gmt_offset)),
-    msg = "'gmt_offset' must be NULL or one finite number")
-  assertthat::assert_that(is.numeric(averaging_period) && length(averaging_period) == 1L &&
-    is.finite(averaging_period) && averaging_period >= 0,
-    msg = "'averaging_period' must be one non-negative finite number")
-
   if (!length(dates)) return(numeric(0))
-  terms <- calculate_solar_time_terms(dates, hour, gmt_offset, averaging_period)
+  terms <- calculate_solar_time_terms(dates, hour)
   calculate_zenith_from_solar_terms(
     terms$utc_minutes, terms$equation_of_time, terms$declination, lon, lat
   )

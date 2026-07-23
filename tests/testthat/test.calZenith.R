@@ -7,8 +7,6 @@
 #
 ####################################################################
 
-context("Solar zenith calculation")
-
 cal_zenith_reference_cases <- list(
   list(
     dates = as.Date(c("2019-01-01", "2020-02-29", "2020-12-31", "2021-01-01")),
@@ -77,7 +75,7 @@ test_that("vector calZenith preserves missing dates and rejects coordinate recyc
   result <- calZenith(dates, lon = -5.66, lat = 40.96)
   expected <- vapply(
     valid,
-    function(i) reference_calZenith_scalar(dates[i], -5.66, 40.96),
+    function(i) reference_calZenith_scalar(dates[i], -5.66, 40.96, hour = TRUE),
     numeric(1)
   )
 
@@ -104,13 +102,26 @@ test_that("calZenith applies longitude and preserves UTC instants", {
   expect_equal(calZenith(new_york, lon = 0, lat = 0, hour = TRUE), zenith[2],
     tolerance = 1e-12)
 
-  # The original C interface interprets 07:30 LST at GMT-5 with a 60-minute
-  # average as the 12:00 UTC interval midpoint.
+})
+
+test_that("solar_time is a clear alias for the legacy hour selector", {
+  instant <- as.POSIXct("2024-03-20 12:00:00", tz = "UTC")
   expect_equal(
-    calZenith("2024-03-20 07:30:00", lon = 0, lat = 0, hour = TRUE,
-      gmt_offset = -5, averaging_period = 60),
-    zenith[2], tolerance = 1e-12
+    calZenith(instant, lon = 0, lat = 0),
+    calZenith(instant, lon = 0, lat = 0, solar_time = "timestamp"), tolerance = 0
   )
+  expect_equal(
+    calZenith(instant, lon = 0, lat = 0, solar_time = "timestamp"),
+    calZenith(instant, lon = 0, lat = 0, hour = TRUE), tolerance = 0
+  )
+  expect_equal(
+    calZenith(instant, lon = 0, lat = 0, solar_time = "date_noon"),
+    calZenith(instant, lon = 0, lat = 0, hour = FALSE), tolerance = 0
+  )
+  expect_error(calZenith(instant, lon = 0, lat = 0, solar_time = "invalid"),
+    "solar_time")
+  expect_error(calZenith(instant, lon = 0, lat = 0, hour = FALSE,
+    solar_time = "timestamp"), "conflicting")
 })
 
 test_that("calZenith accepts offset-aware timestamps and ISO 8601 instants", {
@@ -124,8 +135,4 @@ test_that("calZenith accepts offset-aware timestamps and ISO 8601 instants", {
     tolerance = 1e-12)
   expect_equal(calZenith(iso8601, lon = 0, lat = 0, hour = TRUE), expected,
     tolerance = 1e-12)
-  expect_error(
-    calZenith(iso8601[1], lon = 0, lat = 0, hour = TRUE, gmt_offset = -5),
-    "must not be combined"
-  )
 })

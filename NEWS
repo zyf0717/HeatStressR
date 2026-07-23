@@ -1,5 +1,22 @@
 # HeatStressR NEWS
 
+## 2.1.5 — 2026-07-23
+
+* `wbgt.Liljegren()` now defaults to `engine = "batch"`; select
+  `engine = "scalar"` for the prior reference execution path. Batch retains
+  automatic scalar fallback for unresolved rows.
+* `wbgt.Liljegren()` and `calZenith()` now accept `solar_time = "timestamp"`
+  or `"date_noon"`. The inherited `hour` argument remains a compatibility
+  alias.
+* Removed the fork-only `gmt_offset` option. Supply timezone-aware timestamps
+  or convert local observations to UTC before calculating solar geometry.
+* Removed the fork-only `averaging_period` option. HeatStressR evaluates the
+  supplied timestamp as an instantaneous observation; callers align
+  interval-mean or accumulated data before calculation.
+* `wbgt.Liljegren()` now accepts `direct_fraction`, the direct share of total
+  supplied shortwave radiation. It may be one value or a row-aligned vector
+  and defaults to 0.8.
+
 ## 2.1.4 — 2026-07-22
 
 * Parallel batch calls with `diagnostics = FALSE` now return compact worker
