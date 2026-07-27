@@ -20,27 +20,7 @@
 
 
 tashurs2vap.pres <- function(tas,hurs){
-
-# Constants (see Dosseger et al. 1992)
-c1 <- 0.06107
-a1 <- 17.368
-b1 <- 2388.3
-c2 <- 0.06108
-a2 <- 17.856
-b2 <- 2455.2
-T0 <- 0
-
-# units
-tas <- 10*tas
-hurs[hurs>100] <- 100 # some SMN stations with hurs >100
-
-iceMask <- which(tas<T0)
-waterMask <- which(tas>=T0)
-vap.pres <- rep(NA,length(tas))
-
-vap.pres[waterMask] <- hurs[waterMask] * c1 *exp((a1*tas[waterMask])/(b1+tas[waterMask]))
-vap.pres[iceMask] <- hurs[iceMask] * c2 *exp((a2*tas[iceMask])/(b2+tas[iceMask]))
-
-return(vap.pres) 
-
+  assertthat::assert_that(length(hurs) == length(tas),
+    msg="Input vectors do not have the same length")
+  .vapour_pressure_hpa(tas, pmin(hurs, 100))
 }

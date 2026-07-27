@@ -1,12 +1,24 @@
-# Liljegren benchmarks
+# Benchmarks
 
-Three benchmark runners are retained.
+Four benchmark runners are retained.
 
 | Runner | Comparison | Result |
 | --- | --- | --- |
 | `benchmark-liljegren-three-way.R` | Current batch and scalar engines versus pre-fork commit `f77a263ba6820a79b7092518ff4376c787ac45b2` | [`results/liljegren-three-way.md`](results/liljegren-three-way.md) |
 | `benchmark-liljegren-workers.R` | One through six internal workers on one fixed workload | [`results/liljegren-parallel-2.1.6-1000000-unique-triplets.md`](results/liljegren-parallel-2.1.6-1000000-unique-triplets.md) |
 | `benchmark-bernard-vectorization.R` | Legacy row-wise optimizer versus vectorized bisection | Prints results; set `BENCHMARK_OUTPUT` to save CSV. |
+| `benchmark-non-liljegren.R` | Legacy formulas versus optimized heat index, vapour pressure, dependents, and fused endpoint | Prints results; set `BENCHMARK_OUTPUT` to save CSV. |
+
+## Non-Liljegren indices
+
+This runner covers cool, mixed, and hot conditions at 1 through 1,000,000 rows.
+It compares the legacy Rothfusz and vapour-pressure calculations with the
+optimized paths, including the three vapour-pressure dependent indices and
+the fused `heat_indices()` endpoint.
+
+```sh
+BENCH_REPS=3 Rscript benchmarks/benchmark-non-liljegren.R
+```
 
 ## Bernard vectorization
 
