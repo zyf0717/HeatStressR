@@ -151,4 +151,5 @@ adjustment remain caller responsibilities.
 Built-in process-level parallel execution is implemented only for
 `wbgt.Liljegren()`. The other indices are vectorized where practical but run in
 one R process. Users who need to parallelize those calculations should manage
-independent calls in their own workflow.
+independent locations, files, or partitions in their own workflow: see
+[Parallel execution](inst/doc/parallelism.md) for guidance.

@@ -39,15 +39,20 @@ serialization, and per-process memory can outweigh parallel speedup. The
 peak combined parent-plus-worker RSS grows from 1.80 GiB (one worker) to 2.93
 GiB. See [benchmark results](../../benchmarks/results/liljegren-parallel-2.1.6-1000000-unique-triplets.md).
 
-## External `foreach` versus in-package workers
+## Caller-managed `foreach` and in-package workers
 
-Use one parallel layer per calculation:
+Choose one parallel layer for each workload:
 
-- Set `workers > 1L` for one large `wbgt.Liljegren()` call. HeatStressR owns
-  a temporary backend and parallelizes that call end to end.
-- Use a caller-managed `foreach` backend for many independent locations,
-  files, or time partitions. Keep `workers = 1L` inside each task so that the
-  outer pool stays alive across calls.
+- Set `workers > 1L` only for one large `wbgt.Liljegren()` call. HeatStressR
+  owns a temporary backend and parallelizes that call end to end.
+- Use a caller-managed `foreach` backend for independent locations, files, or
+  time partitions. This pattern applies to every HeatStressR calculation,
+  including `heat_indices()`, `wbgt.Bernard()`, and the individual indices.
+
+Most non-Liljegren indices are already vectorized, but the performance tradeoff
+between one call and external workers depends on vector length, partitioning,
+serialization, and the execution environment. Benchmark representative data on
+the target system before choosing an outer backend.
 
 ```r
 library(foreach)
@@ -68,6 +73,9 @@ results <- foreach(
 }
 ```
 
-Nested pools oversubscribe CPUs, multiply memory consumption, and repeatedly
-pay process-start and serialization costs. Use nesting only when worker and
-memory budgets have been explicitly provisioned.
+The example uses `wbgt.Liljegren()`, but the task body can call any exported
+HeatStressR function. When an outer task calls `wbgt.Liljegren()`, keep
+`workers = 1L` inside it so the outer pool stays alive. Nested pools
+oversubscribe CPUs, multiply memory consumption, and repeatedly pay process
+startup and serialization costs. Use nesting only when worker and memory
+budgets have been explicitly provisioned.
