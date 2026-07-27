@@ -8,6 +8,8 @@
 #' @return Vapour pressure in hPa.
 #' @author A.Casanueva (11.08.2016).
 #' @details Formulation from Dosseger et al. 1992. Formula 16 in MCH document.
+#' Relative humidity values above 100\% are clamped to 100\% for backwards
+#' compatibility. Higher-level index functions reject those inputs instead.
 #'  
 #' @export
 #' 

@@ -71,12 +71,36 @@ See the generated R help for the complete parameter reference:
 ?wbgt.Liljegren
 ```
 
+## Calculate multiple non-Liljegren indices
+
+Use `heat_indices()` when several closed-form indices are needed for the same
+observations. It validates the shared temperature and humidity vectors once and
+calculates vapour pressure once for `swbgt`, `apparentTemp`, and `humidex`.
+The default selection requires `wind`; request a subset when wind is not
+available.
+
+```r
+indices <- heat_indices(tas, hurs, wind = wind)
+humidex_and_hi <- heat_indices(tas, hurs, indices = c("humidex", "hi"))
+
+# Bernard WBGT is opt-in and requires dew point. The returned column is WBGT;
+# call wbgt.Bernard() directly when the psychrometric wet-bulb temperature is
+# also needed.
+shade_wbgt <- heat_indices(
+  tas, hurs, dewp = dewp, indices = "wbgt.Bernard"
+)
+```
+
+All output columns are in °C. Use `indexShow()` for the single-index input and
+unit catalog.
+
 ## Guides
 
 - [Liljegren inputs and scope](inst/doc/liljegren-inputs.md)
 - [Parallel execution](inst/doc/parallelism.md)
 - [Differences from the original C implementation](inst/doc/original-c-differences.md)
 - [Benchmarking](inst/doc/benchmarking.md)
+- [Non-Liljegren indices](inst/doc/non-liljegren-indices.md)
 - [Documentation index](inst/doc/README.md)
 
 ## Fork scope

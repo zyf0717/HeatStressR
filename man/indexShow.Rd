@@ -17,7 +17,9 @@ Print a table on the screen with the following columns:
 }
 }
 \description{
-Print a table with a summary of the available indices
+Print a table with a summary of the available single-index
+calculations. The fused \code{heat_indices()} helper is documented
+separately because it returns multiple requested indices.
 }
 \author{
 A. Casanueva

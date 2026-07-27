@@ -15,7 +15,15 @@
 #' @return A data frame with one row per input observation and one column per
 #'   requested index. The optional \code{wbgt.Bernard} column contains the WBGT
 #'   value; call \code{wbgt.Bernard()} directly to obtain \code{Tpwb} too.
+#' @details The closed-form indices are calculated directly from shared
+#' inputs. Vapour pressure is calculated once when one or more of
+#' \code{swbgt}, \code{apparentTemp}, and \code{humidex} is requested.
 #' @export
+#' @examples
+#' heat_indices(
+#'   tas = c(25, 30), hurs = c(60, 70), wind = c(1, 2),
+#'   indices = c("humidex", "hi", "apparentTemp")
+#' )
 heat_indices <- function(tas, hurs, wind = NULL, dewp = NULL,
                          indices = c("wbt", "swbgt", "apparentTemp",
                            "effectiveTemp", "humidex", "discomInd", "hi")) {

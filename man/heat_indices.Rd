@@ -36,3 +36,14 @@ A data frame with one row per input observation and one column per
 Calculates selected non-Liljegren heat indices while reusing validation and
 vapour pressure calculations across the requested indices.
 }
+\details{
+The closed-form indices are calculated directly from shared
+inputs. Vapour pressure is calculated once when one or more of
+\code{swbgt}, \code{apparentTemp}, and \code{humidex} is requested.
+}
+\examples{
+heat_indices(
+  tas = c(25, 30), hurs = c(60, 70), wind = c(1, 2),
+  indices = c("humidex", "hi", "apparentTemp")
+)
+}

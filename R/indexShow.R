@@ -1,5 +1,7 @@
 #' @title List all available heat indices
-#' @description Print a table with a summary of the available indices
+#' @description Print a table with a summary of the available single-index
+#' calculations. The fused \code{heat_indices()} helper is documented
+#' separately because it returns multiple requested indices.
 #' @return Print a table on the screen with the following columns:
 #' \itemize{
 #' \item \strong{code}: Code of the index.
