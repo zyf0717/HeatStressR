@@ -7,5 +7,4 @@ apparentTemp;apparent temperature;apparentTemp;1;0;1;1;0;degC
 effectiveTemp;effective temperature;effectiveTemp;1;0;1;1;0;degC
 humidex;humidex;humidex;1;0;1;0;0;degC
 discomInd;discomfort index;discomInd;1;0;1;0;0;degC
-hi;heat index;hi;1;0;1;0;0;degF 
-
+hi;heat index;hi;1;0;1;0;0;degC

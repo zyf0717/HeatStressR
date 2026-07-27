@@ -19,6 +19,8 @@ Calculation of vapour pressure from temperature and relative humidity
 }
 \details{
 Formulation from Dosseger et al. 1992. Formula 16 in MCH document.
+Relative humidity values above 100\% are clamped to 100\% for backwards
+compatibility. Higher-level index functions reject those inputs instead.
 }
 \examples{
 \dontrun{ 

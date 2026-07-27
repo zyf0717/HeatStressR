@@ -1,8 +1,8 @@
 Package: HeatStressR
 Type: Package
 Title: Calculate Heat Stress Indices
-Version: 2.1.6
-Date: 2026-07-23
+Version: 2.2.0
+Date: 2026-07-27
 Authors@R: c(
     person("Yifei", "Zheng", email = "zyf0717@gmail.com", role = c("aut", "cre"),
            comment = "Maintainer of this fork"),

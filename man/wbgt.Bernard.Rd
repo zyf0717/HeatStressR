@@ -11,7 +11,8 @@ wbgt.Bernard(tas, dewp, tolerance = 1e-04, noNAs = TRUE, swap = FALSE)
 
 \item{dewp}{vector of dew point temperature in degC.}
 
-\item{tolerance}{(optional): tolerance value for the iteration. Default: 1e-4.}
+\item{tolerance}{(optional): maximum final bracket width for the psychrometric
+wet-bulb solution. Default: 1e-4.}
 
 \item{noNAs}{logical, should NAs be introduced when dewp>tas? If TRUE specify how to deal in those cases (swap argument)}
 
@@ -28,7 +29,7 @@ $Tpwb: phychrometric wet bulb temperature (Tpwb) in degC.
 Calculation of wet bulb globe temperature from air temperature and dew point temperature. This corresponds to the implementation for indoors or shadow conditions.
 }
 \details{
-Based on Lemke and Kjellstrom 2012, using the formulation from Bernard et al. 1999.
+Based on Lemke and Kjellstrom 2012, using the formulation from Bernard et al. 1999. The psychrometric wet-bulb temperature is solved with vectorized bisection on the physical interval from dew point to air temperature.
 }
 \examples{
 \dontrun{ 

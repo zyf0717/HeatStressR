@@ -20,21 +20,7 @@
 
 wbt.Stull <- function(tas,hurs){
 
-  # assertion statements
-  assertthat::assert_that(length(hurs)==length(tas), msg="Input vectors do not have the same length")
-  assertthat::assert_that(all(hurs <= 100, na.rm = TRUE), msg="Some values in hurs are greater than 100")
-  
-  # Constants
-  c1 <- 0.151977
-  c2 <- 8.313659
-  c3 <- 1.676331
-  c4 <- 0.00391838
-  c5 <- 0.023101
-  c6 <- 4.686035
-  
-  # calculation of the wet bulb temperature in degC (Stull 2011)
-  wetbulb <- tas * atan(c1 * sqrt(hurs + c2)) + atan(tas + hurs) - atan(hurs - c3) + c4 * (hurs^(3/2)) * atan(c5 * hurs) - c6 
-  
-  return(wetbulb)
+  .validate_tas_hurs(tas, hurs)
+  .wbt_stull(tas, hurs)
 
 }

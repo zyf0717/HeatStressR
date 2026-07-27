@@ -30,12 +30,10 @@ swbgt <- function(tas,hurs){
   c2 <- 0.216
   c3 <- 3.38
 
-  # assertion statements
-  assertthat::assert_that(length(hurs)==length(tas), msg="Input vectors do not have the same length")
-  assertthat::assert_that(all(hurs <= 100, na.rm = TRUE), msg="Some values in hurs are greater than 100")
+  .validate_tas_hurs(tas, hurs)
   
   # Calculate vapour pressure in hPa
-  vp <- tashurs2vap.pres(tas, hurs)
+  vp <- .vapour_pressure_hpa(tas, hurs)
   
   # calculation of the swbgt
   result <- c1 * tas + c2 * vp + c3

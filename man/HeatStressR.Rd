@@ -25,6 +25,8 @@ The following calculation methods are implemented:
  \item \code{humidex}: Calculation of the humidex (Buzan et al. 2015 and references therein).
  \item \code{discomInd}: Calculation of the discomfort index (Coccolo et al. 2016 and references therein).
  \item \code{hi}: Calculation of the heat index (NOAA, Rothfusz 1990).
+ \item \code{heat_indices}: Fused calculation of multiple non-Liljegren
+ indices from shared observations.
 }
 
 \code{wbgt.Liljegren()} implements the outdoor Liljegren wet-bulb globe
@@ -57,4 +59,6 @@ their application. To cite the package and the Liljegren model, use
 
 Check the details of the indices and input variables with
 \code{indexShow()}.
+Use \code{heat_indices()} to calculate multiple closed-form indices from the
+same observations while reusing shared intermediate calculations.
 }

@@ -21,12 +21,10 @@
 
 apparentTemp <- function(tas,hurs, wind){
   
-  # assertion statements
-  assertthat::assert_that(length(hurs)==length(tas) & length(tas)==length(wind), msg="Input vectors do not have the same length")
-  assertthat::assert_that(all(hurs <= 100, na.rm = TRUE), msg="Some values in hurs are greater than 100")
+  .validate_tas_hurs_wind(tas, hurs, wind)
   
   # Calculate vapour pressure in hPa
-  vp <- tashurs2vap.pres(tas, hurs)
+  vp <- .vapour_pressure_hpa(tas, hurs)
   
   # Calculate apparent temperature
   result <- tas + 0.33*vp - 0.7*wind -4
