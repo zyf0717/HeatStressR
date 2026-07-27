@@ -16,9 +16,6 @@
 
 dewp2hurs <- function(tas,dewp){
 
-assertthat::assert_that(length(tas) == length(dewp),
-                        msg="Input vectors do not have the same length")
-
 # Constants (see Dosseger et al. 1992)
 # IF T ≥ 0: a = 17.368 and b = 238.83
 # IF T < 0: a = 17.856 and b = 245.52
@@ -27,10 +24,10 @@ a1 <- 17.368
 b1 <- 238.83
 a2 <- 17.856
 b2 <- 245.52
-hurs <- rep(NA_real_, length(tas))
+hurs <- rep(NA,length(tas))
 
-iceMask <- !is.na(tas) & tas < T0
-waterMask <- !is.na(tas) & tas >= T0
+iceMask <- which(tas<T0)
+waterMask <- which(tas>=T0)
 
 hurs[waterMask] <- 100*exp(((a1*dewp[waterMask])/(b1+dewp[waterMask]))-((a1*tas[waterMask])/(b1+tas[waterMask])))
 hurs[iceMask] <- 100*exp(((a2*dewp[iceMask])/(b2+dewp[iceMask]))-((a2*tas[iceMask])/(b2+tas[iceMask])))

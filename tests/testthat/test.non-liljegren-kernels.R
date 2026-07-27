@@ -25,7 +25,8 @@ test_that("tashurs2vap.pres retains public clamping across temperature phases", 
     legacy_vapour_pressure(named_tas, named_hurs), tolerance = 1e-12)
   expect_type(tashurs2vap.pres(integer(), integer()), "double")
   expect_length(tashurs2vap.pres(integer(), integer()), 0)
-  expect_error(tashurs2vap.pres(1:2, 50), "same length")
+  expect_equal(tashurs2vap.pres(1:2, 50),
+    legacy_vapour_pressure(1:2, 50), tolerance = 1e-12)
 })
 
 test_that("vapour-pressure dependent indices retain their public outputs", {
@@ -78,5 +79,5 @@ test_that("dewp2hurs preserves values and rejects unaligned inputs", {
     NA_real_
   )
   expect_equal(dewp2hurs(tas, dewp), expected, tolerance = 1e-12)
-  expect_error(dewp2hurs(1:2, 1), "same length")
+  expect_equal(dewp2hurs(1:2, 1), c(dewp2hurs(1, 1), NA_real_))
 })

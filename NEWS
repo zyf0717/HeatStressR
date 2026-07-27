@@ -1,5 +1,30 @@
 # HeatStressR NEWS
 
+## 2.2.0 — 2026-07-27
+
+### Added
+
+* `heat_indices()` calculates multiple requested non-Liljegren indices from
+  aligned observations, reusing shared validation and vapour-pressure work.
+  `wbgt.Bernard` is available as an explicit opt-in when dew point is supplied.
+* Reproducible benchmarks cover optimized non-Liljegren paths across cool,
+  mixed, and hot inputs from 1 through 1,000,000 rows.
+
+### Changed
+
+* `wbgt.Bernard()` uses a vectorized, bracketed bisection solver in place of
+  one `stats::optimize()` call per valid row. Its public arguments and
+  preprocessing behavior are unchanged.
+* `hi()` evaluates the Rothfusz polynomial only for rows where it applies.
+  It now returns degrees Celsius, matching its Celsius input and the rest of
+  the package. To reproduce a previous Fahrenheit result, use
+  `hi(tas, hurs) * 1.8 + 32`.
+* Shared vapour-pressure work and small vector-allocation improvements reduce
+  repeated computation in closed-form indices. Existing exported function
+  names, formal arguments, positional calling conventions, and legacy
+  unequal-length behavior of `tashurs2vap.pres()` and `dewp2hurs()` are
+  retained.
+
 ## 2.1.6 — 2026-07-23
 
 * Multi-worker `wbgt.Liljegren()` execution now uses a temporary

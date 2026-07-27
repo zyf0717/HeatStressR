@@ -22,7 +22,5 @@
 
 
 tashurs2vap.pres <- function(tas,hurs){
-  assertthat::assert_that(length(hurs) == length(tas),
-    msg="Input vectors do not have the same length")
   .vapour_pressure_hpa(tas, pmin(hurs, 100))
 }
