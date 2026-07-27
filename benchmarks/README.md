@@ -1,11 +1,23 @@
 # Liljegren benchmarks
 
-Only two benchmark runners are retained.
+Three benchmark runners are retained.
 
 | Runner | Comparison | Result |
 | --- | --- | --- |
 | `benchmark-liljegren-three-way.R` | Current batch and scalar engines versus pre-fork commit `f77a263ba6820a79b7092518ff4376c787ac45b2` | [`results/liljegren-three-way.md`](results/liljegren-three-way.md) |
 | `benchmark-liljegren-workers.R` | One through six internal workers on one fixed workload | [`results/liljegren-parallel-2.1.6-1000000-unique-triplets.md`](results/liljegren-parallel-2.1.6-1000000-unique-triplets.md) |
+| `benchmark-bernard-vectorization.R` | Legacy row-wise optimizer versus vectorized bisection | Prints results; set `BENCHMARK_OUTPUT` to save CSV. |
+
+## Bernard vectorization
+
+The runner uses identical, physically bracketed temperature/dew-point rows for
+both implementations. It reports the median runtime, speedup, and maximum
+absolute psychrometric wet-bulb difference for 100, 10,000, 100,000, and
+1,000,000 rows by default.
+
+```sh
+BENCH_REPS=3 Rscript benchmarks/benchmark-bernard-vectorization.R
+```
 
 ## Three-way comparison
 
