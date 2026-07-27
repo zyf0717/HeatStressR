@@ -9,11 +9,34 @@
 
 ## What is HeatStressR?
 
-HeatStressR calculates heat-stress indices in R, including the Liljegren WBGT
-method. Its Liljegren implementation provides vectorized batch solving,
-explicit physical and numerical controls, input validation, and row-aligned
-diagnostics. It is an R implementation of the Liljegren model, not a
-bitwise-compatible port of the original C program.
+HeatStressR calculates heat-stress indices from aligned meteorological
+observations. It retains the original package's public index functions while
+substantially extending the Liljegren wet-bulb globe temperature (WBGT) model
+and optimizing the remaining indices.
+
+This fork was created for a workload requiring approximately **two billion
+Liljegren calculations**. That scale made the inherited per-row R execution
+path impractical, so the work concentrated first on vectorized numerical
+solving, predictable failure handling, and scalable batch execution.
+
+HeatStressR is an R implementation of the Liljegren model, not a
+bitwise-compatible port of the original C program. Match physical assumptions
+and numerical controls before comparing implementations.
+
+## What changed since `f77a263`?
+
+| Area | Upgrades in HeatStressR |
+| --- | --- |
+| Liljegren throughput | Vectorized batch solving is the default; optional local PSOCK workers split a single large calculation across processes. |
+| Numerical behavior | Adaptive bracketing, residual validation, scalar fallback, and row-aligned diagnostics distinguish invalid inputs from solver failures. |
+| Meteorological inputs | Timestamp-aware solar geometry, scalar or row-aligned pressure/coordinates/direct-radiation fraction, and explicit physical controls. |
+| Operational use | Documented batch, parallel, timestamp, and input contracts; reproducible performance runners for large workloads. |
+| Other indices | Vectorized Bernard psychrometric solves, selective NWS heat-index regression in °C, shared vapour-pressure kernels, and fused multi-index calculation through `heat_indices()`. |
+| Compatibility | Existing exported function signatures and positional calling conventions are retained; `hi()` now returns °C to match its °C input. |
+
+The largest and most mature changes are in `wbgt.Liljegren()`. The closed-form
+and Bernard updates improve common non-Liljegren workflows without adding
+compiled-code dependencies or changing their existing input signatures.
 
 ## Install and load
 
@@ -25,7 +48,20 @@ library(HeatStressR)
 indexShow()
 ```
 
-## Calculate Liljegren WBGT
+## Units and parameter reference
+
+`indexShow()` lists each single-index calculation, its required inputs, and its
+output unit. For detailed parameter definitions and units—including Liljegren
+controls such as pressure, radiation, coordinates, timestamps, and direct
+fraction—use the generated R help for the relevant function:
+
+```r
+?wbgt.Liljegren
+?wbgt.Bernard
+?heat_indices
+```
+
+## Quick start: Liljegren WBGT
 
 `wbgt.Liljegren()` expects aligned vectors for air temperature (`tas`, °C),
 dewpoint (`dewp`, °C), wind speed (`wind`, m/s), total downwelling shortwave
@@ -52,7 +88,9 @@ result <- wbgt.Liljegren(
 
 The result contains WBGT, globe temperature (`Tg`), and natural wet-bulb
 temperature (`Tnwb`). Batch is the default engine; use scalar only for
-reference comparisons or debugging.
+reference comparisons or debugging. For a single very large call, set
+`workers > 1` to use temporary local PSOCK workers; do not nest it inside an
+existing parallel loop.
 
 ## Liljegren contract
 
