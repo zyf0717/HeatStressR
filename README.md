@@ -1,6 +1,8 @@
 # HeatStressR
 
 [![R-CMD-check](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml)
+[![Release](https://img.shields.io/github/v/release/zyf0717/HeatStressR?display_name=tag&sort=semver)](https://github.com/zyf0717/HeatStressR/releases)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/zyf0717/HeatStressR/blob/master/LICENSE)
 
 > **Fork notice:** HeatStressR is an independently maintained fork of
 > [HeatStress at `f77a263`](https://github.com/anacv/HeatStress/tree/f77a263ba6820a79b7092518ff4376c787ac45b2).

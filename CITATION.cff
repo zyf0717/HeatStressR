@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use HeatStressR, please cite it as below."
+type: software
+title: "HeatStressR: Calculate Heat Stress Indices"
+abstract: "An independently maintained fork of HeatStress that improves numerical robustness, diagnostics, validation, documentation, and performance across multiple heat-stress indices, including a substantially optimized Liljegren WBGT implementation."
+authors:
+  - family-names: "Zheng"
+    given-names: "Yifei"
+  - family-names: "Casanueva"
+    given-names: "Ana"
+version: 2.2.0
+repository-code: "https://github.com/zyf0717/HeatStressR"
+url: "https://github.com/zyf0717/HeatStressR"
+license: GPL-3.0-only
