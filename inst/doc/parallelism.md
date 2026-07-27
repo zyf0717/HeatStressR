@@ -2,6 +2,11 @@
 
 Return to the [package README](https://github.com/zyf0717/HeatStressR#readme).
 
+This guide applies only to `wbgt.Liljegren()`. It is the only HeatStressR
+calculation with built-in process-level parallel execution. Other indices are
+vectorized where practical but run in one R process. Users who need to
+parallelize them should manage independent calls in their own workflow.
+
 ## In-package workers
 
 The default batch engine runs in one R process. Set `workers` to split one

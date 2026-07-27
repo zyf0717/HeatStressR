@@ -143,7 +143,12 @@ unit catalog.
 
 ## Fork scope
 
-HeatStressR maintains an R implementation of the Liljegren model with
-vectorized batch solving, optional `foreach`/PSOCK workers, configurable sensor and
-radiation controls, timezone-aware solar geometry, and row-aligned solver
-diagnostics.
+HeatStressR prioritizes scalable Liljegren WBGT and compatible improvements to
+the remaining heat indices. It evaluates supplied meteorological states;
+source-specific preprocessing, interval conventions, and wind-height
+adjustment remain caller responsibilities.
+
+Built-in process-level parallel execution is implemented only for
+`wbgt.Liljegren()`. The other indices are vectorized where practical but run in
+one R process. Users who need to parallelize those calculations should manage
+independent calls in their own workflow.
