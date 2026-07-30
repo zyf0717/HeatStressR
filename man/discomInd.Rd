@@ -21,11 +21,9 @@ Calculation of the discomfort index from temperature and relative humidity.
 Formula based on air temperature and relative humidity, as it is calculated in Coccolo et al. 2016 and references therein.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 di <- discomInd(data_obs$tasmean, hurs=data_obs$hurs)
-}
 
 }
 \author{

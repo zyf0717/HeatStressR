@@ -3,3 +3,5 @@
 ^benchmarks$
 ^\.github$
 ^cran-comments\.md$
+^CITATION\.cff$
+^LICENSE$

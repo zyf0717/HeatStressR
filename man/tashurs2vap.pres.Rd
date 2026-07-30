@@ -23,11 +23,9 @@ Relative humidity values above 100\% are clamped to 100\% for backwards
 compatibility. Higher-level index functions reject those inputs instead.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 vp <- tashurs2vap.pres(data_obs$tasmean, hurs=data_obs$hurs)
-}
 
 }
 \author{

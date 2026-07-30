@@ -23,11 +23,9 @@ Calculation of the apparent temperature from temperature, relative humidity and 
 Formula based on air temperature, relative humidity and wind only, as it is calculated in Steadman 1994, Buzan et al. 2015 GMD and references therein. There is a version including radiation (net radiation absorved per unit area of human body surface), but it is not implemented here.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 at <- apparentTemp(data_obs$tasmean, hurs=data_obs$hurs, wind= data_obs$wind)
-}
 
 }
 \author{

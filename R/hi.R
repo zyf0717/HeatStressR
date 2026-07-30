@@ -11,11 +11,10 @@
 #'  
 #' @export
 #' 
-#' @examples \dontrun{ 
+#' @examples
 #' # load the meteorological variables for example data in Salamanca:
 #' data("data_obs") 
 #' heatindex <- hi(data_obs$tasmean, hurs=data_obs$hurs)
-#' }
 #' 
 
 

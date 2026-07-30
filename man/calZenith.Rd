@@ -35,11 +35,9 @@ ranges. Solar time incorporates longitude and the equation of time. Missing
 dates return \code{NA} in the corresponding output position.
 }
 \examples{
-\dontrun{
 calZenith("1981-06-15", -5.66, 40.96)
 calZenith("1981-06-15 10:00:00", -5.66, 40.96, solar_time = "timestamp")
 calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
-}
 }
 \author{
 Anke Duguay-Tetzlaff, Translated to R by Ana Casanueva (17.01.2017)

@@ -23,11 +23,9 @@ Calculation of the effective temperature from temperature, relative humidity and
 Formula based on air temperature, relative humidity and wind, as it is calculated in Coccolo et al. 2016 and references therein.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 et <- effectiveTemp(data_obs$tasmean, hurs=data_obs$hurs, wind=data_obs$wind)
-}
 
 }
 \author{

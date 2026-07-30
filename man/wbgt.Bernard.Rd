@@ -32,11 +32,9 @@ Calculation of wet bulb globe temperature from air temperature and dew point tem
 Based on Lemke and Kjellstrom 2012, using the formulation from Bernard et al. 1999. The psychrometric wet-bulb temperature is solved with vectorized bisection on the physical interval from dew point to air temperature.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 wbgt.indoors <- wbgt.Bernard(tas=data_obs$tasmean, dewp=data_obs$dewp)
-}
 
 }
 \author{
