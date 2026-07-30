@@ -12,11 +12,10 @@
 #'   
 #' @export
 #' 
-#' @examples \dontrun{ 
+#' @examples
 #' # load the meteorological variables for example data in Salamanca:
 #' data("data_obs") 
 #' at <- apparentTemp(data_obs$tasmean, hurs=data_obs$hurs, wind= data_obs$wind)
-#' }
 #' 
 
 apparentTemp <- function(tas,hurs, wind){

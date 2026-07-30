@@ -171,7 +171,7 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' )
 #' result$data
 #'
-#' \dontrun{
+#' \donttest{
 #' result_parallel <- wbgt.Liljegren(
 #'   tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
 #'   radiation = c(700, 750), dates = times, lon = 0, lat = 15,

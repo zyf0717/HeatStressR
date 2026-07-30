@@ -80,11 +80,10 @@ bernard_bisection <- function(tas, dewp, ed, tolerance,
 #' @details Based on Lemke and Kjellstrom 2012, using the formulation from Bernard et al. 1999. The psychrometric wet-bulb temperature is solved with vectorized bisection on the physical interval from dew point to air temperature.
 #' @export
 #' 
-#' @examples \dontrun{ 
+#' @examples
 #' # load the meteorological variables for example data in Salamanca:
 #' data("data_obs") 
 #' wbgt.indoors <- wbgt.Bernard(tas=data_obs$tasmean, dewp=data_obs$dewp)
-#' }
 #' 
 wbgt.Bernard <- function(tas, dewp, tolerance= 1e-4, noNAs=TRUE, swap=FALSE){
 

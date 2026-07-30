@@ -21,11 +21,9 @@ Calculation of humidex from temperature and relative humidity.
 Formula based on air temperature and relative humidity, as it is calculated in Buzan 2015 GMD and references therein.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 hum <- humidex(data_obs$tasmean, hurs=data_obs$hurs)
-}
 
 }
 \author{

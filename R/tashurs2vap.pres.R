@@ -13,11 +13,10 @@
 #'  
 #' @export
 #' 
-#' @examples \dontrun{ 
+#' @examples
 #' # load the meteorological variables for example data in Salamanca:
 #' data("data_obs") 
 #' vp <- tashurs2vap.pres(data_obs$tasmean, hurs=data_obs$hurs)
-#' }
 #' 
 
 

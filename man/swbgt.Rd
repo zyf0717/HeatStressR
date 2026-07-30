@@ -21,11 +21,9 @@ Calculation of the simplified wet bulb globe temperature from temperature and re
 Formula based on air temperature and relative humidity, as it is calculated in Buzan et al. 2015 GMD with a small correction in the constants from Lemke and Kjellstrom 2012.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 swbgt <- swbgt(data_obs$tasmean, hurs=data_obs$hurs)
-}
 
 }
 \author{

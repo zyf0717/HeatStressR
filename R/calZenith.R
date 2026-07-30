@@ -20,11 +20,10 @@
 #' dates return `NA` in the corresponding output position.
 #' @author Anke Duguay-Tetzlaff, Translated to R by Ana Casanueva (17.01.2017)
 #' 
-#' @examples \dontrun{ 
+#' @examples
 #' calZenith("1981-06-15",  -5.66, 40.96)
 #' calZenith("1981-06-15 10:00:00",  -5.66, 40.96, solar_time = "timestamp")
 #' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
-#' }
 #' @noRd
 parse_wall_datetime <- function(x) {
   result <- rep(NA_real_, length(x))
@@ -166,11 +165,10 @@ calculate_zenith_from_solar_terms <- function(utc_minutes, equation_of_time,
 #' @author Anke Duguay-Tetzlaff, Translated to R by Ana Casanueva (17.01.2017)
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples
 #' calZenith("1981-06-15", -5.66, 40.96)
 #' calZenith("1981-06-15 10:00:00", -5.66, 40.96, solar_time = "timestamp")
 #' calZenith("1981-06-15T18:00:00+08:00", -5.66, 40.96, solar_time = "timestamp")
-#' }
 calZenith <- function(dates, lon, lat, hour = FALSE, solar_time = "timestamp") {
   hour_supplied <- !missing(hour)
   solar_time_supplied <- !missing(solar_time)

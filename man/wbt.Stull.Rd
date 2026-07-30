@@ -21,11 +21,9 @@ Calculation of wet bulb temperature from temperature and relative humidity.
 Formulation from Stull 2011, Journal of Applied Meteorology and Climatology.
 }
 \examples{
-\dontrun{ 
 # load the meteorological variables for example data in Salamanca:
 data("data_obs") 
 wbt <- wbt.Stull(data_obs$tasmean, hurs=data_obs$hurs)
-}
 
 }
 \author{

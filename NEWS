@@ -1,5 +1,12 @@
 # HeatStressR NEWS
 
+## 2.2.1 — 2026-07-31
+
+* Examples completing within five seconds are now unwrapped and run as
+  ordinary examples.
+* Remaining executable long-running examples now use `\donttest{}` instead of
+  `\dontrun{}`.
+
 ## 2.2.0 — 2026-07-27
 
 ### Added
