@@ -282,29 +282,6 @@ solve_liljegren_parallel_worker <- function(chunk, controls, diagnostics) {
   if (diagnostics) result else compact_liljegren_chunk_result(result)
 }
 
-capture_foreach_backend <- function() {
-  globals <- utils::getFromNamespace(".foreachGlobals", "foreach")
-  names <- c("fun", "data", "info")
-  present <- vapply(names, exists, logical(1), envir = globals, inherits = FALSE)
-  list(
-    globals = globals,
-    present = present,
-    values = stats::setNames(lapply(names[present], get, envir = globals,
-      inherits = FALSE), names[present])
-  )
-}
-
-restore_foreach_backend <- function(backend) {
-  names <- names(backend$present)
-  for (name in names) {
-    if (backend$present[[name]]) {
-      assign(name, backend$values[[name]], envir = backend$globals)
-    } else if (exists(name, envir = backend$globals, inherits = FALSE)) {
-      rm(list = name, envir = backend$globals)
-    }
-  }
-}
-
 solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, lon, lat,
                                      hour, pressure, direct_fraction, workers,
                                      controls, diagnostics) {
@@ -320,17 +297,12 @@ solve_liljegren_parallel <- function(tas, dewp, wind, radiation, dates, lon, lat
     direct_fraction = direct_fraction[index],
     dates = dates[index], lon = lon[index], lat = lat[index], hour = hour
   ))
-  backend <- capture_foreach_backend()
-  on.exit(restore_foreach_backend(backend), add = TRUE)
   cluster <- parallel::makePSOCKcluster(effective_workers)
   on.exit(parallel::stopCluster(cluster), add = TRUE)
-  doParallel::registerDoParallel(cluster)
-  chunk <- NULL
-  chunk_results <- foreach::`%dopar%`(
-    foreach::foreach(chunk = chunks, .packages = "HeatStressR", .inorder = TRUE),
-    utils::getFromNamespace("solve_liljegren_parallel_worker", "HeatStressR")(
-      chunk, controls, diagnostics
-    )
+  invisible(parallel::clusterCall(cluster, base::loadNamespace, "HeatStressR"))
+  worker <- utils::getFromNamespace("solve_liljegren_parallel_worker", "HeatStressR")
+  chunk_results <- parallel::parLapply(
+    cluster, chunks, worker, controls = controls, diagnostics = diagnostics
   )
   if (!diagnostics) {
     return(list(
