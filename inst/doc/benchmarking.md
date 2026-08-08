@@ -4,9 +4,8 @@ Return to the [package README](https://github.com/zyf0717/HeatStressR#readme).
 
 `calZenith()` processes date vectors in one pass. The batch engine is the
 default because it vectorizes the dominant numerical solves. It remains
-single-process unless `workers > 1L`; then each temporary `foreach`/
-`doParallel` PSOCK worker calculates zenith and runs the full chunk-local WBGT
-pipeline.
+single-process unless `workers > 1L`; then each temporary base R PSOCK worker
+calculates zenith and runs the full chunk-local WBGT pipeline.
 
 Performance depends on input size, coordinate reuse, worker count, and local
 hardware. Measure the current release on the target workload with the

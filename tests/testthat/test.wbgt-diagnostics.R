@@ -94,3 +94,29 @@ test_that("nighttime solar forcing is removed and geometry mismatches are record
   expect_equal(forced$Tg[1], nighttime$Tg)
   expect_equal(forced$Tnwb[1], nighttime$Tnwb)
 })
+
+test_that("preprocessing diagnostics are aligned across local engines", {
+  dates <- as.POSIXct(c("2024-06-01 00:00:00", "2024-06-01 12:00:00",
+    "2024-06-01 12:00:00", "2024-06-01 12:00:00"), tz = "UTC")
+  run <- function(engine) suppressWarnings(wbgt.Liljegren(
+    tas = rep(20, 4), dewp = c(10, 25, 10, 25),
+    wind = c(1, -1, 1, 1), radiation = c(100, -10, 100, 100),
+    dates = dates, lon = 0, lat = 0, hour = TRUE,
+    pressure = c(1010, 1010, 1010, NA), diagnostics = TRUE,
+    engine = engine
+  ))
+  batch <- run("batch")$diagnostics
+  scalar <- run("scalar")$diagnostics
+  expected <- list(
+    wind_clamped = c(FALSE, TRUE, FALSE, FALSE),
+    radiation_clamped = c(FALSE, TRUE, FALSE, FALSE),
+    radiation_zeroed_below_horizon = c(TRUE, FALSE, FALSE, FALSE),
+    dewpoint_adjusted = c(FALSE, TRUE, FALSE, TRUE)
+  )
+
+  for (field in names(expected)) {
+    expect_identical(batch[[field]], expected[[field]])
+    expect_identical(scalar[[field]], expected[[field]])
+  }
+  expect_identical(batch$input_status[4], "missing_input")
+})

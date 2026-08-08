@@ -1,6 +1,17 @@
 # HeatStressR NEWS
 
-## 2.2.1.9000 — development
+## 2.3.0 — 2026-08-08
+
+* Liljegren forcing, input-status, dewpoint-policy, and humidity preprocessing
+  now share one internal implementation across local and PSOCK paths.
+  Diagnostics optionally expose wind/radiation clamping, below-horizon
+  radiation zeroing, and dewpoint adjustment for each row.
+* Multi-worker Liljegren execution now uses base `parallel::parLapply()` with
+  temporary PSOCK workers. `foreach` and `doParallel` are no longer package
+  dependencies, and numerical results and worker controls are unchanged.
+* `heat_indices(tas, hurs)` now selects the five indices supported without
+  wind. Supplying wind retains the existing seven-index default, while Bernard
+  WBGT remains explicit.
 
 ## 2.2.1 — 2026-07-31
 

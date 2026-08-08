@@ -70,8 +70,9 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' @param engine Numerical solver engine. \code{"batch"} is the default
 #' vectorized safeguarded root solver with automatic scalar fallback for
 #' unresolved rows. \code{"scalar"} selects the reference R implementation.
-#' @param diagnostics logical; return solver metadata in addition to the usual result.
-#' @param workers number of \code{foreach}/PSOCK worker processes for
+#' @param diagnostics logical; return solver and preprocessing metadata in
+#' addition to the usual result.
+#' @param workers number of PSOCK worker processes for
 #' \code{engine = "batch"}.
 #' Must be an integer from 1 through the currently permitted logical CPU count.
 #' The default of 1 preserves sequential batch execution; values greater than 1
@@ -115,7 +116,7 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' fork and is not affiliated with the original project or its authors.
 #'
 #' The batch engine is the default implementation. It uses explicitly requested
-#' \code{foreach}/\code{doParallel} PSOCK workers when \code{workers > 1}; no
+#' base R PSOCK workers when \code{workers > 1}; no
 #' workers are created by default.
 #' The scalar engine remains available as a reference implementation. Pressure, surface
 #' albedo, globe diameter, minimum wind speed, and direct-radiation fraction
@@ -146,6 +147,9 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' With \code{diagnostics = TRUE}, all row-level diagnostic vectors match the
 #' input length. \code{input_status} describes filtering, while per-solver
 #' \code{converged} and \code{fallback_reason} describe numerical solving.
+#' Preprocessing is recorded by \code{wind_clamped},
+#' \code{radiation_clamped}, \code{radiation_zeroed_below_horizon}, and
+#' \code{dewpoint_adjusted}.
 #' \code{workers} reports the effective worker count and
 #' \code{requested_workers} reports the supplied count.
 #'
@@ -271,6 +275,10 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
       input_valid <- parallel_result$input_valid
       input_status <- parallel_result$input_status
       solar_geometry_mismatch <- parallel_result$solar_geometry_mismatch
+      wind_clamped <- parallel_result$wind_clamped
+      radiation_clamped <- parallel_result$radiation_clamped
+      radiation_zeroed_below_horizon <- parallel_result$radiation_zeroed_below_horizon
+      dewpoint_adjusted <- parallel_result$dewpoint_adjusted
       valid_idx <- parallel_result$valid_idx
       Tg.batch <- parallel_result$Tg.batch
       Tnwb.batch <- parallel_result$Tnwb.batch
@@ -293,7 +301,7 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour)
   preprocessed <- preprocess_liljegren_inputs(
     tas, dewp, wind, radiation, pressure, zenith_rad,
-    noNAs, swap, dewpoint_tolerance
+    noNAs, swap, dewpoint_tolerance, diagnostics
   )
   tas <- preprocessed$tas
   dewp <- preprocessed$dewp
@@ -305,6 +313,12 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   input_status <- preprocessed$input_status
   solar_geometry_mismatch <- preprocessed$solar_geometry_mismatch
   valid_idx <- preprocessed$valid_idx
+  if (diagnostics) {
+    wind_clamped <- preprocessed$wind_clamped
+    radiation_clamped <- preprocessed$radiation_clamped
+    radiation_zeroed_below_horizon <- preprocessed$radiation_zeroed_below_horizon
+    dewpoint_adjusted <- preprocessed$dewpoint_adjusted
+  }
   MinWindSpeed <- min_wind_speed
   Tnwb <- rep(NA_real_, ndates)
   Tg <- rep(NA_real_, ndates)
@@ -423,6 +437,11 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
     wbgt$diagnostics$complete_wbgt <- wbgt$diagnostics$Tg$converged &
       wbgt$diagnostics$Tnwb$converged
     wbgt$diagnostics$solar_geometry_mismatch <- solar_geometry_mismatch
+    wbgt$diagnostics$wind_clamped <- wind_clamped
+    wbgt$diagnostics$radiation_clamped <- radiation_clamped
+    wbgt$diagnostics$radiation_zeroed_below_horizon <-
+      radiation_zeroed_below_horizon
+    wbgt$diagnostics$dewpoint_adjusted <- dewpoint_adjusted
   }
   wbgt
 }
