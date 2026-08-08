@@ -23,5 +23,5 @@ Suggests:
     pkgload,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Imports: stats, assertthat, parallel, foreach, doParallel
+Imports: stats, assertthat, parallel
 Encoding: UTF-8

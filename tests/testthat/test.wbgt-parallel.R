@@ -50,23 +50,33 @@ test_that("check core limit constrains the permitted worker maximum", {
     "permitted worker count")
 })
 
-test_that("parallel execution restores the foreach backend", {
+test_that("parallel execution uses ordered base PSOCK workers", {
   skip_if(HeatStressR:::max_liljegren_workers() < 2L,
     "requires at least two logical CPUs")
-  previous_cluster <- parallel::makePSOCKcluster(1L)
-  doParallel::registerDoParallel(previous_cluster)
-  on.exit({
-    foreach::registerDoSEQ()
-    parallel::stopCluster(previous_cluster)
-  }, add = TRUE)
+  sequential <- run_parallel_fixture(1L)
+  parallel <- run_parallel_fixture(2L)
+  expect_identical(parallel$data, sequential$data)
+  expect_identical(parallel$Tg, sequential$Tg)
+  expect_identical(parallel$Tnwb, sequential$Tnwb)
+})
+
+test_that("parallel worker errors propagate to the caller", {
+  skip_if(HeatStressR:::max_liljegren_workers() < 2L,
+    "requires at least two logical CPUs")
   x <- parallel_fixture()
-  suppressWarnings(wbgt.Liljegren(
+  controls <- list(
+    swap = FALSE, dewpoint_tolerance = 1e-4,
+    min_wind_speed = 0.13, tolerance = 1e-4, root_tolerance = 1e-6,
+    residual_tolerance = 1e-4, surface_albedo = 0.45,
+    globe_diameter = 0.0508
+  )
+  expect_error(HeatStressR:::solve_liljegren_parallel(
     x$tas, x$dewp, x$wind, x$radiation, x$dates,
-    lon = -5.66, lat = 40.96, hour = TRUE, engine = "batch",
-    workers = 2L, diagnostics = FALSE
-  ))
-  expect_identical(foreach::getDoParName(), "doParallelSNOW")
-  expect_identical(foreach::getDoParWorkers(), 1L)
+    lon = rep(-5.66, length(x$tas)), lat = rep(40.96, length(x$tas)),
+    hour = TRUE, pressure = 1010, direct_fraction = numeric(), workers = 2L,
+    controls = controls, diagnostics = FALSE
+  ), "node")
+  expect_no_error(run_parallel_fixture(2L))
 })
 
 test_that("parallel batch execution preserves results and diagnostics", {
