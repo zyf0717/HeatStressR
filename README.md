@@ -1,6 +1,7 @@
 # HeatStressR
 
 [![R-CMD-check](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/HeatStressR)](https://CRAN.R-project.org/package=HeatStressR)
 [![Release](https://img.shields.io/github/v/release/zyf0717/HeatStressR?display_name=tag&sort=semver)](https://github.com/zyf0717/HeatStressR/releases)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/zyf0717/HeatStressR/blob/master/LICENSE)
 
@@ -45,7 +46,18 @@ compiled-code dependencies or changing their existing input signatures.
 HeatStressR requires R 3.4 or later. The test suite is supported from R 4.1.
 
 ```r
+install.packages("HeatStressR")
+```
+
+### Development version
+
+```r
 remotes::install_github("zyf0717/HeatStressR")
+```
+
+After installation:
+
+```r
 library(HeatStressR)
 indexShow()
 ```
