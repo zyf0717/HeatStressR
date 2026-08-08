@@ -8,8 +8,8 @@ authors:
     given-names: "Yifei"
   - family-names: "Casanueva"
     given-names: "Ana"
-version: 2.2.1
-date-released: 2026-08-07
+version: 2.3.0
+date-released: 2026-08-08
 doi: 10.32614/CRAN.package.HeatStressR
 repository-code: "https://github.com/zyf0717/HeatStressR"
 url: "https://CRAN.R-project.org/package=HeatStressR"

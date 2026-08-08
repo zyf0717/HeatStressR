@@ -167,6 +167,8 @@ test_that("parallel chunks reproduce row-local preprocessing", {
     "requires at least two logical CPUs")
   x <- parallel_fixture()
   x$dewp[2] <- 40
+  x$wind[1] <- -1
+  x$radiation[3] <- -1
   x$dates[5] <- NA
   run <- function(workers) suppressWarnings(wbgt.Liljegren(
     x$tas, x$dewp, x$wind, x$radiation, x$dates,
@@ -178,6 +180,10 @@ test_that("parallel chunks reproduce row-local preprocessing", {
   parallel <- run(2L)
   expect_identical(parallel$diagnostics$input_status[2], "invalid_dewpoint")
   expect_identical(parallel$diagnostics$input_status[5], "missing_date")
+  expect_identical(parallel$diagnostics$wind_clamped,
+    c(TRUE, FALSE, FALSE, FALSE, FALSE))
+  expect_identical(parallel$diagnostics$radiation_clamped,
+    c(FALSE, FALSE, TRUE, FALSE, FALSE))
   parallel$diagnostics$workers <- 1L
   parallel$diagnostics$requested_workers <- 1L
   expect_identical(parallel, sequential)

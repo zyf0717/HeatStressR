@@ -1,8 +1,8 @@
 # HeatStressR guides
 
 These repository guides describe the Liljegren WBGT implementation, including
-its batch default and optional local `foreach`/`doParallel` workers, plus the
-fused non-Liljegren workflow. For complete parameter references, use
+its batch default and optional local base R PSOCK workers, plus the fused
+non-Liljegren workflow. For complete parameter references, use
 `?wbgt.Liljegren` and `?heat_indices` after loading the package.
 
 - [Liljegren inputs and scope](liljegren-inputs.md)

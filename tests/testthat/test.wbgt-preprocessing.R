@@ -45,3 +45,25 @@ test_that("Liljegren preprocessing implements every dewpoint policy", {
       c("attempted", "invalid_dewpoint", "invalid_dewpoint"))
   }
 })
+
+test_that("Liljegren preprocessing allocates diagnostics only when requested", {
+  args <- list(
+    tas = c(20, 20, NA, 20), dewp = c(25, 10, 25, 25),
+    wind = c(-1, 1, 1, 1), radiation = c(-10, 100, 100, 100),
+    pressure = c(1010, 1000, 990, NA), zenith = c(pi, pi, 0, 0),
+    noNAs = TRUE, swap = FALSE, dewpoint_tolerance = 1e-4
+  )
+  diagnostic_fields <- c("wind_clamped", "radiation_clamped",
+    "radiation_zeroed_below_horizon", "dewpoint_adjusted")
+
+  compact <- do.call(HeatStressR:::preprocess_liljegren_inputs, args)
+  expect_false(any(diagnostic_fields %in% names(compact)))
+
+  detailed <- do.call(HeatStressR:::preprocess_liljegren_inputs,
+    c(args, list(diagnostics = TRUE)))
+  expect_identical(detailed$wind_clamped, c(TRUE, FALSE, FALSE, FALSE))
+  expect_identical(detailed$radiation_clamped, c(TRUE, FALSE, FALSE, FALSE))
+  expect_identical(detailed$radiation_zeroed_below_horizon,
+    c(FALSE, TRUE, FALSE, FALSE))
+  expect_identical(detailed$dewpoint_adjusted, c(TRUE, FALSE, FALSE, TRUE))
+})

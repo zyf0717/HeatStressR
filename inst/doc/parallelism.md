@@ -11,7 +11,7 @@ parallelize them should manage independent calls in their own workflow.
 
 The default batch engine runs in one R process. Set `workers` to split one
 large `wbgt.Liljegren()` call into contiguous row chunks processed by local
-`foreach`/`doParallel` PSOCK workers.
+base R PSOCK workers.
 
 ```r
 result_parallel <- wbgt.Liljegren(
@@ -31,7 +31,7 @@ there is no cross-worker coordinate cache.
 CPU count. The effective count is capped at the input-row count, avoiding
 empty workers. R check environments with `_R_CHECK_LIMIT_CORES_ = "true"`
 permit at most two workers. Each call creates and stops a temporary PSOCK
-cluster, and restores the caller's registered `foreach` backend afterward.
+cluster without changing any caller-managed parallel backend.
 
 Use `workers = 1L` for small calls or memory-constrained hosts: startup,
 serialization, and per-process memory can outweigh parallel speedup. The
@@ -39,13 +39,13 @@ serialization, and per-process memory can outweigh parallel speedup. The
 peak combined parent-plus-worker RSS grows from 1.80 GiB (one worker) to 2.93
 GiB. See [benchmark results](../../benchmarks/results/liljegren-parallel-2.1.6-1000000-unique-triplets.md).
 
-## Caller-managed `foreach` and in-package workers
+## Caller-managed and in-package workers
 
 Choose one parallel layer for each workload:
 
 - Set `workers > 1L` only for one large `wbgt.Liljegren()` call. HeatStressR
-  owns a temporary backend and parallelizes that call end to end.
-- Use a caller-managed `foreach` backend for independent locations, files, or
+  owns a temporary cluster and parallelizes that call end to end.
+- Use a caller-managed parallel pool for independent locations, files, or
   time partitions. This pattern applies to every HeatStressR calculation,
   including `heat_indices()`, `wbgt.Bernard()`, and the individual indices.
 
@@ -55,22 +55,16 @@ serialization, and the execution environment. Benchmark representative data on
 the target system before choosing an outer backend.
 
 ```r
-library(foreach)
-
 cluster <- parallel::makePSOCKcluster(6L)
-doParallel::registerDoParallel(cluster)
 on.exit(parallel::stopCluster(cluster), add = TRUE)
 
-results <- foreach(
-  shard = weather_shards,
-  .packages = "HeatStressR"
-) %dopar% {
-  wbgt.Liljegren(
+results <- parallel::parLapply(cluster, weather_shards, function(shard) {
+  HeatStressR::wbgt.Liljegren(
     shard$tas, shard$dewp, shard$wind, shard$radiation, shard$dates,
     lon = shard$lon, lat = shard$lat, solar_time = "timestamp",
     engine = "batch", workers = 1L
   )
-}
+})
 ```
 
 The example uses `wbgt.Liljegren()`, but the task body can call any exported
