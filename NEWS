@@ -1,5 +1,7 @@
 # HeatStressR NEWS
 
+## 2.2.1.9000 — development
+
 ## 2.2.1 — 2026-07-31
 
 * Examples completing within five seconds are now unwrapped and run as

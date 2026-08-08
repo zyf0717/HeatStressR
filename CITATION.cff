@@ -9,6 +9,8 @@ authors:
   - family-names: "Casanueva"
     given-names: "Ana"
 version: 2.2.1
+date-released: 2026-08-07
+doi: 10.32614/CRAN.package.HeatStressR
 repository-code: "https://github.com/zyf0717/HeatStressR"
-url: "https://github.com/zyf0717/HeatStressR"
+url: "https://CRAN.R-project.org/package=HeatStressR"
 license: GPL-3.0-only

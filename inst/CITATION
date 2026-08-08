@@ -7,9 +7,10 @@ bibentry(
     person("Yifei", "Zheng"),
     person("Ana", "Casanueva")
   ),
-  year = sub("-.*", "", meta$Date),
+  year = "2026",
   note = paste("R package version", meta$Version),
-  url = meta$URL
+  url = "https://CRAN.R-project.org/package=HeatStressR",
+  doi = "10.32614/CRAN.package.HeatStressR"
 )
 
 bibentry(
