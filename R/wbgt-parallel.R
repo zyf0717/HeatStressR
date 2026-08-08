@@ -112,14 +112,11 @@ solve_liljegren_batch <- function(tas, dewp, relh, Pair, wind, radiation, zenith
   solve_liljegren_batch_chunk(payload, controls)
 }
 
-solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
-  n <- length(chunk$tas)
-  Pair <- rep(chunk$pressure, length.out = n)
-  tas <- chunk$tas
-  dewp <- chunk$dewp
-  wind <- chunk$wind
-  radiation <- chunk$radiation
-  zenith <- chunk$zenith
+preprocess_liljegren_inputs <- function(tas, dewp, wind, radiation, pressure,
+                                        zenith, noNAs, swap,
+                                        dewpoint_tolerance) {
+  n <- length(tas)
+  Pair <- rep(pressure, length.out = n)
 
   radiation[radiation < 0] <- 0
   wind[wind < 0] <- 0
@@ -129,47 +126,67 @@ solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
 
   input_valid <- !is.na(tas + dewp + wind + radiation + Pair) & !is.na(zenith)
   input_status <- rep("attempted", n)
-  input_status[is.na(tas) | is.na(dewp) | is.na(wind) | is.na(radiation) | is.na(Pair)] <-
-    "missing_input"
+  input_status[is.na(tas) | is.na(dewp) | is.na(wind) | is.na(radiation) |
+    is.na(Pair)] <- "missing_input"
   input_status[input_status == "attempted" & is.na(zenith)] <- "missing_date"
 
-  if (controls$noNAs && controls$swap) {
+  if (noNAs && swap) {
     tas_tmp <- pmax(tas, dewp)
     dewp <- pmin(tas, dewp)
     tas <- tas_tmp
-  } else if (controls$noNAs) {
-    dewp[(dewp - tas) > controls$dewpoint_tolerance] <-
-      tas[(dewp - tas) > controls$dewpoint_tolerance]
+  } else if (noNAs) {
+    invalid_dewp <- which((dewp - tas) > dewpoint_tolerance)
+    dewp[invalid_dewp] <- tas[invalid_dewp]
   } else {
     input_valid <- input_valid & tas >= dewp
     input_status[input_status == "attempted" & !is.na(tas) & !is.na(dewp) &
       dewp > tas] <- "invalid_dewpoint"
   }
-  relh <- dewp2hurs(tas, dewp)
-  valid_idx <- which(input_valid)
+
+  list(
+    tas = tas, dewp = dewp, wind = wind, radiation = radiation,
+    Pair = Pair, zenith = zenith, relh = dewp2hurs(tas, dewp),
+    input_valid = input_valid, input_status = input_status,
+    solar_geometry_mismatch = solar_geometry_mismatch,
+    valid_idx = which(input_valid)
+  )
+}
+
+solve_liljegren_batch_raw_chunk <- function(chunk, controls) {
+  n <- length(chunk$tas)
+  preprocessed <- preprocess_liljegren_inputs(
+    chunk$tas, chunk$dewp, chunk$wind, chunk$radiation, chunk$pressure,
+    chunk$zenith, controls$noNAs, controls$swap,
+    controls$dewpoint_tolerance
+  )
   Tg <- rep(NA_real_, n)
   Tnwb <- rep(NA_real_, n)
   Tg.batch <- NULL
   Tnwb.batch <- NULL
-  if (length(valid_idx)) {
+  if (length(preprocessed$valid_idx)) {
     chunk_controls <- controls
-    chunk_controls$prop_direct <- chunk$direct_fraction[valid_idx]
+    chunk_controls$prop_direct <- chunk$direct_fraction[preprocessed$valid_idx]
     solved <- solve_liljegren_batch_chunk(list(
-      tas = tas[valid_idx], dewp = dewp[valid_idx], relh = relh[valid_idx],
-      Pair = Pair[valid_idx], wind = wind[valid_idx], radiation = radiation[valid_idx],
-      zenith = zenith[valid_idx]
+      tas = preprocessed$tas[preprocessed$valid_idx],
+      dewp = preprocessed$dewp[preprocessed$valid_idx],
+      relh = preprocessed$relh[preprocessed$valid_idx],
+      Pair = preprocessed$Pair[preprocessed$valid_idx],
+      wind = preprocessed$wind[preprocessed$valid_idx],
+      radiation = preprocessed$radiation[preprocessed$valid_idx],
+      zenith = preprocessed$zenith[preprocessed$valid_idx]
     ), chunk_controls)
     Tg.batch <- solved$Tg
     Tnwb.batch <- solved$Tnwb
-    Tg[valid_idx] <- Tg.batch
-    Tnwb[valid_idx] <- Tnwb.batch
+    Tg[preprocessed$valid_idx] <- Tg.batch
+    Tnwb[preprocessed$valid_idx] <- Tnwb.batch
   }
   list(
     n = n, data = ifelse(is.na(Tg) | is.na(Tnwb), NA_real_,
-      0.7 * Tnwb + 0.2 * Tg + 0.1 * tas), Tg = Tg, Tnwb = Tnwb,
-    input_valid = input_valid,
-    input_status = input_status, solar_geometry_mismatch = solar_geometry_mismatch,
-    valid_idx = valid_idx, Tg.batch = Tg.batch, Tnwb.batch = Tnwb.batch
+      0.7 * Tnwb + 0.2 * Tg + 0.1 * preprocessed$tas), Tg = Tg, Tnwb = Tnwb,
+    input_valid = preprocessed$input_valid,
+    input_status = preprocessed$input_status,
+    solar_geometry_mismatch = preprocessed$solar_geometry_mismatch,
+    valid_idx = preprocessed$valid_idx, Tg.batch = Tg.batch, Tnwb.batch = Tnwb.batch
   )
 }
 
