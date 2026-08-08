@@ -4,14 +4,7 @@
 \alias{heat_indices}
 \title{Calculate multiple heat indices from shared observations.}
 \usage{
-heat_indices(
-  tas,
-  hurs,
-  wind = NULL,
-  dewp = NULL,
-  indices = c("wbt", "swbgt", "apparentTemp", "effectiveTemp", "humidex", "discomInd",
-    "hi")
-)
+heat_indices(tas, hurs, wind = NULL, dewp = NULL, indices = NULL)
 }
 \arguments{
 \item{tas}{vector of air temperature in degC.}
@@ -24,8 +17,9 @@ heat_indices(
 \item{dewp}{optional vector of dew point temperature in degC. Required only
 when \code{wbgt.Bernard} is requested.}
 
-\item{indices}{character vector of requested indices. \code{wbgt.Bernard}
-is available when \code{dewp} is supplied but is not selected by default.}
+\item{indices}{optional character vector of requested indices. By default,
+all indices supported by the supplied inputs are selected.
+\code{wbgt.Bernard} is never selected automatically.}
 }
 \value{
 A data frame with one row per input observation and one column per
@@ -38,7 +32,9 @@ vapour pressure calculations across the requested indices.
 }
 \details{
 The closed-form indices are calculated directly from shared
-inputs. Vapour pressure is calculated once when one or more of
+inputs. Without \code{wind}, the default excludes \code{apparentTemp} and
+\code{effectiveTemp}; supplying \code{wind} selects the complete default set.
+Vapour pressure is calculated once when one or more of
 \code{swbgt}, \code{apparentTemp}, and \code{humidex} is requested.
 }
 \examples{
