@@ -291,47 +291,27 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
   # Solar geometry depends only on aligned timestamps and coordinates. Reuse
   # timestamp-only terms and calculate each coordinate group before solving.
   zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour)
-  Pair <- rep(pressure, length.out = ndates)
+  preprocessed <- preprocess_liljegren_inputs(
+    tas, dewp, wind, radiation, pressure, zenith_rad,
+    noNAs, swap, dewpoint_tolerance
+  )
+  tas <- preprocessed$tas
+  dewp <- preprocessed$dewp
+  wind <- preprocessed$wind
+  radiation <- preprocessed$radiation
+  Pair <- preprocessed$Pair
+  relh <- preprocessed$relh
+  input_valid <- preprocessed$input_valid
+  input_status <- preprocessed$input_status
+  solar_geometry_mismatch <- preprocessed$solar_geometry_mismatch
+  valid_idx <- preprocessed$valid_idx
   MinWindSpeed <- min_wind_speed
   Tnwb <- rep(NA_real_, ndates)
   Tg <- rep(NA_real_, ndates)
 
-  # Do not allow negative wind and radiation
-  radiation[radiation<0] <- 0
-  wind[wind<0] <- 0
-  solar_geometry_mismatch <- !is.na(radiation) & !is.na(zenith_rad) &
-    radiation > 15 & zenith_rad > 1.54
-  radiation[!is.na(zenith_rad) & cos(zenith_rad) <= 0] <- 0
-  
-  # Filter data to calculate the WBGT with optimization function
-  xmask <- !is.na(tas + dewp + wind + radiation + Pair) & !is.na(zenith_rad)
-  input_status <- rep("attempted", ndates)
-  input_status[is.na(tas) | is.na(dewp) | is.na(wind) | is.na(radiation) | is.na(Pair)] <-
-    "missing_input"
-  input_status[input_status == "attempted" & is.na(zenith_rad)] <- "missing_date"
-  
-  if (noNAs & swap){
-    tastmp <- pmax(tas, dewp)
-    dewp <- pmin(tas, dewp)
-    tas <- tastmp
-  } else if(noNAs & !swap){
-    noway_idx <- which((dewp - tas) > dewpoint_tolerance)
-    dewp[noway_idx] <- tas[noway_idx]
-  } else if(!noNAs){
-    xmask <- xmask & tas >= dewp
-    input_status[input_status == "attempted" & !is.na(tas) & !is.na(dewp) &
-      dewp > tas] <- "invalid_dewpoint"
-  }
-  input_valid <- xmask
- 
-  # Calculate relative humidity from air temperature and dew point temperature
-  relh <- dewp2hurs(tas,dewp) # input in degC, output in %
-
-  
   # **************************************
   # *** Calculation of the Tg and Tnwb ***
   # **************************************
-  valid_idx <- which(xmask)
   Tg.converged <- rep(NA, ndates)
   Tnwb.converged <- rep(NA, ndates)
   Tg.evaluations <- rep(NA_integer_, ndates)
