@@ -6,12 +6,13 @@ with one row per observation and columns in the requested order.
 
 ```r
 all_indices <- heat_indices(tas, hurs, wind = wind)
+thermal_indices <- heat_indices(tas, hurs)
 thermal_only <- heat_indices(tas, hurs, indices = c("wbt", "humidex", "hi"))
 ```
 
-The default request is `wbt`, `swbgt`, `apparentTemp`, `effectiveTemp`,
-`humidex`, `discomInd`, and `hi`. `apparentTemp` and `effectiveTemp` require a
-row-aligned `wind` vector. Every default output is in °C.
+Without `wind`, the default request is `wbt`, `swbgt`, `humidex`, `discomInd`,
+and `hi`. Supplying a row-aligned `wind` vector also selects `apparentTemp` and
+`effectiveTemp`. Every default output is in °C.
 
 `wbgt.Bernard` is optional because it requires dew point and has a different
 computational profile. Select it explicitly with a row-aligned `dewp` vector:

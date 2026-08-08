@@ -128,11 +128,12 @@ See the generated R help for the complete parameter reference:
 Use `heat_indices()` when several closed-form indices are needed for the same
 observations. It validates the shared temperature and humidity vectors once and
 calculates vapour pressure once for `swbgt`, `apparentTemp`, and `humidex`.
-The default selection requires `wind`; request a subset when wind is not
-available.
+The default selects every supported closed-form index: five columns without
+`wind`, or all seven when `wind` is supplied.
 
 ```r
 indices <- heat_indices(tas, hurs, wind = wind)
+thermal_indices <- heat_indices(tas, hurs)
 humidex_and_hi <- heat_indices(tas, hurs, indices = c("humidex", "hi"))
 
 # Bernard WBGT is opt-in and requires dew point. The returned column is WBGT;

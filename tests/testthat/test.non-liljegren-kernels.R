@@ -62,9 +62,15 @@ test_that("heat_indices matches individual indices and validates required inputs
   expect_equal(fused$discomInd, discomInd(tas, hurs))
   expect_equal(fused$hi, hi(tas, hurs))
 
+  thermal <- heat_indices(tas, hurs)
+  expect_identical(names(thermal), c("wbt", "swbgt", "humidex", "discomInd", "hi"))
+  expect_equal(thermal, fused[names(thermal)])
+  expect_identical(heat_indices(tas, hurs, dewp = dewp), thermal)
+
   bernard <- heat_indices(tas, hurs, dewp = dewp, indices = "wbgt.Bernard")
   expect_equal(bernard$wbgt.Bernard, wbgt.Bernard(tas, dewp)$data)
   expect_error(heat_indices(tas, hurs, indices = "apparentTemp"), "same length")
+  expect_error(heat_indices(tas, hurs, wind = wind[-1]), "same length")
   expect_error(heat_indices(tas, hurs, indices = "wbgt.Bernard"), "same length")
   expect_error(heat_indices(tas, hurs, indices = c("hi", "hi")), "unique")
 })
