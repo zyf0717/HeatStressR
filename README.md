@@ -78,8 +78,9 @@ fraction—use the generated R help for the relevant function:
 ## Quick start: Liljegren WBGT
 
 `wbgt.Liljegren()` expects aligned vectors for air temperature (`tas`, °C),
-dewpoint (`dewp`, °C), wind speed (`wind`, m/s), total downwelling shortwave
-radiation (`radiation`, W/m²), and timestamps (`dates`). Longitude (`lon`,
+dewpoint (`dewp`, °C), wind speed at 2 m above ground (`wind`, m/s), total
+downwelling shortwave radiation (`radiation`, W/m²), and timestamps (`dates`).
+Wind-height adjustment is not performed internally. Longitude (`lon`,
 degrees), latitude (`lat`, degrees), and pressure (`pressure`, hPa) may each be
 a scalar or row-aligned vector.
 

@@ -49,7 +49,8 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' 
 #' @param tas vector of temperature in degC.
 #' @param dewp vector of dewpoint temperature in degC.
-#' @param wind vector of wind speed in m/s.
+#' @param wind vector of wind speed at 2 m above ground in m/s. Wind-height
+#' adjustment is not performed internally.
 #' @param radiation vector of solar shortwave downwelling radiation in W/m2.
 #' @param dates vector of dates, \code{POSIXct}/\code{POSIXlt} instants, or ISO 8601
 #' datetime strings. Use timezone-aware \code{POSIXct} for high-throughput

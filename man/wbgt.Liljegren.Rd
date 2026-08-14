@@ -35,7 +35,8 @@ wbgt.Liljegren(
 
 \item{dewp}{vector of dewpoint temperature in degC.}
 
-\item{wind}{vector of wind speed in m/s.}
+\item{wind}{vector of wind speed at 2 m above ground in m/s. Wind-height
+adjustment is not performed internally.}
 
 \item{radiation}{vector of solar shortwave downwelling radiation in W/m2.}
 
