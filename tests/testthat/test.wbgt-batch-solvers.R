@@ -112,7 +112,7 @@ test_that("Liljegren batch engine agrees with scalar", {
   }
 })
 
-test_that("Liljegren groups solar geometry by row-aligned coordinates", {
+test_that("Liljegren vectorizes solar geometry over row-aligned coordinates", {
   x <- engine_fixture()
   lon <- c(-5.66, -5.66, 0, 0, -5.66, 0, 0, -5.66)
   lat <- c(40.96, 40.96, 15, 15, 40.96, 15, 15, 40.96)
@@ -136,7 +136,7 @@ test_that("Liljegren groups solar geometry by row-aligned coordinates", {
   }
 })
 
-test_that("Liljegren reuses timestamp solar terms across coordinate groups", {
+test_that("Liljegren reuses timestamp solar terms before coordinate projection", {
   dates <- rep(as.POSIXct(c("2024-03-20 06:00:00", "2024-03-20 18:00:00"),
     tz = "UTC"), 3)
   lon <- c(-90, 0, 90, -90, 0, 90)

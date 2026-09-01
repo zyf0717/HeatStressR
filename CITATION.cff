@@ -9,8 +9,8 @@ authors:
     orcid: "https://orcid.org/0009-0001-4858-2025"
   - family-names: "Casanueva"
     given-names: "Ana"
-version: 2.3.0
-date-released: 2026-08-08
+version: 2.4.0
+date-released: 2026-09-02
 doi: 10.32614/CRAN.package.HeatStressR
 repository-code: "https://github.com/zyf0717/HeatStressR"
 url: "https://CRAN.R-project.org/package=HeatStressR"

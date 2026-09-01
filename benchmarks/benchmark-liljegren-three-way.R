@@ -30,6 +30,7 @@ measure <- function(work, repetitions) {
 root <- Sys.getenv("BENCHMARK_ROOT", unset = getwd())
 engine <- Sys.getenv("BENCHMARK_ENGINE", unset = "batch")
 if (!engine %in% c("pre", "scalar", "batch")) stop("BENCHMARK_ENGINE must be pre, scalar, or batch")
+revision <- Sys.getenv("BENCHMARK_REVISION", unset = "head")
 pkgload::load_all(root, quiet = TRUE)
 
 make_weather <- function(n, lon = -5.66, lat = 40.96) {
@@ -60,7 +61,7 @@ rows <- lapply(sizes, function(n) {
     if (engine != "pre") args$engine <- engine
     suppressWarnings(do.call(wbgt.Liljegren, args))
   }, repetitions)
-  data.frame(revision = if (engine == "pre") "pre_fork" else paste0("head_", engine),
+  data.frame(revision = if (engine == "pre") "pre_fork" else paste(revision, engine, sep = "_"),
     engine = engine, rows = n, repetitions = repetitions,
     coordinate_mode = "unique_timestamp_fixed_coordinate", coordinate_pairs = 1L,
     rows_per_coordinate_pair = n, unique_timestamp_coordinate_triplets = n,

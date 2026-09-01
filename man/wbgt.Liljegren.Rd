@@ -136,9 +136,9 @@ albedo, globe diameter, minimum wind speed, and direct-radiation fraction
 are configurable. Solar
 positions use the supplied timestamp, latitude, longitude, and the equation
 of time. Radiation is zeroed when the computed
-solar elevation is not positive. When coordinates are row-aligned, solar
-geometry groups rows by longitude-latitude pair and reuses timestamp-only
-solar terms for repeated instants.
+solar elevation is not positive. Solar geometry deduplicates timestamp-only
+terms for repeated instants, then applies one vectorized row-aligned
+longitude/latitude projection.
 The function evaluates aligned instantaneous meteorological states; interval
 alignment, timestamp conversion, wind-height adjustment, and radiation
 quality control remain caller responsibilities. When direct and diffuse
