@@ -18,20 +18,10 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour) {
   unique_date_index <- !duplicated(date_key)
   date_index <- match(date_key, date_key[unique_date_index])
   terms <- calculate_solar_time_terms(dates[unique_date_index], hour)
-  coordinate_id <- paste(sprintf("%a", coordinates$lon),
-    sprintf("%a", coordinates$lat), sep = "\r")
-  groups <- split(seq_len(n), match(coordinate_id, unique(coordinate_id)))
-  zenith <- rep(NA_real_, n)
-
-  for (index in groups) {
-    term_index <- date_index[index]
-    zenith[index] <- degToRad(calculate_zenith_from_solar_terms(
-      terms$utc_minutes[term_index], terms$equation_of_time[term_index],
-      terms$declination[term_index], coordinates$lon[index[1L]],
-      coordinates$lat[index[1L]]
-    ))
-  }
-  zenith
+  degToRad(calculate_zenith_from_solar_terms(
+    terms$utc_minutes[date_index], terms$equation_of_time[date_index],
+    terms$declination[date_index], coordinates$lon, coordinates$lat
+  ))
 }
 
 format_liljegren_failure_counts <- function(counts) sprintf(
@@ -124,9 +114,9 @@ liljegren_failure_counts <- function(reasons, failed) {
 #' are configurable. Solar
 #' positions use the supplied timestamp, latitude, longitude, and the equation
 #' of time. Radiation is zeroed when the computed
-#' solar elevation is not positive. When coordinates are row-aligned, solar
-#' geometry groups rows by longitude-latitude pair and reuses timestamp-only
-#' solar terms for repeated instants.
+#' solar elevation is not positive. Solar geometry deduplicates timestamp-only
+#' terms for repeated instants, then applies one vectorized row-aligned
+#' longitude/latitude projection.
 #' The function evaluates aligned instantaneous meteorological states; interval
 #' alignment, timestamp conversion, wind-height adjustment, and radiation
 #' quality control remain caller responsibilities. When direct and diffuse
@@ -297,8 +287,8 @@ wbgt.Liljegren <- function(tas, dewp, wind, radiation, dates, lon, lat, toleranc
       parallel_failure_summary <- parallel_result$failure_summary
     }
   } else {
-  # Solar geometry depends only on aligned timestamps and coordinates. Reuse
-  # timestamp-only terms and calculate each coordinate group before solving.
+  # Reuse timestamp-only terms, then project row-aligned coordinates in one
+  # vectorized solar-geometry call before solving.
   zenith_rad <- calculate_liljegren_zenith(dates, lon, lat, hour = hour)
   preprocessed <- preprocess_liljegren_inputs(
     tas, dewp, wind, radiation, pressure, zenith_rad,

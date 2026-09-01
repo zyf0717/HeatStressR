@@ -132,18 +132,25 @@ test_that("parallel batch execution supports row-aligned coordinates", {
   skip_if(HeatStressR:::max_liljegren_workers() < 2L,
     "requires at least two logical CPUs")
   x <- parallel_fixture()
-  lon <- c(-5.66, 0, -5.66, 0, -5.66)
-  lat <- c(40.96, 15, 40.96, 15, 40.96)
-  run <- function(workers) suppressWarnings(wbgt.Liljegren(
-    x$tas, x$dewp, x$wind, x$radiation, x$dates,
-    lon = lon, lat = lat, hour = TRUE, engine = "batch", workers = workers,
-    diagnostics = TRUE
-  ))
-  sequential <- run(1L)
-  parallel <- run(2L)
-  parallel$diagnostics$workers <- 1L
-  parallel$diagnostics$requested_workers <- 1L
-  expect_identical(parallel, sequential)
+  coordinates <- list(
+    repeated = list(lon = c(-5.66, 0, -5.66, 0, -5.66),
+      lat = c(40.96, 15, 40.96, 15, 40.96)),
+    unique = list(lon = c(-179, -90, 0, 90, 179),
+      lat = c(-80, -40, 0, 40, 80))
+  )
+  for (case_name in names(coordinates)) {
+    coordinate <- coordinates[[case_name]]
+    run <- function(workers) suppressWarnings(wbgt.Liljegren(
+      x$tas, x$dewp, x$wind, x$radiation, x$dates,
+      lon = coordinate$lon, lat = coordinate$lat, hour = TRUE,
+      engine = "batch", workers = workers, diagnostics = TRUE
+    ))
+    sequential <- run(1L)
+    parallel <- run(2L)
+    parallel$diagnostics$workers <- 1L
+    parallel$diagnostics$requested_workers <- 1L
+    expect_identical(parallel, sequential, info = case_name)
+  }
 })
 
 test_that("parallel batch execution supports row-aligned direct fractions", {

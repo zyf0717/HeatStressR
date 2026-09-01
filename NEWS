@@ -1,5 +1,10 @@
 # HeatStressR NEWS
 
+## 2.4.0 — 2026-09-02
+
+* Vectorized row-aligned Liljegren solar geometry to avoid
+  coordinate-cardinality overhead.
+
 ## 2.3.0 — 2026-08-08
 
 * Liljegren forcing, input-status, dewpoint-policy, and humidity preprocessing
@@ -102,9 +107,8 @@
 ## 2.1.2 — 2026-07-22
 
 * `wbgt.Liljegren()` now accepts scalar or row-aligned `lon` and `lat`.
-  Solar geometry groups rows by coordinate pair and reuses timestamp-only
-  terms for repeated instants before either scalar or batch heat-balance
-  solving begins.
+  Solar geometry reuses timestamp-only terms for repeated instants before
+  either scalar or batch heat-balance solving begins.
 
 ## 2.1.1 — 2026-07-21
 
