@@ -31,3 +31,4 @@ Imports: stats, utils, parallel, heatindex (>= 0.0.2)
 Encoding: UTF-8
 Config/roxygen2/version: 8.1.0
 Config/roxygen2/markdown: true
+Config/build/clean-inst-doc: false
