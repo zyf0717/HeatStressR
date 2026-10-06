@@ -37,13 +37,13 @@ test_that("residual acceptance thresholds are independent from root precision", 
     strict$diagnostics$Tnwb$root_tolerance)
 })
 
-test_that("dewpoint tolerance only changes the dewpoint policy", {
+test_that("deprecated dewpoint tolerance is validated while exact cap policy applies", {
   args <- liljegren_tolerance_args()
   args$dewp <- args$tas + 5e-4
-  loose <- do.call(wbgt.Liljegren, c(args, list(diagnostics = TRUE,
-    dewpoint_tolerance = 1e-3)))
-  strict <- do.call(wbgt.Liljegren, c(args, list(diagnostics = TRUE,
-    dewpoint_tolerance = 1e-4)))
+  expect_warning(loose <- do.call(wbgt.Liljegren, c(args, list(diagnostics = TRUE,
+    dewpoint_tolerance = 1e-3))), "adjusted=1")
+  expect_warning(strict <- do.call(wbgt.Liljegren, c(args, list(diagnostics = TRUE,
+    dewpoint_tolerance = 1e-4))), "adjusted=1")
   expect_true(loose$diagnostics$attempted)
   expect_true(strict$diagnostics$attempted)
   expect_identical(loose$diagnostics$Tg$converged, strict$diagnostics$Tg$converged)

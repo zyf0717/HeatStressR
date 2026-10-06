@@ -62,11 +62,29 @@ test_that("vector calZenith matches the preserved reference fixtures", {
       },
       numeric(1)
     )
-    actual <- calZenith(case$dates, case$lon, case$lat, hour = case$hour)
+    actual <- suppressWarnings(calZenith(case$dates, case$lon, case$lat, hour = case$hour))
 
     expect_length(actual, length(case$dates))
     expect_equal(actual, expected, tolerance = 1e-12)
   }
+})
+
+test_that("solar geometry handles Gregorian century and year boundaries", {
+  years <- c(1900L, 2000L, 2100L, 2400L)
+  dates <- as.POSIXct(unlist(lapply(years, function(year) {
+    c(sprintf("%04d-%s 12:00:00", year,
+      c("01-01", "02-28", "03-01", "12-31")),
+      sprintf("%04d-01-01 00:00:00", year + 1L))
+  })), tz = "UTC")
+  dates <- c(dates, as.POSIXct(c("2000-02-29 12:00:00",
+    "2400-02-29 12:00:00", NA_character_), tz = "UTC"))
+  expected <- vapply(dates[!is.na(dates)], function(date) {
+    reference_calZenith_scalar(date, lon = 15, lat = 45, hour = TRUE)
+  }, numeric(1))
+
+  actual <- solar_zenith(dates, lon = 15, lat = 45)
+  expect_identical(is.na(actual), is.na(dates))
+  expect_equal(actual[!is.na(dates)], expected, tolerance = 1e-12)
 })
 
 test_that("vector calZenith preserves missing dates and rejects coordinate recycling", {
@@ -84,8 +102,10 @@ test_that("vector calZenith preserves missing dates and rejects coordinate recyc
   expect_equal(result[valid], expected, tolerance = 1e-12)
   expect_error(calZenith(dates, lon = c(-5.66, 0), lat = 40.96), "lon")
   expect_error(calZenith(dates, lon = -5.66, lat = c(40.96, 0)), "lat")
-  expect_error(calZenith(dates, lon = 181, lat = 40.96), "Invalid lon")
-  expect_error(calZenith(dates, lon = -5.66, lat = 91), "Invalid lat")
+  expect_warning(invalid <- calZenith(dates, lon = 181, lat = 40.96), "invalid=")
+  expect_true(all(is.na(invalid)))
+  expect_warning(invalid <- calZenith(dates, lon = -5.66, lat = 91), "invalid=")
+  expect_true(all(is.na(invalid)))
   expect_error(calZenith(dates, lon = -5.66, lat = 40.96, hour = NA), "hour")
 })
 

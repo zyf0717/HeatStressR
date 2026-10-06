@@ -6,7 +6,7 @@
 \alias{data_wbgt.Liljegren}
 \title{Example for Wet Bulb Globe Temperature in the sun (Liljegren et al. 2008).}
 \format{
-List of three elements: 
+List of three elements:
 \itemize{
 \item data: numeric vector with the WBGT values in degC.
 \item Tpwb: natural wet bulb temperature (Tnwb) in degC.
@@ -17,7 +17,7 @@ List of three elements:
 data(data_wbgt.Liljegren)
 }
 \description{
-Dataset to check the result of \code{wbgt.Liljegren} with the testing data \code{obs_data} 
+Dataset to check the result of \code{wbgt.Liljegren} with the testing data \code{obs_data}
 for summer 2003 and one station (Salamanca, Spain).
 }
 \keyword{datasets}

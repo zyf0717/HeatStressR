@@ -21,13 +21,16 @@ test_that("wbgt.Liljegren rejects malformed wrapper controls", {
   invalid <- args; invalid$lat <- c(0, 1, 2)
   expect_error(do.call(wbgt.Liljegren, invalid), "meteorological input length")
   invalid <- args; invalid$lon <- Inf
-  expect_error(do.call(wbgt.Liljegren, invalid), "one finite")
+  expect_warning(result <- do.call(wbgt.Liljegren, invalid), "invalid=1")
+  expect_true(is.na(result$data))
   invalid <- args; invalid$lat <- NaN
-  expect_error(do.call(wbgt.Liljegren, invalid), "one finite")
+  expect_warning(result <- do.call(wbgt.Liljegren, invalid), "invalid=1")
+  expect_true(is.na(result$data))
   invalid <- args; invalid$pressure <- c(1000, 900)
   expect_error(do.call(wbgt.Liljegren, invalid), "pressure")
   invalid <- args; invalid$pressure <- 0
-  expect_error(do.call(wbgt.Liljegren, invalid), "pressure")
+  expect_warning(result <- do.call(wbgt.Liljegren, invalid), "invalid=1")
+  expect_true(is.na(result$data))
   invalid <- args; invalid$surface_albedo <- 1.1
   expect_error(do.call(wbgt.Liljegren, invalid), "surface_albedo")
   invalid <- args; invalid$globe_diameter <- 0
@@ -35,7 +38,8 @@ test_that("wbgt.Liljegren rejects malformed wrapper controls", {
   invalid <- args; invalid$min_wind_speed <- -0.01
   expect_error(do.call(wbgt.Liljegren, invalid), "min_wind_speed")
   invalid <- args; invalid$direct_fraction <- 1.1
-  expect_error(do.call(wbgt.Liljegren, invalid), "direct_fraction")
+  expect_warning(result <- do.call(wbgt.Liljegren, invalid), "invalid=1")
+  expect_true(is.na(result$data))
   invalid <- args; invalid$direct_fraction <- c(0.2, 0.8)
   expect_error(do.call(wbgt.Liljegren, invalid), "direct_fraction")
 })

@@ -117,29 +117,3 @@ fTnwb_solution <- function(tas, dewp, relh, Pair, wind, min.speed, radiation,
        residual_tolerance = residual_tolerance, converged = converged,
        failure_reason = if (converged) "none" else "residual_validation")
 }
-
-#' Calculation of the natural wet bulb temperature.
-#'
-#' @param tas vector of temperature in degC.
-#' @param dewp vector of dewpoint temperature in degC.
-#' @param wind vector of wind speed in m/s.
-#' @param relh vector of relative humidity in \%.
-#' @param radiation vector of solar shortwave downwelling radiation in W/m2.
-#' @param propDirect proportion of direct radiation = direct/(diffuse + direct).
-#' @param zenith zenith angle in radians.
-#' @param SurfAlbedo (optional) surface albedo. Default: 0.45.
-#' @param tolerance (optional) tolerance value for the iteration. Default: 1e-4.
-#' @param irad (optional): include radiation (1) or not (irad=0, psychrometric web bulb temp). Default: 1.
-#' @inheritParams h_cylinder_in_air
-#'
-#' @return Natural wet bulb globe temperature in degC.
-#' @author Ana Casanueva (05.01.2017).
-#' @details Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA).
-#' @export
-fTnwb <- function(tas, dewp, relh, Pair, wind, min.speed, radiation, propDirect,
-                  zenith, irad = 1, SurfAlbedo = 0.45, tolerance = 1e-4) {
-  solution <- fTnwb_solution(tas, dewp, relh, Pair, wind, min.speed, radiation,
-    propDirect, zenith, irad, SurfAlbedo, tolerance)
-  if (solution$converged) solution$root else NA_real_
-  
-}
