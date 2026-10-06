@@ -101,6 +101,40 @@ test_that("legacy Bernard policy maps to canonical cap/reject/swap", {
   }
 })
 
+test_that("legacy swapping validates input types and lengths before transformation", {
+  local_mocked_bindings(.warn_deprecation = function(...) NULL, .package = "HeatStressR")
+  for (swap in c(FALSE, TRUE)) {
+    expect_error(wbgt.Bernard(c(30, 40), c(10, 20, 25, 30), swap = swap), "same length")
+    expect_error(wbgt.Bernard(30, matrix(20), swap = swap), "numeric vector")
+    expect_error(wbgt.Bernard(30, "20", swap = swap), "numeric vector")
+    expect_error(wbgt.Liljegren(30, matrix(20), 1, 700,
+      "2024-06-01T12:00:00Z", 0, 15, swap = swap), "numeric vector")
+  }
+  expanded <- wbgt.Bernard(30, c(20, 35), swap = TRUE)
+  expected <- wbgt_bernard(c(30, 35), c(20, 30), diagnostics = TRUE)
+  expect_equal(expanded$data, expected$values)
+  expect_equal(expanded$Tpwb, expected$components$tpwb)
+})
+
+test_that("legacy timestamps distinguish parsing failures from missing dates", {
+  local_mocked_bindings(.warn_deprecation = function(...) NULL, .package = "HeatStressR")
+  for (hour in c(FALSE, TRUE)) {
+    dates <- c("2024-06-01T12:00:00Z", NA_character_, "garbage", "2024-02-30T12:00:00Z")
+    expect_warning(zenith <- calZenith(dates, 0, 15, hour = hour), "invalid=2")
+    expect_identical(is.na(zenith), c(FALSE, TRUE, TRUE, TRUE))
+    expect_warning(result <- wbgt.Liljegren(rep(30, 4), rep(20, 4), rep(1, 4),
+      rep(700, 4), dates, 0, 15, hour = hour, diagnostics = TRUE), "invalid=2")
+    expect_identical(result$diagnostics$input_status,
+      c("attempted", "missing_date", "invalid_input", "invalid_input"))
+    expect_identical(result$diagnostics$attempted, c(TRUE, FALSE, FALSE, FALSE))
+    expect_identical(is.na(result$data), c(FALSE, TRUE, TRUE, TRUE))
+    expect_no_warning(calZenith(NA_character_, 0, 15, hour = hour))
+    instants <- as.POSIXct(c(1717243200, NA_real_, NaN), origin = "1970-01-01", tz = "UTC")
+    expect_warning(x <- calZenith(instants, 0, 15, hour = hour), "invalid=1")
+    expect_identical(is.na(x), c(FALSE, TRUE, TRUE))
+  }
+})
+
 test_that("legacy timestamp and date-noon modes preserve POSIXlt instants", {
   utc <- as.POSIXct(c("2024-06-01 12:00:00","2024-06-01 20:00:00"),tz="UTC")
   local <- as.POSIXlt(utc,tz="Asia/Singapore")

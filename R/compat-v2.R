@@ -11,17 +11,25 @@
   fTnwb = "wbgt_liljegren")
 
 .legacy_times <- function(dates, hour) {
-  if (hour) {
-    if (inherits(dates, "POSIXt")) return(.normalise_time(dates))
+  if (inherits(dates, "POSIXt")) {
+    dates <- .normalise_time(dates)
+    if (hour) return(dates)
+    missing <- is.na(dates) & !is.nan(as.numeric(dates))
+    d <- format(dates, "%Y-%m-%d", tz = "UTC")
+  } else {
     d <- as.character(dates)
+    missing <- is.na(d)
+  }
+  if (hour) {
     result <- parse_wall_datetime(d)
     offset <- parse_iso8601_datetime(d)
     result[!is.na(offset)] <- offset[!is.na(offset)]
-    result
   } else {
-    d <- if (inherits(dates, "POSIXt")) format(.normalise_time(dates), "%Y-%m-%d", tz = "UTC") else as.character(dates)
-    as.POSIXct(strptime(d, "%Y-%m-%d", tz = "UTC")) + 12 * 3600
+    result <- as.POSIXct(strptime(d, "%Y-%m-%d", tz = "UTC")) + 12 * 3600
   }
+  # The common validator treats NaN as invalid and NA as genuinely missing.
+  result[!missing & is.na(result)] <- NaN
+  result
 }
 
 resolve_solar_time <- function(hour, solar_time, hour_supplied, solar_time_supplied) {
@@ -43,6 +51,14 @@ calculate_liljegren_zenith <- function(dates, lon, lat, hour) {
 .legacy_swap <- function(tas, dewp, noNAs, swap) {
   .logical_control(noNAs, "noNAs")
   .logical_control(swap, "swap")
+  for (name in c("tas", "dewp")) {
+    value <- get(name)
+    .assert(is.numeric(value) && is.null(dim(value)),
+      paste0("'", name, "' must be a numeric vector"))
+  }
+  inputs <- .align_inputs(list(tas = tas, dewp = dewp))
+  tas <- inputs$tas
+  dewp <- inputs$dewp
   adjusted <- noNAs & swap & !is.na(tas) & !is.na(dewp) & dewp > tas
   if (noNAs && swap) {
     old_tas <- tas
