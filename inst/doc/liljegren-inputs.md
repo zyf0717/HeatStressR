@@ -1,81 +1,44 @@
 # Liljegren inputs and scope
 
-Return to the [package README](https://github.com/zyf0717/HeatStressR#readme).
+`wbgt_liljegren()` evaluates instantaneous meteorological states. Supply air
+and dew-point temperature in C, wind at 2 m in m/s, total downwelling shortwave
+radiation in W/m2, geographic coordinates in degrees, and timestamps identifying
+instants. No wind-height or interval adjustment is performed.
 
-## Physical controls
+POSIXct/POSIXlt timestamps and offset-bearing ISO-8601 strings are normalized
+to UTC. Convert strings upstream for repeated high-throughput calls. Date-only
+and unzoned-string conventions are confined to deprecated adapters. Align
+interval means or accumulated data to a representative instant using source
+metadata before calculation.
 
-`pressure` accepts one value or a vector aligned with the meteorological rows;
-the default is 1010 hPa. Other defaults are `surface_albedo = 0.45`,
-`globe_diameter = 0.0508`, and `min_wind_speed = 0.13`.
+`pressure` defaults to 1010 hPa and may be scalar or row-aligned.
+`direct_fraction` is direct / (direct + diffuse), default 0.8. Supply a measured
+or externally derived fraction when available. `control` contains advanced
+physical/numerical settings: root_tolerance=1e-6 K,
+residual_tolerance=1e-4 K (at most 0.01), surface_albedo=0.45,
+globe_diameter=0.0508 m, and min_wind_speed=0.13 m/s.
 
-`wind` is wind speed at 2 m above ground in m/s. HeatStressR does not perform
-wind-height adjustment; adjust measurements from other reference heights
-before calling `wbgt.Liljegren()`.
+Numeric scalars expand. Empty observations return empty results; unequal
+non-scalar lengths and malformed controls raise errors. Missing observations
+remain NA. Invalid physical inputs, including negative wind/radiation and
+non-finite values, produce NA rows and one summary warning.
 
-`radiation` is total downwelling shortwave radiation. `direct_fraction`
-specifies the direct share, `direct / (direct + diffuse)`, and accepts one
-value or a row-aligned vector. It defaults to `0.8`; retain that default when
-only total shortwave radiation is available, or supply a measured or
-externally derived fraction when direct and diffuse radiation are known.
+`dewpoint_policy` caps above-air dew points by default and reports adjustment;
+`"na"` rejects those rows, while `"error"` stops the call. Swapping temperatures
+is supported only by deprecated compatibility adapters.
 
-## Timestamps and intervals
+Solar forcing is set to zero below the horizon. Diagnostics record that
+operation and geometry mismatches. The batch solver uses safeguarded roots,
+residual validation and scalar fallback. Complete WBGT requires both component
+roots; a validated globe or natural wet-bulb component survives failure of its
+partner. Root precision and residual acceptance are independent.
 
-Solar geometry uses latitude, longitude, and timestamp. Use UTC or
-timezone-aware `POSIXct` for high-throughput calculations. `POSIXlt`
-timestamps and ISO-8601 strings with an offset—for example,
-`2024-06-01T20:00:00+08:00` or `2024-06-01T12:00:00Z`—identify instants and
-are normalized to UTC when `solar_time = "timestamp"`. ISO-8601 strings are
-accepted for convenience but parsed on every call; convert them to `POSIXct`
-upstream when performance matters.
+The default return is a numeric WBGT vector. With diagnostics, use `$values`,
+`$components$tnwb`, `$components$tg`, `$diagnostics$rows`, and
+`$diagnostics$solver`. Rows distinguish invalid input from calculation failure;
+solver details retain convergence, residuals, brackets and fallback reasons.
 
-HeatStressR evaluates every input at the supplied instant; it does not infer
-or apply an interval-average convention. For interval-mean or accumulated
-source data, choose the representative instant from source metadata, align all
-meteorological inputs to it, and supply that timestamp before calculation.
-
-`solar_time = "timestamp"` uses each full timestamp. `solar_time =
-"date_noon"` evaluates each date at 12:00 UTC. The inherited `hour` argument
-is retained as a compatibility alias.
-
-## Scope boundary
-
-HeatStressR evaluates aligned meteorological states; it does not perform
-meteorological pre-processing. The caller is responsible for:
-
-- choosing the representative instant for interval-mean or accumulated data;
-- converting timestamps to UTC or constructing timezone-aware `POSIXct`;
-- adjusting wind to 2 m above ground; and
-- deriving and quality-controlling shortwave radiation from cloud cover or
-  other source data.
-
-The wrapper returns WBGT, globe temperature, and natural wet-bulb temperature.
-It does not expose the original C program's psychrometric wet-bulb or estimated
-wind-speed outputs. This keeps the public interface limited to heat-balance
-calculation and leaves source-specific processing upstream.
-
-## Validation and numerical controls
-
-Meteorological vectors must be non-empty, equal length, and row-aligned with
-`dates`. `lon` and `lat` must be finite geographic coordinates, supplied as
-scalars or row-aligned vectors. Repeated coordinate pairs share one
-solar-geometry calculation.
-
-`wbgt.Liljegren()` exposes three numerical controls:
-
-- `root_tolerance` controls root-location precision (default `1e-6 K`);
-- `residual_tolerance` controls the accepted absolute heat-balance residual
-  (default `1e-4 K`; `0 < value <= 0.01`); and
-- `dewpoint_tolerance` controls the dewpoint-versus-air-temperature policy
-  (default `1e-4 °C`).
-
-Use `diagnostics = TRUE` to investigate invalid inputs or solver failures.
-Diagnostic vectors match input length, and `input_status` separates filtered
-rows from heat-balance solver failures. Diagnostics are disabled by default so
-parallel calls return compact chunk summaries rather than row-level diagnostic
-metadata from every worker. `wind_clamped`, `radiation_clamped`,
-`radiation_zeroed_below_horizon`, and `dewpoint_adjusted` identify row-level
-preprocessing changes without altering `input_status`.
-
-Relaxing `residual_tolerance` only accepts an already located finite root; it
-does not recover unbracketed or non-finite rows. WBGT is `NA` unless both `Tg`
-and `Tnwb` validate, while an independently validated component is retained.
+This R model uses the supplied daytime radiation and configurable direct
+fraction, rather than the original C program's irradiance capping and derived
+partitioning. Match model assumptions when comparing implementations; see
+[original-c-differences.md](original-c-differences.md).

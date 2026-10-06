@@ -1,5 +1,34 @@
 # HeatStressR NEWS
 
+## 3.0.0 development
+
+* Added canonical snake_case index APIs, registry-driven method discovery and
+  multi-index dispatch, scalar expansion, common row validation and diagnostics.
+* Added pressure-aware Romps thermodynamic liquid-water wet bulb and the 2026
+  Lu Heat Index through the authors' heatindex package. Reference fixtures and
+  reproducibility CI pin heatindex 0.0.2; runtime installations may use newer
+  compatible versions.
+* Added separately named ABM and indoor simplified WBGT. Legacy swbgt remains
+  the indoor formula, rather than a coefficient variant of ABM.
+* Corrected POSIXlt timezone normalization to preserve instants instead of
+  interpreting local wall-clock fields as UTC, including legacy adapters.
+* Corrected the NWS low-humidity Heat Index adjustment, simple averaging and
+  regression-selection procedure; corrected results also apply to legacy hi.
+* Added wbgt_liljegren with meaningful dew-point policy and grouped advanced
+  controls, retaining the R batch solver, scalar fallback and PSOCK execution.
+* heat_indices now automatically selects all methods supported by supplied
+  inputs, including numerical methods. Explicit selection preserves requested
+  order. wind_10m and wind_2m are distinct; legacy wind is a deprecated 10 m alias.
+* Invalid physical/non-finite rows produce NA and summary warnings, including
+  through compatibility adapters. Missing values remain silent. No general
+  recycling or silent wind/radiation/RH clamping is performed.
+* Isolated all deprecated 2.x endpoints and legacy argument translations in
+  R/compat-v2.R, with once-per-session warnings and a v4 removal manifest.
+* Removed attach-time networking, duplicate master metadata and assertthat.
+  Minimum supported R is now 4.1. Historical author and GPL-3 notices remain.
+* Added a v3 migration guide, independent reference fixtures, boundary/input
+  matrices, deprecation/core-independence checks and canonical benchmarks.
+
 ## 2.4.0 — 2026-09-02
 
 * Vectorized row-aligned Liljegren solar geometry to avoid

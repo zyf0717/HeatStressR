@@ -1,16 +1,27 @@
 cff-version: 1.2.0
-message: "If you use HeatStressR, please cite it as below."
+message: >-
+  If you use HeatStressR, please cite it as below. Please also cite the original
+  methodological reference for each heat-stress method used; see the corresponding
+  function documentation.
 type: software
 title: "HeatStressR: Calculate Heat Stress Indices"
-abstract: "An independently maintained fork of HeatStress that improves numerical robustness, diagnostics, validation, documentation, and performance across multiple heat-stress indices, including a substantially optimized Liljegren WBGT implementation."
+abstract: >-
+  Calculates heat-stress indices from meteorological observations using shared
+  psychrometric calculations and consistent method-specific input handling.
+  Methods include the physically based outdoor wet-bulb globe temperature model
+  of Liljegren et al. (2008), wet-bulb temperature and heat-index calculations,
+  and established closed-form heat-stress indices. Provides row-level diagnostics,
+  configurable physical controls, vectorized batch processing, and optional
+  parallel execution for the Liljegren method. An independently maintained fork
+  of HeatStress; its Liljegren implementation is not a bitwise-compatible port
+  of the original program.
 authors:
   - family-names: "Zheng"
     given-names: "Yifei"
+    email: "zyf0717@gmail.com"
     orcid: "https://orcid.org/0009-0001-4858-2025"
-  - family-names: "Casanueva"
-    given-names: "Ana"
-version: 2.4.0
-date-released: 2026-09-02
+version: 3.0.0
+date-released: 2026-10-06
 doi: 10.32614/CRAN.package.HeatStressR
 repository-code: "https://github.com/zyf0717/HeatStressR"
 url: "https://CRAN.R-project.org/package=HeatStressR"
