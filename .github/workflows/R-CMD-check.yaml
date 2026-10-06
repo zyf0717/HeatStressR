@@ -36,3 +36,19 @@ jobs:
           R CMD INSTALL .
           BENCHMARK_ROOT=$PWD BENCHMARK_ENGINE=batch E2E_SIZES=100 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-three-way.R
           LILJEGREN_PARALLEL_ROWS=1000 LILJEGREN_WORKERS=1,2 BENCH_REPS=1 Rscript benchmarks/benchmark-liljegren-workers.R
+
+  reference-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, any::pkgload
+      - name: Pin numerical reference dependency
+        run: Rscript tools/install-reference-dependencies.R "$R_LIBS_USER"
+      - uses: r-lib/actions/check-r-package@v2
+      - name: Canonical benchmark smoke test
+        run: V3_ROWS=100 BENCH_REPS=1 Rscript benchmarks/benchmark-v3.R

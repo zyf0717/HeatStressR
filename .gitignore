@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 HeatStress.Rproj
+*.Rcheck
+HeatStressR_*.tar.gz
