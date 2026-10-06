@@ -93,3 +93,14 @@ BENCHMARK_REVISION=master_grouped CARDINALITY_SIZES=1000000 \
 CARDINALITY_MODE=unique BENCH_REPS=3 \
   /usr/bin/time -v Rscript benchmarks/benchmark-liljegren-coordinate-cardinality.R
 ```
+
+## v3 canonical methods
+
+`benchmark-v3.R` measures modern adapters, automatic/explicit bulk dispatch,
+and the canonical Liljegren API. Set `V3_ROWS` and `BENCH_REPS`; optionally set
+`BENCHMARK_OUTPUT` to a CSV path. Recorded results are in
+[results/v3-3.0.0.md](results/v3-3.0.0.md).
+
+The non-Liljegren runner uses an explicit seven-method subset for comparable
+work. Heat Index differences against 2.x include intentional NWS corrections;
+its old formula is a performance baseline, not a scientific oracle.

@@ -17,7 +17,7 @@ measure <- function(work, repetitions) {
   for (i in seq_len(repetitions)) {
     gc()
     started <- proc.time()[["elapsed"]]
-    value <- work()
+    value <- suppressWarnings(work())
     elapsed[i] <- proc.time()[["elapsed"]] - started
   }
   list(seconds = median(elapsed), value = value)
@@ -89,25 +89,27 @@ results <- unlist(lapply(sizes, function(n) {
     weather <- make_weather(n, climate)
     list(
       measure_pair("hi", function() legacy_hi(weather$tas, weather$hurs),
-        function() hi(weather$tas, weather$hurs), n, climate),
+        function() heat_index_rothfusz(weather$tas, weather$hurs), n, climate),
       measure_pair("vapour_pressure", function() legacy_vapour_pressure(weather$tas, weather$hurs),
-        function() tashurs2vap.pres(weather$tas, weather$hurs), n, climate),
+        function() vapour_pressure(weather$tas, weather$hurs), n, climate),
       measure_pair("apparentTemp", function() weather$tas + 0.33 *
           legacy_vapour_pressure(weather$tas, weather$hurs) - 0.7 * weather$wind - 4,
-        function() apparentTemp(weather$tas, weather$hurs, weather$wind), n, climate),
+        function() apparent_temperature(weather$tas, weather$hurs, weather$wind), n, climate),
       measure_pair("humidex", function() weather$tas + 5 / 9 *
           (legacy_vapour_pressure(weather$tas, weather$hurs) - 10),
         function() humidex(weather$tas, weather$hurs), n, climate),
       measure_pair("swbgt", function() 0.567 * weather$tas + 0.216 *
           legacy_vapour_pressure(weather$tas, weather$hurs) + 3.38,
-        function() swbgt(weather$tas, weather$hurs), n, climate),
+        function() wbgt_simplified_indoor(weather$tas, weather$hurs), n, climate),
       measure_pair("all_indices", function() cbind(
           wbt.Stull(weather$tas, weather$hurs), swbgt(weather$tas, weather$hurs),
           apparentTemp(weather$tas, weather$hurs, weather$wind),
           effectiveTemp(weather$tas, weather$hurs, weather$wind),
           humidex(weather$tas, weather$hurs), discomInd(weather$tas, weather$hurs),
           hi(weather$tas, weather$hurs)),
-        function() heat_indices(weather$tas, weather$hurs, wind = weather$wind), n, climate)
+        function() heat_indices(weather$tas, weather$hurs, wind_10m = weather$wind,
+          indices = c("wet_bulb_stull", "wbgt_simplified_indoor", "apparent_temperature",
+            "effective_temperature", "humidex", "discomfort_index", "heat_index_rothfusz")), n, climate)
     )
   }), recursive = FALSE)
 }), recursive = FALSE)
