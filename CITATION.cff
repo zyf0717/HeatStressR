@@ -21,7 +21,7 @@ authors:
     email: "zyf0717@gmail.com"
     orcid: "https://orcid.org/0009-0001-4858-2025"
 version: 3.0.0
-date-released: 2026-10-06
+date-released: 2026-10-09
 doi: 10.32614/CRAN.package.HeatStressR
 repository-code: "https://github.com/zyf0717/HeatStressR"
 url: "https://CRAN.R-project.org/package=HeatStressR"

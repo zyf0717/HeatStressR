@@ -1,6 +1,6 @@
 # HeatStressR NEWS
 
-## 3.0.0 development
+## 3.0.0 — 2026-10-09
 
 * Added canonical snake_case index APIs, registry-driven method discovery and
   multi-index dispatch, scalar expansion, common row validation and diagnostics.
