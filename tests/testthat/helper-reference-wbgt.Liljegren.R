@@ -21,24 +21,24 @@ reference_wbgt.Liljegren_scalar_zenith <- local({
     Pair <- 1010
     MinWindSpeed <- 0.13
 
-    assertthat::assert_that(is.logical(hour), msg = "'hour' should be logical")
-    assertthat::assert_that(is.logical(noNAs), msg = "'noNAs' should be logical")
-    assertthat::assert_that(is.logical(swap), msg = "'swap' should be logical")
-    assertthat::assert_that(
+    HeatStressR:::.assert(is.logical(hour), msg = "'hour' should be logical")
+    HeatStressR:::.assert(is.logical(noNAs), msg = "'noNAs' should be logical")
+    HeatStressR:::.assert(is.logical(swap), msg = "'swap' should be logical")
+    HeatStressR:::.assert(
       length(tas) == length(dewp) & length(dewp) == length(wind) &
         length(wind) == length(radiation),
       msg = "Input vectors do not have the same length"
     )
-    assertthat::assert_that(is.numeric(Pair), msg = "'Pair' is not an integer")
-    assertthat::assert_that(
+    HeatStressR:::.assert(is.numeric(Pair), msg = "'Pair' is not an integer")
+    HeatStressR:::.assert(
       is.numeric(MinWindSpeed),
       msg = "'min.speed' is not an integer"
     )
-    assertthat::assert_that(propDirect < 1, msg = "'propDirect' should be [0,1]")
-    assertthat::assert_that(is.numeric(lon), msg = "'lon' is not an integer")
-    assertthat::assert_that(is.numeric(lat), msg = "'lat' is not an integer")
-    assertthat::assert_that(lon <= 180 & lon >= -180, msg = "Invalid lon")
-    assertthat::assert_that(lat <= 90 & lat >= -90, msg = "Invalid lat")
+    HeatStressR:::.assert(propDirect < 1, msg = "'propDirect' should be [0,1]")
+    HeatStressR:::.assert(is.numeric(lon), msg = "'lon' is not an integer")
+    HeatStressR:::.assert(is.numeric(lat), msg = "'lat' is not an integer")
+    HeatStressR:::.assert(lon <= 180 & lon >= -180, msg = "Invalid lon")
+    HeatStressR:::.assert(lat <= 90 & lat >= -90, msg = "Invalid lat")
 
     ndates <- length(tas)
     Tnwb <- rep(NA, ndates)

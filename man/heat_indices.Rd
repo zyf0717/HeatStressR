@@ -2,44 +2,83 @@
 % Please edit documentation in R/heat_indices.R
 \name{heat_indices}
 \alias{heat_indices}
-\title{Calculate multiple heat indices from shared observations.}
+\title{Calculate all heat indices supported by supplied observations}
 \usage{
-heat_indices(tas, hurs, wind = NULL, dewp = NULL, indices = NULL)
+heat_indices(
+  tas,
+  hurs = NULL,
+  wind = NULL,
+  dewp = NULL,
+  indices = NULL,
+  wind_10m = NULL,
+  wind_2m = NULL,
+  pressure = 1010,
+  radiation = NULL,
+  time = NULL,
+  lon = NULL,
+  lat = NULL,
+  diagnostics = FALSE,
+  liljegren_options = list()
+)
 }
 \arguments{
-\item{tas}{vector of air temperature in degC.}
+\item{tas}{Air temperature in degrees Celsius.}
 
-\item{hurs}{vector of relative humidity in \%.}
+\item{hurs}{Optional RH in percent; required by humidity-based methods.}
 
-\item{wind}{optional vector of wind at 10m in m/s. Required by
-\code{apparentTemp} and \code{effectiveTemp}.}
+\item{wind}{Deprecated alias for wind_10m.}
 
-\item{dewp}{optional vector of dew point temperature in degC. Required only
-when \code{wbgt.Bernard} is requested.}
+\item{dewp}{Optional dew point in C for Bernard and Liljegren.}
 
-\item{indices}{optional character vector of requested indices. By default,
-all indices supported by the supplied inputs are selected.
-\code{wbgt.Bernard} is never selected automatically.}
+\item{indices}{Canonical method names or deprecated aliases. NULL selects
+all methods whose declared observation inputs were supplied, in registry
+order. Explicit selection retains requested order and column labels.}
+
+\item{wind_10m, wind_2m}{Wind in m/s at the indicated height. One is never
+substituted for the other.}
+
+\item{pressure}{Atmospheric pressure in hPa, default 1010. This is an explicit
+near-sea-level assumption; use observed pressure at elevation.}
+
+\item{radiation, time, lon, lat}{Optional Liljegren inputs; see \code{\link[=wbgt_liljegren]{wbgt_liljegren()}}.}
+
+\item{diagnostics}{Return values, component temperatures and diagnostics.}
+
+\item{liljegren_options}{Named list containing direct_fraction,
+dewpoint_policy, workers, or control; see \code{\link[=wbgt_liljegren]{wbgt_liljegren()}}.}
 }
 \value{
-A data frame with one row per input observation and one column per
-  requested index. The optional \code{wbgt.Bernard} column contains the WBGT
-  value; call \code{wbgt.Bernard()} directly to obtain \code{Tpwb} too.
+A data frame by default. With diagnostics, list(values, components,
+diagnostics), where components and diagnostics are named lists by requested
+index. Validation/forcing warnings are summarized once per call.
 }
 \description{
-Calculates selected non-Liljegren heat indices while reusing validation and
-vapour pressure calculations across the requested indices.
+Uses the method registry to select and dispatch methods, including numerical
+Romps, Lu, Bernard and Liljegren calculations. Explicit indices are recommended
+for stable column sets and predictable workloads.
 }
 \details{
-The closed-form indices are calculated directly from shared
-inputs. Without \code{wind}, the default excludes \code{apparentTemp} and
-\code{effectiveTemp}; supplying \code{wind} selects the complete default set.
-Vapour pressure is calculated once when one or more of
-\code{swbgt}, \code{apparentTemp}, and \code{humidex} is requested.
+No absent meteorological inputs are inferred. pressure defaults to
+1010 hPa, so Romps is selected when tas and hurs are supplied. An all-NA
+supplied input still satisfies availability, with NA rows in the result.
+All default column names are canonical. Humidity phase references differ
+between published methods below freezing; see \code{\link[=heat_methods]{heat_methods()}}.
+
+Available methods:
+\describe{\item{\code{wet_bulb_stull}}{Stull wet-bulb approximation; inputs: tas, hurs; units: degC.}
+\item{\code{wet_bulb_romps}}{Romps thermodynamic liquid-water wet bulb; inputs: tas, hurs, pressure; units: degC.}
+\item{\code{wbgt_simplified_abm}}{ABM simplified WBGT; inputs: tas, hurs; units: degC.}
+\item{\code{wbgt_simplified_indoor}}{Indoor simplified WBGT; inputs: tas, hurs; units: degC.}
+\item{\code{apparent_temperature}}{Apparent temperature; inputs: tas, hurs, wind_10m; units: degC.}
+\item{\code{effective_temperature}}{Effective temperature; inputs: tas, hurs, wind_10m; units: degC.}
+\item{\code{humidex}}{Humidex (Celsius-equivalent scale); inputs: tas, hurs; units: degC.}
+\item{\code{discomfort_index}}{Discomfort index; inputs: tas, hurs; units: degC.}
+\item{\code{heat_index_rothfusz}}{NWS Rothfusz Heat Index; inputs: tas, hurs; units: degC.}
+\item{\code{heat_index_lu}}{Lu et al. (2026) simplified Heat Index; inputs: tas, hurs; units: degC.}
+\item{\code{wbgt_bernard}}{Bernard indoor/shade WBGT; inputs: tas, dewp; units: degC.}
+\item{\code{wbgt_liljegren}}{Liljegren outdoor WBGT; inputs: tas, dewp, wind_2m, radiation, time, lon, lat, pressure; units: degC.}}
 }
 \examples{
-heat_indices(
-  tas = c(25, 30), hurs = c(60, 70), wind = c(1, 2),
-  indices = c("humidex", "hi", "apparentTemp")
-)
+heat_indices(c(25, 30), c(60, 70), indices = c("humidex", "heat_index_lu"))
+heat_indices(30, 70, wind_10m = 2)
 }

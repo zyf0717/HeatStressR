@@ -1,28 +1,34 @@
 Package: HeatStressR
 Type: Package
 Title: Calculate Heat Stress Indices
-Version: 2.4.0
-Date: 2026-09-02
+Version: 3.0.0
+Date: 2026-10-06
 Authors@R: c(
     person("Yifei", "Zheng", email = "zyf0717@gmail.com", role = c("aut", "cre"),
-           comment = "Maintainer of this fork"),
-    person("Ana", "Casanueva", role = "aut", comment = "Original package author")
+           comment = c(ORCID = "0009-0001-4858-2025",
+                       "Creator and maintainer of this fork")),
+    person("Ana", "Casanueva", role = "ctb", comment = "Original HeatStress package author and R implementation")
     )
-Description: Calculates heat-stress indices from meteorological observations,
-    including the physically based wet-bulb globe temperature model described
-    by Liljegren et al. (2008) <doi:10.1080/15459620802310770>. The package
-    provides an independently maintained R implementation with row-level
-    diagnostics, configurable physical controls, and batch processing for the
-    Liljegren method; it is not a bitwise-compatible port of the original
-    program, and cross-implementation differences are expected.
+Description: Calculates heat-stress indices from meteorological observations
+    using shared psychrometric calculations and consistent method-specific
+    input handling. Methods include the physically based outdoor wet-bulb
+    globe temperature model described by Liljegren et al. (2008)
+    <doi:10.1080/15459620802310770>, wet-bulb temperature and heat-index
+    calculations, and established closed-form heat-stress indices. Provides
+    row-level diagnostics, configurable physical controls, vectorized batch
+    processing, and optional parallel execution for the Liljegren method.
+    It is an independently maintained fork of 'HeatStress'; its Liljegren
+    implementation is not a bitwise-compatible port of the original program.
 License: GPL-3
 URL: https://github.com/zyf0717/HeatStressR
 BugReports: https://github.com/zyf0717/HeatStressR/issues
-RoxygenNote: 8.0.0
-Depends: R (>= 3.4.0)
+Depends: R (>= 4.1.0)
 Suggests:
     pkgload,
-    testthat (>= 3.0.0)
+    testthat (>= 3.2.0)
 Config/testthat/edition: 3
-Imports: stats, assertthat, parallel
+Imports: stats, utils, parallel, heatindex (>= 0.0.2)
 Encoding: UTF-8
+Config/roxygen2/version: 8.1.0
+Config/roxygen2/markdown: true
+Config/build/clean-inst-doc: false

@@ -16,16 +16,9 @@ fTg_solution <- function(tas, relh, Pair, wind, min.speed, radiation, propDirect
                          globe_diameter = 0.0508) {
 
  
-  # Physical constants
-  stefanb <- 0.000000056696
-  cp <- 1003.5 # heat capaticy at constant pressure of dry air
-  m.air <- 28.97
-  m.h2o <- 18.015
-  r.gas <- 8314.34
-  r.air <- r.gas / m.air
-  ratio <- cp * m.air/ m.h2o
-  Pr <- cp / (cp + (1.25 * r.air))
-  
+  # Shared physical constant (SI).
+  stefanb <- STEFAN_BOLTZMANN
+
   # Globe constants
   emis.globe <- 0.95 # emissivity
   alb.globe <- 0.05 # albedo
@@ -110,20 +103,4 @@ fTg_solution <- function(tas, relh, Pair, wind, min.speed, radiation, propDirect
     upper_residual = f.upper, root_tolerance = root_tolerance,
     residual_tolerance = residual_tolerance, converged = converged,
     failure_reason = if (converged) "none" else "residual_validation")
-}
-
-#' Calculation of the globe temperature.
-#'
-#' @inheritParams fTnwb
-#' @param globe_diameter black-globe diameter in m. Default: 0.0508.
-#' @return Globe temperature in degC.
-#' @author Ana Casanueva (05.01.2017).
-#' @details Original fortran code by James C. Liljegren, translated by Bruno Lemke into Visual Basic (VBA).
-#' Uses an adaptively bracketed signed heat-balance residual.
-#' @export
-fTg <- function(tas, relh, Pair, wind, min.speed, radiation, propDirect,
-                zenith, SurfAlbedo = 0.45, tolerance = 1e-4,
-                globe_diameter = 0.0508) {
-  fTg_solution(tas, relh, Pair, wind, min.speed, radiation, propDirect,
-    zenith, SurfAlbedo, tolerance, globe_diameter = globe_diameter)$root
 }

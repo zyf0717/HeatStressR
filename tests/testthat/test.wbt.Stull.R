@@ -14,7 +14,7 @@ test_that("test if the wbt.Stull function computes WBT properly",{
   data("data_wbt.Stull", envir = environment())
   WBT <- data_wbt.Stull
   
-  WBT.new <- wbt.Stull(tas, hurs)
+  WBT.new <- wet_bulb_stull(tas, hurs)
   
   expect_equal(WBT.new,WBT, tolerance = 1e-3)
 })

@@ -12,7 +12,7 @@ Numeric vector with 92 values (days).
 data(data_wbt.Stull)
 }
 \description{
-Dataset to check the result of \code{wbt.Stull} with the testing data \code{obs_data} 
+Dataset to check the result of \code{wbt.Stull} with the testing data \code{obs_data}
 for summer 2003 and one station (Salamanca, Spain).
 }
 \keyword{datasets}

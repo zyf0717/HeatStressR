@@ -62,7 +62,7 @@ test_that("diagnostics distinguish status precedence from solver failures", {
   }
 })
 
-test_that("numerical failures emit one counted warning with aligned batch diagnostics", {
+test_that("non-finite forcing is rejected before batch solving", {
   warnings <- character()
   result <- withCallingHandlers(wbgt.Liljegren(
     tas = 22, dewp = 10, wind = 0, radiation = Inf,
@@ -73,10 +73,9 @@ test_that("numerical failures emit one counted warning with aligned batch diagno
     invokeRestart("muffleWarning")
   })
   expect_length(warnings, 1L)
-  expect_match(warnings, "failed for 1 of 1 attempted rows")
-  expect_match(warnings, "Tg:")
-  expect_match(warnings, "non-finite: 1")
-  expect_match(warnings, "Complete WBGT was set to NA")
+  expect_match(warnings, "invalid=1")
+  expect_false(result$diagnostics$attempted)
+  expect_identical(result$diagnostics$input_status, "invalid_input")
   for (solver in list(result$diagnostics$Tg, result$diagnostics$Tnwb)) {
     expect_true(all(vapply(solver, length, integer(1)) == 1L))
     expect_true(all(solver$fallback_reason %in% batch_reason_vocabulary))
@@ -108,10 +107,10 @@ test_that("preprocessing diagnostics are aligned across local engines", {
   batch <- run("batch")$diagnostics
   scalar <- run("scalar")$diagnostics
   expected <- list(
-    wind_clamped = c(FALSE, TRUE, FALSE, FALSE),
-    radiation_clamped = c(FALSE, TRUE, FALSE, FALSE),
+    wind_clamped = rep(FALSE, 4),
+    radiation_clamped = rep(FALSE, 4),
     radiation_zeroed_below_horizon = c(TRUE, FALSE, FALSE, FALSE),
-    dewpoint_adjusted = c(FALSE, TRUE, FALSE, TRUE)
+    dewpoint_adjusted = rep(FALSE, 4)
   )
 
   for (field in names(expected)) {

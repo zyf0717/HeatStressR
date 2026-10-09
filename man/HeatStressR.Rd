@@ -2,63 +2,52 @@
 % Please edit documentation in R/HeatStressR.R
 \name{HeatStressR}
 \alias{HeatStressR}
-\title{HeatStressR}
+\title{Meteorological heat-stress metrics}
 \description{
-Calculate heat stress indices
+Canonical single-index functions, registry-driven multi-index calculations,
+aligned input validation and optional diagnostics. The package includes the
+vectorized R Liljegren WBGT model and delegates Romps thermodynamic wet bulb
+and the 2026 Lu Heat Index to the authors' heatindex package.
 }
 \details{
-The package \code{HeatStressR} calculates heat-stress indices from
-meteorological observations and exposes both index-level functions and
-lower-level physical components.
+Available methods:
+\describe{\item{\code{wet_bulb_stull}}{Stull wet-bulb approximation; inputs: tas, hurs; units: degC.}
+\item{\code{wet_bulb_romps}}{Romps thermodynamic liquid-water wet bulb; inputs: tas, hurs, pressure; units: degC.}
+\item{\code{wbgt_simplified_abm}}{ABM simplified WBGT; inputs: tas, hurs; units: degC.}
+\item{\code{wbgt_simplified_indoor}}{Indoor simplified WBGT; inputs: tas, hurs; units: degC.}
+\item{\code{apparent_temperature}}{Apparent temperature; inputs: tas, hurs, wind_10m; units: degC.}
+\item{\code{effective_temperature}}{Effective temperature; inputs: tas, hurs, wind_10m; units: degC.}
+\item{\code{humidex}}{Humidex (Celsius-equivalent scale); inputs: tas, hurs; units: degC.}
+\item{\code{discomfort_index}}{Discomfort index; inputs: tas, hurs; units: degC.}
+\item{\code{heat_index_rothfusz}}{NWS Rothfusz Heat Index; inputs: tas, hurs; units: degC.}
+\item{\code{heat_index_lu}}{Lu et al. (2026) simplified Heat Index; inputs: tas, hurs; units: degC.}
+\item{\code{wbgt_bernard}}{Bernard indoor/shade WBGT; inputs: tas, dewp; units: degC.}
+\item{\code{wbgt_liljegren}}{Liljegren outdoor WBGT; inputs: tas, dewp, wind_2m, radiation, time, lon, lat, pressure; units: degC.}}
 
+Temperatures use Celsius, pressure hPa, humidity percent, wind m/s,
+and radiation W/m2. Consult \code{\link[=heat_methods]{heat_methods()}} for phase conventions, wind
+measurement height, applicability and scientific references. Missing inputs
+propagate silently; invalid rows become NA with summarized warnings.
+Scalar observations expand to the common input length.
 
+\code{\link[=wbgt_liljegren]{wbgt_liljegren()}} evaluates instantaneous states, using batch roots,
+scalar fallback and optional PSOCK workers. Its independently maintained R
+model is not a bitwise port of the original Liljegren program. Validated
+component temperatures are retained when another component fails.
 
-The following calculation methods are implemented:
- \itemize{
- 
- \item \code{wbt.Stull}: Calculation of the Wet Bulb Temperature (Stull 2011).
- \item \code{wbgt.Bernard}: Calculation of the Wet Bulb Globe Temperature in the shade (Bernard et al. 1999) 
- \item \code{wbgt.Liljegren}: Calculation of the Wet Bulb Globe Temperature in the sun (Liljegren et al. 2008) 
- \item \code{swbgt}: Calculation of the simplified wet bulb globe temperature (Buzan et al. 2015 and references therein).
- \item \code{apparentTemp}: Calculation of the apparent temperature (Buzan et al. 2015 and references therein).
- \item \code{effectiveTemp}: Calculation of the effective temperature (Coccolo et al. 2016 and references therein).
- \item \code{humidex}: Calculation of the humidex (Buzan et al. 2015 and references therein).
- \item \code{discomInd}: Calculation of the discomfort index (Coccolo et al. 2016 and references therein).
- \item \code{hi}: Calculation of the heat index (NOAA, Rothfusz 1990).
- \item \code{heat_indices}: Fused calculation of multiple non-Liljegren
- indices from shared observations.
+HeatStressR is a GPL-3 fork of HeatStress. Ana Casanueva authored the
+original package and R translation; Yifei Zheng maintains this fork.
+Historical contributions and attribution are retained. The fork is not
+affiliated with the original project or its authors.
+
+Deprecated 2.x adapters preserve signatures and return shapes while
+applying documented scientific corrections. Removal is planned no earlier
+than v4.0.0. See \link{HeatStressR-deprecated} and the installed migration guide.
+Package attachment performs no network access. Use
+\code{citation("HeatStressR")} for the package citation. Please also cite the
+original methodological reference for each heat-stress method used; see the
+corresponding function documentation.
 }
-
-\code{wbgt.Liljegren()} implements the outdoor Liljegren wet-bulb globe
-temperature model in R. Its vectorized batch engine is the default and can
-use explicitly requested base R PSOCK workers;
-the scalar engine remains available as a reference implementation. Pressure and
-documented physical constants are configurable. Set
-\code{diagnostics = TRUE} to obtain row-aligned input and solver metadata.
-This is not a bitwise-compatible port of the original Liljegren program, and
-cross-implementation differences are expected.
-
-Invalid inputs and numerical solver failures are distinct. Complete WBGT is
-\code{NA} unless both globe and natural-wet-bulb temperatures validate, while
-an independently valid component can be retained. Diagnostic vectors remain
-aligned with the supplied meteorological rows.
-
-HeatStressR is an independently maintained fork of the HeatStress package.
-Ana Casanueva made the original R translation; this fork changes the R
-package implementation by adding explicit numerical controls, row-level
-diagnostics, and optional batch execution. These changes are not a claim that
-HeatStressR improves on or supersedes the original Liljegren implementation.
-It is maintained by Yifei Zheng and is not affiliated with the original
-project or its authors. The source repository is
-\url{https://github.com/zyf0717/HeatStressR}.
-
-CRAN checks package portability and software quality; users remain
-responsible for matching the methodological assumptions of a chosen index to
-their application. To cite the package and the Liljegren model, use
-\code{citation("HeatStressR")}.
-
-Check the details of the indices and input variables with
-\code{indexShow()}.
-Use \code{heat_indices()} to calculate multiple closed-form indices from the
-same observations while reusing shared intermediate calculations.
+\seealso{
+\code{\link[=heat_methods]{heat_methods()}}, \code{\link[=heat_indices]{heat_indices()}}, \code{\link[=wbgt_liljegren]{wbgt_liljegren()}}
 }

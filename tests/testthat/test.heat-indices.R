@@ -1,0 +1,37 @@
+test_that("bulk auto-selection follows supplied inputs and canonical registry order", {
+  x <- heat_indices(c(25, 30), c(60, 70))
+  expected <- c("wet_bulb_stull", "wet_bulb_romps", "wbgt_simplified_abm", "wbgt_simplified_indoor",
+    "humidex", "discomfort_index", "heat_index_rothfusz", "heat_index_lu")
+  expect_identical(names(x), expected)
+  for (name in expected) expect_equal(x[[name]], getExportedValue("HeatStressR", name)(c(25,30), c(60,70)))
+  ten <- heat_indices(30, 70, wind_10m = 2)
+  expect_true(all(c("apparent_temperature", "effective_temperature") %in% names(ten)))
+  time <- as.POSIXct("2024-06-01 12:00:00", tz = "UTC")
+  two <- heat_indices(30, 70, dewp = 20, wind_2m = 2, radiation = 700, time = time, lon = 0, lat = 15)
+  expect_true(all(c("wbgt_bernard", "wbgt_liljegren") %in% names(two)))
+  expect_false(any(c("apparent_temperature", "effective_temperature") %in% names(two)))
+  expect_equal(two$wbgt_liljegren, wbgt_liljegren(30,20,2,700,time,0,15))
+  expect_identical(names(heat_indices(30, dewp = 20)), "wbgt_bernard")
+  expect_identical(names(heat_indices(30, 70, wind_10m = NA_real_)), names(ten))
+  expect_error(heat_indices(30, indices = "heat_index_lu"), "Missing required inputs")
+  expect_error(heat_indices(30), "no methods match")
+})
+
+test_that("bulk validation and shared intermediates preserve independent missing masks", {
+  x <- heat_indices(c(25,30), c(60,70), wind_10m = c(NA_real_,2),
+    indices = c("apparent_temperature", "humidex", "wbgt_simplified_abm"), diagnostics = TRUE)
+  expect_true(is.na(x$values$apparent_temperature[1]))
+  expect_equal(x$values$humidex, humidex(c(25,30), c(60,70)))
+  expect_equal(x$values$wbgt_simplified_abm, wbgt_simplified_abm(c(25,30),c(60,70)))
+  expect_identical(names(x$diagnostics), names(x$values))
+  warnings <- character()
+  y <- withCallingHandlers(heat_indices(c(30,30), c(70,101), wind_10m = c(2,-1)),
+    warning = function(w) { warnings <<- c(warnings, conditionMessage(w)); invokeRestart("muffleWarning") })
+  expect_length(warnings, 1L)
+  expect_true(all(is.na(y[2, ])))
+  expect_equal(nrow(heat_indices(numeric(), numeric())), 0)
+  expect_error(heat_indices(1:3, 1:2), "same length")
+  expect_error(heat_indices(matrix(30), c(60,70)), "must be vectors")
+  expect_error(heat_indices(30, 70, indices = c("humidex", "humidex")), "unique")
+  expect_error(heat_indices(30, 70, indices = "invented"), "supported")
+})

@@ -59,21 +59,21 @@ test_that("test if the wbgt.Bernard function computes WBGTshade properly",{
   WBGT.shade <- data_wbgt.Bernard$data
   Tpwb <- data_wbgt.Bernard$Tpwb
   
-  WBGTshade.new <- wbgt.Bernard(tas,dewp)
+  WBGTshade.new <- wbgt_bernard(tas,dewp,diagnostics=TRUE)
   
-  expect_equal(WBGTshade.new$data,WBGT.shade, tolerance = 1e-3)
+  expect_equal(WBGTshade.new$values,WBGT.shade, tolerance = 1e-3)
   
-  expect_equal(WBGTshade.new$Tpwb,Tpwb, tolerance = 1e-3)
+  expect_equal(WBGTshade.new$components$tpwb,Tpwb, tolerance = 1e-3)
 })
 
 test_that("wbgt.Bernard preserves missing input row positions", {
-  result <- wbgt.Bernard(
+  result <- wbgt_bernard(
     tas = c(25, NA_real_, 30),
-    dewp = c(20, 15, NA_real_)
+    dewp = c(20, 15, NA_real_), diagnostics = TRUE
   )
 
-  expect_identical(is.na(result$Tpwb), c(FALSE, TRUE, TRUE))
-  expect_identical(is.na(result$data), c(FALSE, TRUE, TRUE))
+  expect_identical(is.na(result$components$tpwb), c(FALSE, TRUE, TRUE))
+  expect_identical(is.na(result$values), c(FALSE, TRUE, TRUE))
 })
 
 test_that("wbgt.Bernard matches the legacy optimizer on representative grids", {
@@ -87,25 +87,9 @@ test_that("wbgt.Bernard matches the legacy optimizer on representative grids", {
 
   for (grid in grids) {
     legacy <- legacy_wbgt_bernard(grid$tas, grid$dewp)
-    vectorized <- wbgt.Bernard(grid$tas, grid$dewp)
-    finite <- is.finite(legacy$Tpwb) & is.finite(vectorized$Tpwb)
-    expect_lte(max(abs(legacy$Tpwb[finite] - vectorized$Tpwb[finite])), 1e-4)
-    expect_equal(vectorized$data, legacy$data, tolerance = 1e-4)
-  }
-})
-
-test_that("wbgt.Bernard retains legacy noNAs, swap, trivial, and NA semantics", {
-  tas <- c(30, 30, 30, 30, NA_real_, 30, 30)
-  dewp <- c(20, 30, 35, 30.00005, 20, NA_real_, 10)
-
-  for (noNAs in c(TRUE, FALSE)) {
-    for (swap in c(TRUE, FALSE)) {
-      legacy <- legacy_wbgt_bernard(tas, dewp, noNAs = noNAs, swap = swap)
-      vectorized <- wbgt.Bernard(tas, dewp, noNAs = noNAs, swap = swap)
-      expect_identical(is.na(vectorized$Tpwb), is.na(legacy$Tpwb))
-      expect_identical(is.na(vectorized$data), is.na(legacy$data))
-      expect_equal(vectorized$Tpwb, legacy$Tpwb, tolerance = 1e-4)
-      expect_equal(vectorized$data, legacy$data, tolerance = 1e-4)
-    }
+    vectorized <- wbgt_bernard(grid$tas, grid$dewp,diagnostics=TRUE)
+    finite <- is.finite(legacy$Tpwb) & is.finite(vectorized$components$tpwb)
+    expect_lte(max(abs(legacy$Tpwb[finite] - vectorized$components$tpwb[finite])), 1e-4)
+    expect_equal(vectorized$values, legacy$data, tolerance = 1e-4)
   }
 })

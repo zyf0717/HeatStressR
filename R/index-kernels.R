@@ -1,22 +1,8 @@
-.validate_tas_hurs <- function(tas, hurs) {
-  assertthat::assert_that(length(hurs) == length(tas),
-    msg = "Input vectors do not have the same length")
-  assertthat::assert_that(all(hurs <= 100, na.rm = TRUE),
-    msg = "Some values in hurs are greater than 100")
-}
-
-.validate_tas_hurs_wind <- function(tas, hurs, wind) {
-  assertthat::assert_that(length(hurs) == length(tas) && length(tas) == length(wind),
-    msg = "Input vectors do not have the same length")
-  assertthat::assert_that(all(hurs <= 100, na.rm = TRUE),
-    msg = "Some values in hurs are greater than 100")
-}
-
 .heat_index <- function(tas, hurs) {
   tasf <- tas * 1.8 + 32
   result_simple <- 0.5 * (tasf + 61 + (tasf - 68) * 1.2 + hurs * 0.094)
-  result <- result_simple
-  regression_idx <- which(tasf >= 80 & ((result_simple + tasf) / 2) >= 80)
+  result <- (result_simple + tasf) / 2
+  regression_idx <- which(result >= 80)
 
   if (length(regression_idx)) {
     tasf_i <- tasf[regression_idx]
@@ -34,7 +20,7 @@
     )]
     if (length(adjustment1_idx)) {
       adjustment1 <- (13 - hurs[adjustment1_idx]) / 4 * sqrt(
-        17 - abs(tasf[adjustment1_idx] - 95) / 17
+        (17 - abs(tasf[adjustment1_idx] - 95)) / 17
       )
       result[adjustment1_idx] <- result[adjustment1_idx] - adjustment1
     }
@@ -50,20 +36,6 @@
   }
 
   (result - 32) / 1.8
-}
-
-.vapour_pressure_hpa <- function(tas, hurs) {
-  vapour_pressure <- rep(NA_real_, length(tas))
-  water <- which(tas >= 0)
-  ice <- which(tas < 0)
-
-  vapour_pressure[water] <- hurs[water] * 0.06107 * exp(
-    17.368 * tas[water] / (238.83 + tas[water])
-  )
-  vapour_pressure[ice] <- hurs[ice] * 0.06108 * exp(
-    17.856 * tas[ice] / (245.52 + tas[ice])
-  )
-  vapour_pressure
 }
 
 .wbt_stull <- function(tas, hurs) {

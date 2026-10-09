@@ -65,15 +65,16 @@ test_that("parallel worker errors propagate to the caller", {
     "requires at least two logical CPUs")
   x <- parallel_fixture()
   controls <- list(
-    swap = FALSE, dewpoint_tolerance = 1e-4,
+    dewpoint_policy = "na", dewpoint_tolerance = 0,
     min_wind_speed = 0.13, tolerance = 1e-4, root_tolerance = 1e-6,
     residual_tolerance = 1e-4, surface_albedo = 0.45,
     globe_diameter = 0.0508
   )
+  controls$surface_albedo <- "invalid"
   expect_error(HeatStressR:::solve_liljegren_parallel(
     x$tas, x$dewp, x$wind, x$radiation, x$dates,
     lon = rep(-5.66, length(x$tas)), lat = rep(40.96, length(x$tas)),
-    hour = TRUE, pressure = 1010, direct_fraction = numeric(), workers = 2L,
+    pressure = 1010, direct_fraction = rep(0.8, length(x$tas)), workers = 2L,
     controls = controls, diagnostics = FALSE
   ), "node")
   expect_no_error(run_parallel_fixture(2L))
@@ -109,7 +110,7 @@ test_that("parallel execution omits row diagnostics when diagnostics are disable
   expect_identical(parallel, sequential)
 })
 
-test_that("parallel diagnostics-off execution preserves numerical failure warnings", {
+test_that("parallel diagnostics-off execution preserves invalid-row warnings", {
   skip_if(HeatStressR:::max_liljegren_workers() < 2L,
     "requires at least two logical CPUs")
   warnings <- character()
@@ -124,8 +125,7 @@ test_that("parallel diagnostics-off execution preserves numerical failure warnin
   })
   expect_null(result$diagnostics)
   expect_length(warnings, 1L)
-  expect_match(warnings, "failed for 2 of 2 attempted rows")
-  expect_match(warnings, "non-finite: 2")
+  expect_match(warnings, "invalid=2")
 })
 
 test_that("parallel batch execution supports row-aligned coordinates", {
@@ -188,9 +188,9 @@ test_that("parallel chunks reproduce row-local preprocessing", {
   expect_identical(parallel$diagnostics$input_status[2], "invalid_dewpoint")
   expect_identical(parallel$diagnostics$input_status[5], "missing_date")
   expect_identical(parallel$diagnostics$wind_clamped,
-    c(TRUE, FALSE, FALSE, FALSE, FALSE))
+    rep(FALSE, 5))
   expect_identical(parallel$diagnostics$radiation_clamped,
-    c(FALSE, FALSE, TRUE, FALSE, FALSE))
+    rep(FALSE, 5))
   parallel$diagnostics$workers <- 1L
   parallel$diagnostics$requested_workers <- 1L
   expect_identical(parallel, sequential)

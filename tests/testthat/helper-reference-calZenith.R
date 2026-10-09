@@ -8,9 +8,8 @@
 ####################################################################
 
 reference_calZenith_scalar <- local({
-  # Keep these bindings and the function body aligned with the scalar source;
-  # do not apply vectorization or numerical corrections in this reference.
-  is.leapyear <- HeatStressR:::is.leapyear
+  # Keep the scalar algorithm; derive year length independently with base R's
+  # calendar rather than sharing the production leap-year rule.
   degToRad <- HeatStressR:::degToRad
   radToDeg <- HeatStressR:::radToDeg
 
@@ -47,8 +46,9 @@ reference_calZenith_scalar <- local({
     # Translate from date to doy
     doy <- as.numeric(strftime(d1, format = "%j"))
 
-    # Number of days per year (check if it is a leap year)
-    if (is.leapyear(year)) dpy <- 366 else dpy <- 365
+    # Number of days between successive January 1 dates.
+    dpy <- as.numeric(as.Date(sprintf("%04d-01-01", year + 1)) -
+      as.Date(sprintf("%04d-01-01", year)))
 
     # Evaluate the input latitude in radians
     RadLat <- degToRad(lat)
