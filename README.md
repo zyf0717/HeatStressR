@@ -1,7 +1,7 @@
 # HeatStressR
 
-[![R-CMD-check](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zyf0717/HeatStressR/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/HeatStressR)](https://CRAN.R-project.org/package=HeatStressR)
+[![R-universe](https://zyf0717.r-universe.dev/badges/HeatStressR)](https://zyf0717.r-universe.dev/HeatStressR)
 
 HeatStressR calculates meteorological heat-stress metrics from aligned
 observations. Version 3 introduces canonical snake_case endpoints, one method
@@ -24,14 +24,21 @@ Requires R 4.1 or later. The new Romps and Lu methods depend on the authors'
 of that dependency require C++17/Rcpp. HeatStressR itself contains R code.
 
 ```r
+# CRAN:
 install.packages("HeatStressR")
-# Development version:
+
+# R-universe:
+install.packages(
+  "HeatStressR",
+  repos = c("https://zyf0717.r-universe.dev", "https://cloud.r-project.org")
+)
+
+# GitHub (development version):
 remotes::install_github("zyf0717/HeatStressR")
+
 library(HeatStressR)
 heat_methods()
 ```
-
-Package attachment performs no networking or version checks.
 
 ## Calculate indices
 
@@ -91,26 +98,9 @@ and minimum wind speed. Use `workers > 1` only for a sufficiently large call
 and avoid nesting worker pools.
 
 The model is an independently maintained R implementation, rather than a
-bitwise port of the original C program. Match physical assumptions when
+bitwise port of the original C program (see
+[lwbgt](https://github.com/zyf0717/lwbgt)). Match physical assumptions when
 comparing implementations.
-
-## Validation and diagnostics
-
-Numeric scalars expand to the common observation length. Other incompatible
-lengths and wrong types raise errors. Missing observations propagate silently.
-Physically invalid rows return NA with one summary warning. Observations
-outside a documented applicability domain are calculated where possible,
-flagged, and summarized in a warning. An unknown validity boundary is recorded
-as unknown. Numerical failures are distinct from invalid input.
-
-Single-index functions return numeric vectors. With `diagnostics = TRUE`,
-they return `list(values, components, diagnostics)`. The diagnostics contain
-aligned row statuses, optional solver details and scientific metadata. Bulk
-calculations return a data frame or the corresponding diagnostic list.
-
-Below freezing, published methods differ in their humidity reference phase.
-Use the convention reported by `heat_methods()` and do not assume that
-water-relative and ice-relative RH are interchangeable.
 
 ## Migration and reproducibility
 
@@ -119,6 +109,7 @@ Removal is planned no earlier than v4.0.0. `hi()` uses the corrected NWS
 procedure; `swbgt()` continues to represent the indoor approximation.
 
 - [v3 migration guide](inst/doc/migration-v3.md)
+- [Validation and diagnostics](inst/doc/validation-and-diagnostics.md)
 - [Compatibility removal manifest](inst/DEPRECATIONS.md)
 - [Liljegren inputs](inst/doc/liljegren-inputs.md)
 - [Parallel execution](inst/doc/parallelism.md)

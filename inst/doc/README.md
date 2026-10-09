@@ -1,6 +1,7 @@
 # HeatStressR guides
 
 - [v3 migration](migration-v3.md)
+- [Validation and diagnostics](validation-and-diagnostics.md)
 - [Liljegren inputs and scope](liljegren-inputs.md)
 - [Parallel execution](parallelism.md)
 - [Differences from the original C implementation](original-c-differences.md)
