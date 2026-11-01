@@ -22,6 +22,10 @@ test_that("equal heights return the wind unchanged", {
   # Equal heights are exempt from method-parameter row validity.
   expect_equal(wind_at_height(3, 10, 10, method = "neutral_log",
     roughness_length_m = 0.1, displacement_height_m = 9.5), 3)
+  expect_silent(u <- wind_at_height(c(3, 4), 10, c(10, 2),
+    method = "neutral_log", roughness_length_m = 0.1,
+    displacement_height_m = c(11, 0)))
+  expect_equal(u, c(3, 4 * log(2 / 0.1) / log(10 / 0.1)))
 })
 
 test_that("converted wind falls monotonically from 10 m to 2 m", {
@@ -53,6 +57,14 @@ test_that("shapes: scalar expansion, vector alignment, empty, NA", {
     exponent = 0.143), 5L)
   expect_equal(wind_at_height(c(4, 5), c(10, 50), 2, method = "power",
     exponent = 0.143), c(4, 5) * (2 / c(10, 50))^0.143)
+  expect_equal(wind_at_height(4, 10, 2, method = "power",
+    exponent = c(0.1, 0.2)), 4 * 0.2^c(0.1, 0.2))
+  expect_equal(wind_at_height(4, 10, 2, method = "neutral_log",
+    roughness_length_m = c(0.01, 0.1)),
+    4 * log(2 / c(0.01, 0.1)) / log(10 / c(0.01, 0.1)))
+  expect_equal(wind_at_height(4, 10, 2, method = "neutral_log",
+    roughness_length_m = 0.1, displacement_height_m = c(0, 1)),
+    4 * log((2 - c(0, 1)) / 0.1) / log((10 - c(0, 1)) / 0.1))
   expect_equal(wind_at_height(NA_real_, 10, 2, method = "power",
     exponent = 0.143), NA_real_)
   expect_silent(wind_at_height(c(4, NA_real_), 10, 2, method = "power",
@@ -62,8 +74,10 @@ test_that("shapes: scalar expansion, vector alignment, empty, NA", {
 test_that("malformed shapes and missing method parameters are call errors", {
   expect_error(wind_at_height(c(1, 2, 3), c(10, 50), 2, method = "power",
     exponent = 0.143), "same length")
+  expect_error(wind_at_height(c(1, 2, 3), 10, 2, method = "power",
+    exponent = c(0.1, 0.2)), "same length")
   expect_error(wind_at_height(matrix(4, 1, 1), 10, 2, method = "power",
-    exponent = 0.143), "numeric vector")
+    exponent = 0.143), "vector")
   expect_error(wind_at_height(4, 10, 2, method = "power"), "exponent")
   expect_error(wind_at_height(4, 10, 2, method = "neutral_log"), "roughness")
   expect_error(wind_at_height(4, 10, 2), "arg")
@@ -130,24 +144,24 @@ test_that("no implicit wind-height pathway was added to existing kernels", {
 # --- wind_2m_liljegren(): SRDT stability-class estimator ---
 
 test_that("daytime wind thresholds 2/3/5/6 m/s select the class rows", {
-  cls <- function(w) suppressWarnings(
-    wind_2m_liljegren(w, 10, 500, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class)
+  cls <- function(w)
+    wind_2m_liljegren(w, 10, 500, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class
   # solar 500 W/m2 is the >= 175 column: classes 2,3,3,3,3,4,4,4.
   expect_equal(cls(c(1.99, 2, 2.99, 3, 4.99, 5, 5.99, 6)),
     c(2, 3, 3, 3, 3, 4, 4, 4))
 })
 
 test_that("daytime radiation thresholds 175/675/925 W/m2 select the columns", {
-  cls <- function(s) suppressWarnings(
-    wind_2m_liljegren(4, 10, s, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class)
+  cls <- function(s)
+    wind_2m_liljegren(4, 10, s, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class
   # wind 4 m/s is the 3-5 m/s row: classes 4,3,3,2,2,2 across the columns.
   expect_equal(cls(c(174.99, 175, 674.99, 675, 924.99, 925)),
     c(4, 3, 3, 2, 2, 2))
 })
 
 test_that("nighttime wind thresholds 2/2.5 m/s and delta_t sign select classes", {
-  cls <- function(w, dt) suppressWarnings(
-    wind_2m_liljegren(w, 10, 0, FALSE, dt, FALSE, diagnostics = TRUE)$stability_class)
+  cls <- function(w, dt)
+    wind_2m_liljegren(w, 10, 0, FALSE, dt, FALSE, diagnostics = TRUE)$stability_class
   # delta_t < 0 (neutral/mixed): 5, 5, 4 across the wind rows.
   expect_equal(cls(c(1.99, 2, 2.49, 2.5), -1), c(5, 5, 5, 4))
   # delta_t >= 0 (inversion): 6, 6, 6, 4; zero counts as inversion (>= 0).
@@ -157,13 +171,9 @@ test_that("nighttime wind thresholds 2/2.5 m/s and delta_t sign select classes",
 })
 
 test_that("all six SRDT classes are reachable", {
-  seen <- c(
-    suppressWarnings(wind_2m_liljegren(1, 10, 925, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class),
-    suppressWarnings(wind_2m_liljegren(1, 10, 500, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class),
-    suppressWarnings(wind_2m_liljegren(4, 10, 500, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class),
-    suppressWarnings(wind_2m_liljegren(6, 10, 500, TRUE, NA_real_, FALSE, diagnostics = TRUE)$stability_class),
-    suppressWarnings(wind_2m_liljegren(1, 10, 0, FALSE, -1, FALSE, diagnostics = TRUE)$stability_class),
-    suppressWarnings(wind_2m_liljegren(1, 10, 0, FALSE, 1, FALSE, diagnostics = TRUE)$stability_class))
+  seen <- wind_2m_liljegren(c(1, 1, 4, 6, 1, 1), 10,
+    c(925, 500, 500, 500, 0, 0), c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
+    c(NA, NA, NA, NA, -1, 1), FALSE, diagnostics = TRUE)$stability_class
   expect_equal(sort(unique(seen)), 1:6)
 })
 
@@ -180,8 +190,8 @@ test_that("rural and urban exponent tables are applied separately", {
 
 test_that("class uses the original-height wind before conversion", {
   # 6 m/s at 50 m is the >= 6 m/s class row, not whatever 2 m value results.
-  d <- suppressWarnings(wind_2m_liljegren(6, 50, 500, TRUE, NA_real_, FALSE,
-    diagnostics = TRUE))
+  d <- wind_2m_liljegren(6, 50, 500, TRUE, NA_real_, FALSE,
+    diagnostics = TRUE)
   expect_equal(d$stability_class, 4L)
   expect_equal(d$wind_2m, 6 * (2 / 50)^0.15)
 })
@@ -199,8 +209,8 @@ test_that("wind at 2 m passes through without stability inputs", {
 test_that("calm floor 0.13 m/s applies only in this estimator", {
   expect_equal(wind_2m_liljegren(0, 10, 500, TRUE, NA_real_, FALSE), 0.13)
   expect_equal(wind_2m_liljegren(0.01, 10, 0, FALSE, 1, FALSE), 0.13)
-  d <- suppressWarnings(wind_2m_liljegren(c(0.01, 4), 10, 500, TRUE, NA_real_,
-    FALSE, diagnostics = TRUE))
+  d <- wind_2m_liljegren(c(0.01, 4), 10, 500, TRUE, NA_real_,
+    FALSE, diagnostics = TRUE)
   expect_equal(d$floored, c(TRUE, FALSE))
   expect_equal(d$wind_2m, c(0.13, 4 * (2 / 10)^0.10))
   # The generic converter never clamps.

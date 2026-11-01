@@ -31,11 +31,12 @@ srdt_fixtures <- function() {
     comment.char = "#", stringsAsFactors = FALSE)
 }
 
-test_that("SRDT fixtures cover all six classes and the calm floor", {
+test_that("SRDT fixtures cover all six classes, boundaries and the calm floor", {
   fixtures <- srdt_fixtures()
   expect_gte(nrow(fixtures), 400L)
   expect_equal(sort(unique(fixtures$stability_class)), 1:6)
   expect_true(any(abs(fixtures$est_speed - 0.13) < SRDT_C_TOLERANCE))
+  expect_gte(sum(fixtures$block == "boundary"), 20L)
 })
 
 test_that("SRDT estimator matches the C reference fixtures", {
@@ -45,17 +46,5 @@ test_that("SRDT estimator matches the C reference fixtures", {
     diagnostics = TRUE)
   expect_identical(est$stability_class, fixtures$stability_class)
   expect_equal(est$wind_2m, fixtures$est_speed,
-    tolerance = SRDT_C_TOLERANCE)
-})
-
-test_that("boundary rows just below and at each threshold match the C fixtures", {
-  fixtures <- srdt_fixtures()
-  boundary <- fixtures[fixtures$block == "boundary", ]
-  expect_gte(nrow(boundary), 20L)
-  est <- wind_2m_liljegren(boundary$speed, boundary$zspeed, boundary$solar,
-    boundary$daytime == 1L, boundary$dt, boundary$urban == 1L,
-    diagnostics = TRUE)
-  expect_identical(est$stability_class, boundary$stability_class)
-  expect_equal(est$wind_2m, boundary$est_speed,
     tolerance = SRDT_C_TOLERANCE)
 })

@@ -99,57 +99,42 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
     .assert(is.numeric(x) && is.null(dim(x)) && length(x) > 0L,
       paste0("'", name, "' must be a numeric vector"))
   }
+  inputs <- .align_inputs(c(list(wind = wind,
+    from_height_m = from_height_m, to_height_m = to_height_m), controls))
+  controls <- lapply(inputs[names(controls)], as.numeric)
 
-  prepared <- .prepare_inputs(list(wind = wind,
-    from_height_m = from_height_m, to_height_m = to_height_m))
+  prepared <- .prepare_inputs(inputs[c("wind", "from_height_m", "to_height_m")])
   status <- prepared$status
-  reason <- prepared$reason
   valid <- prepared$valid
   n <- prepared$n
   wind_v <- prepared$inputs$wind
   from_v <- prepared$inputs$from_height_m
   to_v <- prepared$inputs$to_height_m
 
-  for (name in names(controls)) {
-    x <- as.numeric(controls[[name]])
-    if (length(x) == 1L && n != 1L) x <- rep(x, length.out = n)
-    .assert(length(x) == n, "Control vectors do not have the same length")
-    controls[[name]] <- x
-  }
-
-  # Ordinary height validity: heights must be positive and finite.
-  bad_height <- valid & (!is.finite(from_v) | !is.finite(to_v) |
-    from_v <= 0 | to_v <= 0)
-  mark_invalid <- function(rows, why) {
-    rows <- rows & status != "invalid_input"
+  # .prepare_inputs() has already rejected non-finite heights.
+  mark_invalid <- function(rows) {
     status[rows] <<- "invalid_input"
-    reason[rows] <<- why
-    valid <<- valid & !rows
+    valid[rows] <<- FALSE
   }
-  mark_invalid(bad_height, "height")
+  mark_invalid(valid & (from_v <= 0 | to_v <= 0))
 
   # Equal-height rows return the input wind unchanged, exempt from
   # method-parameter row validity (but not from wind/height validity).
-  same_height <- valid & is.finite(from_v) & is.finite(to_v) & from_v == to_v
+  same_height <- valid & from_v == to_v
 
   values <- rep(NA_real_, n)
   if (method == "power") {
     exponent_v <- controls$exponent
-    mark_invalid(valid & !same_height & !is.finite(exponent_v), "exponent")
-    rows <- valid
+    mark_invalid(valid & !same_height & !is.finite(exponent_v))
+    rows <- valid & !same_height
     values[rows] <- wind_v[rows] * (to_v[rows] / from_v[rows])^exponent_v[rows]
   } else {
     z0_v <- controls$roughness_length_m
     d_v <- controls$displacement_height_m
-    # A zero-plane displacement height is the height the profile is shifted
-    # to; negative values have no physical meaning for conventional
-    # canopy/roughness applications and are rejected row-wise.
-    mark_invalid(valid & !same_height & is.finite(d_v) & d_v < 0,
-      "displacement")
     admissible <- is.finite(z0_v) & (z0_v > 0) & is.finite(d_v) & (d_v >= 0) &
       (from_v - d_v > z0_v) & (to_v - d_v > z0_v)
-    mark_invalid(valid & !same_height & !admissible, "roughness")
-    rows <- valid
+    mark_invalid(valid & !same_height & !admissible)
+    rows <- valid & !same_height
     values[rows] <- wind_v[rows] *
       log((to_v[rows] - d_v[rows]) / z0_v[rows]) /
       log((from_v[rows] - d_v[rows]) / z0_v[rows])
@@ -202,10 +187,7 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
   if (is.numeric(x)) {
     .assert(all(is.na(x) | x %in% c(0, 1)),
       paste0("'", name, "' numeric values must be 0 or 1"))
-    out <- rep(NA, length(x))
-    known <- !is.na(x)
-    out[known] <- x[known] == 1
-    x <- out
+    x <- as.logical(x)
   }
   x
 }
@@ -221,7 +203,7 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
     ifelse(speed >= 6, 5L, ifelse(speed >= 5, 4L, ifelse(speed >= 3, 3L,
       ifelse(speed >= 2, 2L, 1L)))),
     ifelse(speed >= 2.5, 3L, ifelse(speed >= 2, 2L, 1L)))
-  matrix(.srdt_lsrdt[cbind(i, j)], ncol = 1L)[, 1L] |> as.integer()
+  as.integer(.srdt_lsrdt[cbind(i, j)])
 }
 
 #' Estimate 2 m wind with the Liljegren SRDT stability-class method
@@ -346,17 +328,13 @@ wind_2m_liljegren <- function(wind, from_height_m, solar_w_m2, daytime,
   reason <- rep("", n)
   mark_missing <- function(rows, why) {
     rows <- which(rows & status == "valid")
-    if (length(rows)) {
-      status[rows] <<- "missing_input"
-      reason[rows] <<- why
-    }
+    status[rows] <<- "missing_input"
+    reason[rows] <<- why
   }
   mark_invalid <- function(rows, why) {
     rows <- which(rows & status != "invalid_input")
-    if (length(rows)) {
-      status[rows] <<- "invalid_input"
-      reason[rows] <<- why
-    }
+    status[rows] <<- "invalid_input"
+    reason[rows] <<- why
   }
   is_missing <- function(x) is.na(x) & !is.nan(x)
   is_bad_num <- function(x, lower_bounded) {
@@ -385,14 +363,13 @@ wind_2m_liljegren <- function(wind, from_height_m, solar_w_m2, daytime,
   mark_invalid(day_rows & is_bad_num(solar_v, TRUE), "solar_w_m2")
   # The inversion sign only changes the class below 2.5 m/s at night, so
   # delta_t is required exactly there; elsewhere it is irrelevant.
-  dt_rows <- night_rows & !is.na(wind_v) & wind_v < 2.5
+  dt_rows <- night_rows & wind_v < 2.5
   mark_missing(dt_rows & is_missing(dt_v), "delta_t_10m_2m_c")
   mark_invalid(dt_rows & is_bad_num(dt_v, FALSE), "delta_t_10m_2m_c")
 
   valid <- status == "valid"
   pass_rows <- valid & from_v == .srdt_ref_height_m
   est_rows <- valid & !pass_rows
-  day_rows <- est_rows & day_v
 
   values <- rep(NA_real_, n)
   cls <- rep(NA_integer_, n)
@@ -408,7 +385,7 @@ wind_2m_liljegren <- function(wind, from_height_m, solar_w_m2, daytime,
     # delta_t is irrelevant at night at or above 2.5 m/s; neutralise it so
     # an NA there cannot contaminate the class lookup.
     dt_used <- dt_v
-    dt_used[!(night_rows & wind_v < 2.5)] <- 0
+    dt_used[!dt_rows] <- 0
     class_rows <- .srdt_stability_class(day_v[rows], wind_v[rows],
       solar_v[rows], dt_used[rows])
     exponent_rows <- ifelse(urban_v[rows], .srdt_urban_exp[class_rows],
