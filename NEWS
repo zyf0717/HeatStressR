@@ -1,5 +1,12 @@
 # HeatStressR NEWS
 
+## 3.1.0 — unreleased
+
+* Added `wind_at_height()`, an explicit standalone wind-height conversion
+  utility (power law and neutral log-law), as preprocessing upstream of all
+  heat-stress methods. No implicit conversion or inference of input wind
+  heights was introduced anywhere else in the package.
+
 ## 3.0.0 — 2026-10-09
 
 * Added canonical snake_case index APIs, registry-driven method discovery and
