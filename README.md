@@ -74,15 +74,20 @@ indoor simplified WBGT formulas also represent different approximations.
 
 The existing vectorized R heat-balance solver remains the implementation,
 with automatic scalar fallback and optional PSOCK workers. Wind must be at
-2 m; adjust other heights externally. Supply timestamps as instants and
+2 m; convert other heights explicitly upstream with `wind_at_height()`
+(general power-law or neutral log-law) or `wind_2m_liljegren()` (original
+SRDT stability-class estimator). Supply timestamps as instants and
 align interval data before calculation.
 
 ```r
+# Convert 10 m wind to the 2 m contract with an explicit method.
+u2 <- wind_at_height(c(2.5, 3.2), from_height_m = 10,
+                     method = "neutral_log", roughness_length_m = 0.1)
 time <- as.POSIXct(
   c("2024-06-01 12:00:00", "2024-06-01 13:00:00"), tz = "UTC"
 )
 wbgt <- wbgt_liljegren(
-  tas = c(30, 31), dewp = c(22, 22.5), wind = c(1.5, 2),
+  tas = c(30, 31), dewp = c(22, 22.5), wind = u2,
   radiation = c(700, 750), time = time, lon = 0, lat = 15,
   direct_fraction = c(0.6, 0.8)
 )

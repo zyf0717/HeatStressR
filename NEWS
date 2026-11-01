@@ -6,6 +6,11 @@
   utility (power law and neutral log-law), as preprocessing upstream of all
   heat-stress methods. No implicit conversion or inference of input wind
   heights was introduced anywhere else in the package.
+* Added `wind_2m_liljegren()`, a compatibility estimator reproducing the
+  original Liljegren v1.1 SRDT stability-class lookup and 2 m power-law
+  estimate, including rural/urban exponents and the 0.13 m/s estimated-speed
+  floor. Verified against the retained C source at class boundaries within
+  float tolerance; the original undefined 2 m output is not reproduced.
 
 ## 3.0.0 — 2026-10-09
 
