@@ -35,14 +35,17 @@ Required and strictly positive for \code{method = "neutral_log"}; ignored
 otherwise.}
 
 \item{displacement_height_m}{Zero-plane displacement height \code{d} in metres.
-Default 0 (open terrain). Used only by \code{method = "neutral_log"}.}
+Default 0 (open terrain). Must be non-negative; negative values have no
+physical meaning for a zero-plane displacement and mark the row invalid.
+Used only by \code{method = "neutral_log"}.}
 }
 \value{
 Numeric wind speed in m/s at \code{to_height_m}. Scalars expand and
 equal-length vectors are processed row-wise; \code{numeric(0)} is preserved.
 \code{NA} inputs propagate. Rows that are physically invalid (negative wind,
-non-positive heights, non-finite exponent, non-positive roughness, or a
-height at or below \code{d + z0}) become \code{NA} with a summary warning.
+non-positive heights, non-finite exponent, non-positive roughness,
+negative displacement height, or a height at or below \code{d + z0}) become
+\code{NA} with a summary warning.
 No minimum-wind clamp is applied; use method-specific controls such as
 \code{\link[=wbgt_liljegren]{wbgt_liljegren()}}\verb{$min_wind_speed} for that, and do not apply both.
 }

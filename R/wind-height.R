@@ -38,12 +38,15 @@
 #'   Required and strictly positive for `method = "neutral_log"`; ignored
 #'   otherwise.
 #' @param displacement_height_m Zero-plane displacement height `d` in metres.
-#'   Default 0 (open terrain). Used only by `method = "neutral_log"`.
+#'   Default 0 (open terrain). Must be non-negative; negative values have no
+#'   physical meaning for a zero-plane displacement and mark the row invalid.
+#'   Used only by `method = "neutral_log"`.
 #' @return Numeric wind speed in m/s at `to_height_m`. Scalars expand and
 #'   equal-length vectors are processed row-wise; `numeric(0)` is preserved.
 #'   `NA` inputs propagate. Rows that are physically invalid (negative wind,
-#'   non-positive heights, non-finite exponent, non-positive roughness, or a
-#'   height at or below `d + z0`) become `NA` with a summary warning.
+#'   non-positive heights, non-finite exponent, non-positive roughness,
+#'   negative displacement height, or a height at or below `d + z0`) become
+#'   `NA` with a summary warning.
 #'   No minimum-wind clamp is applied; use method-specific controls such as
 #'   [wbgt_liljegren()]`$min_wind_speed` for that, and do not apply both.
 #' @details
@@ -138,7 +141,12 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
   } else {
     z0_v <- controls$roughness_length_m
     d_v <- controls$displacement_height_m
-    admissible <- is.finite(z0_v) & (z0_v > 0) & is.finite(d_v) &
+    # A zero-plane displacement height is the height the profile is shifted
+    # to; negative values have no physical meaning for conventional
+    # canopy/roughness applications and are rejected row-wise.
+    mark_invalid(valid & !same_height & is.finite(d_v) & d_v < 0,
+      "displacement")
+    admissible <- is.finite(z0_v) & (z0_v > 0) & is.finite(d_v) & (d_v >= 0) &
       (from_v - d_v > z0_v) & (to_v - d_v > z0_v)
     mark_invalid(valid & !same_height & !admissible, "roughness")
     rows <- valid

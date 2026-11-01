@@ -90,6 +90,14 @@ test_that("physically invalid rows become NA with a summary warning", {
   # Height at or below d + z0 is inadmissible for the log law.
   expect_warning(wind_at_height(4, 10, 2, method = "neutral_log",
     roughness_length_m = 0.5, displacement_height_m = 1.6), "invalid=1")
+  # Negative zero-plane displacement height is physically invalid.
+  expect_warning(wind_at_height(4, 10, 2, method = "neutral_log",
+    roughness_length_m = 0.1, displacement_height_m = -0.5), "invalid=1")
+  expect_warning(u <- wind_at_height(c(4, 4), 10, 2, method = "neutral_log",
+    roughness_length_m = 0.1, displacement_height_m = c(0, -0.5)),
+    "invalid=1")
+  expect_equal(u[1], 4 * log(2 / 0.1) / log(10 / 0.1))
+  expect_equal(u[2], NA_real_)
   expect_warning(u <- wind_at_height(c(4, 4), 10, 2, method = "neutral_log",
     roughness_length_m = c(0.1, -1)), "invalid=1")
   expect_equal(u[2], NA_real_)
