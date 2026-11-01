@@ -164,3 +164,274 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
   }
   values
 }
+
+# Original Liljegren v1.1 SRDT tables, transcribed verbatim from stab_srdt()
+# and est_wind_speed() in the retained wbgt.c.original (EPA-454/5-99-005,
+# 2000, section 6.2.5). Rows are wind-speed classes (day: i = 0..4 for
+# < 2, 2-3, 3-5, 5-6, >= 6 m/s; night: i = 0..2 for < 2, 2-2.5, >= 2.5 m/s).
+# Columns are 0-based as in C: day j = 0..3 for solar >= 925, >= 675,
+# >= 175, < 175 W/m2; night j = 5 for delta_t < 0 and j = 6 for
+# delta_t >= 0. Entries 0 and the sixth row are unreachable padding kept for
+# table fidelity.
+.srdt_lsrdt <- rbind(
+  c(1, 1, 2, 4, 0, 5, 6, 0),
+  c(1, 2, 3, 4, 0, 5, 6, 0),
+  c(2, 2, 3, 4, 0, 4, 4, 0),
+  c(3, 3, 4, 4, 0, 0, 0, 0),
+  c(3, 4, 4, 4, 0, 0, 0, 0),
+  c(0, 0, 0, 0, 0, 0, 0, 0))
+
+# est_wind_speed() exponent tables, indexed by stability class 1..6.
+.srdt_urban_exp <- c(0.15, 0.15, 0.20, 0.25, 0.30, 0.30)
+.srdt_rural_exp <- c(0.07, 0.07, 0.10, 0.15, 0.35, 0.55)
+
+# est_wind_speed() calm floor (MIN_SPEED) and reference height (REF_HEIGHT).
+.srdt_min_speed <- 0.13
+.srdt_ref_height_m <- 2
+
+# 0/1 flag vectors accepted as logical or numeric 0/1; NA stays missing.
+.srdt_flag <- function(x, name) {
+  .assert(is.null(dim(x)) && (is.logical(x) || is.numeric(x)),
+    paste0("'", name, "' must be a logical or 0/1 numeric vector"))
+  if (is.numeric(x)) {
+    .assert(all(is.na(x) | x %in% c(0, 1)),
+      paste0("'", name, "' numeric values must be 0 or 1"))
+    out <- rep(NA, length(x))
+    known <- !is.na(x)
+    out[known] <- x[known] == 1
+    x <- out
+  }
+  x
+}
+
+# stab_srdt() port. Callers pass sanitized, row-valid daytime, speed, solar
+# and delta_t; delta_t is only consulted for rows that need it.
+.srdt_stability_class <- function(daytime, speed, solar, delta_t) {
+  j <- ifelse(daytime,
+    ifelse(solar >= 925, 1L, ifelse(solar >= 675, 2L,
+      ifelse(solar >= 175, 3L, 4L))),
+    ifelse(delta_t >= 0, 7L, 6L))
+  i <- ifelse(daytime,
+    ifelse(speed >= 6, 5L, ifelse(speed >= 5, 4L, ifelse(speed >= 3, 3L,
+      ifelse(speed >= 2, 2L, 1L)))),
+    ifelse(speed >= 2.5, 3L, ifelse(speed >= 2, 2L, 1L)))
+  matrix(.srdt_lsrdt[cbind(i, j)], ncol = 1L)[, 1L] |> as.integer()
+}
+
+#' Estimate 2 m wind with the Liljegren SRDT stability-class method
+#'
+#' @description
+#' Compatibility estimator reproducing the original Liljegren v1.1 SRDT
+#' (short-range diffusion time) stability-class lookup and 2 m power-law
+#' estimate from the retained C implementation (EPA-454/5-99-005, 2000,
+#' section 6.2.5). Use it when a reanalysis or tower wind must be reduced to
+#' the 2 m height [wbgt_liljegren()] expects using exactly the original
+#' stability logic. For any other height conversion, including 2 m targets
+#' under neutral assumptions, use [wind_at_height()] instead; this function
+#' is the only place the SRDT tables and the 0.13 m/s estimated-speed floor
+#' apply.
+#'
+#' The stability class is computed from the wind speed at its ORIGINAL
+#' measurement height, before conversion, exactly as the C program does.
+#' Daytime classes use the wind thresholds 2/3/5/6 m/s and radiation
+#' classes at 175/675/925 W/m2; nighttime classes use wind thresholds
+#' 2/2.5 m/s and the sign of `delta_t_10m_2m_c`. Separate rural and urban
+#' power-law exponent tables are applied, selected by the explicit `urban`
+#' flag. The estimated speed is `wind * (2 / from_height_m)^exponent`,
+#' floored at 0.13 m/s (the original `MIN_SPEED`); this floor applies only
+#' inside this estimator. Inside the WBGT kernel the existing
+#' [wbgt_liljegren()]`$min_wind_speed` control remains in force; do not
+#' apply both clamps expecting a single raw wind to pass through them twice.
+#'
+#' @param wind Wind speed in m/s at `from_height_m`. Zero is valid; negative
+#'   values are invalid. The stability class uses this original-height
+#'   value.
+#' @param from_height_m Measurement height of `wind` in metres. Must be
+#'   positive. Rows already at 2 m pass through unchanged and do not require
+#'   any stability inputs. (The original C left its estimated-speed output
+#'   undefined at 2 m; this function never reproduces that defect.)
+#' @param solar_w_m2 Solar irradiance in W/m2, used only for daytime rows
+#'   to select the radiation class (>= 925, >= 675, >= 175, < 175). Must be
+#'   finite and non-negative where required; may be `NA` on nighttime and
+#'   at-height-2 rows.
+#' @param daytime Logical (or 0/1 numeric) flag from solar geometry, not
+#'   from whether irradiance is positive. Required on every estimated row;
+#'   never defaulted.
+#' @param delta_t_10m_2m_c Vertical temperature difference (10 m minus 2 m)
+#'   in degrees C, used only for nighttime rows with wind below 2.5 m/s,
+#'   where its sign selects the inversion class. Required exactly where it
+#'   affects the class; may be `NA` elsewhere. No default sign is invented.
+#' @param urban Logical (or 0/1 numeric) land-use flag selecting the urban
+#'   versus rural exponent table. Required on every estimated row; no
+#'   land-use class is assumed.
+#' @param diagnostics Single logical. If `TRUE`, return row-aligned
+#'   metadata instead of a bare vector.
+#' @return Numeric wind speed in m/s at 2 m. Scalars expand and equal-length
+#'   vectors are processed row-wise; `numeric(0)` is preserved; `NA` inputs
+#'   propagate silently. Rows missing a required conditional input are `NA`
+#'   without warning; physically invalid rows (negative wind, non-positive
+#'   or non-finite height, negative or non-finite required radiation,
+#'   non-finite required temperature difference) become `NA` with a summary
+#'   warning. With `diagnostics = TRUE`, a data frame with `wind_2m` plus
+#'   row-aligned `stability_class` (1..6, `NA` for pass-through rows),
+#'   `exponent`, `adjustment` (the applied `(2 / from_height_m)^exponent`
+#'   factor; 1 for pass-through rows), `floored` (whether the 0.13 m/s
+#'   floor was applied), and `status`/`reason` row records.
+#' @details
+#' Assumptions inherited from the original method: the SRDT class is a
+#' coarse surface-layer stability surrogate driven by wind, solar geometry
+#' and irradiance; `solar_w_m2` should be the same forcing passed to the
+#' WBGT kernel. The original C evaluates the radiation class on its
+#' internally normalized solar value; when comparing against a full C
+#' pipeline, use forcing where that normalization is the identity (see the
+#' reference tests). Results are computed in double precision while the
+#' original uses `float`, so agreement is to floating-point tolerance, not
+#' bitwise. Conversion does not resolve exposure representativeness,
+#' terrain or building effects, or time-averaging mismatches.
+#' @references
+#' Liljegren, J. C., Carff, J., Stotz, S. and Ebert, L. (2008).
+#' "Modeling the Wet Bulb Globe Temperature and Its Implications for Heat
+#' Stress Display Models in Outdoor Shaded Environments." International
+#' Journal of Occupational Environmental and Safety. \doi{10.1080/15459620802310770}.
+#'
+#' U.S. EPA (2000). "ISC3 User's Guide, Volume II, Chapter 2: Meteorological
+#' Data Input." EPA-454/5-99-005, section 6.2.5.
+#' @seealso [wind_at_height()] for explicit general height conversion
+#' @examples
+#' # 10 m rural daytime wind, mid-range radiation.
+#' wind_2m_liljegren(4, from_height_m = 10, solar_w_m2 = 500,
+#'   daytime = TRUE, delta_t_10m_2m_c = NA_real_, urban = FALSE)
+#'
+#' # Nighttime with a surface inversion (delta_t > 0 means stable).
+#' wind_2m_liljegren(1.5, from_height_m = 10, solar_w_m2 = 0,
+#'   daytime = FALSE, delta_t_10m_2m_c = 2, urban = FALSE)
+#'
+#' # Wind already at 2 m passes through without stability inputs.
+#' wind_2m_liljegren(3.5, from_height_m = 2, solar_w_m2 = NA_real_,
+#'   daytime = NA, delta_t_10m_2m_c = NA_real_, urban = NA)
+#'
+#' # Row-aligned metadata.
+#' wind_2m_liljegren(c(4, 0.05), c(10, 10), c(500, 500), c(TRUE, TRUE),
+#'   NA_real_, FALSE, diagnostics = TRUE)
+#' @export
+wind_2m_liljegren <- function(wind, from_height_m, solar_w_m2, daytime,
+                              delta_t_10m_2m_c, urban,
+                              diagnostics = FALSE) {
+  .logical_control(diagnostics, "diagnostics")
+  for (name in c("wind", "from_height_m", "solar_w_m2", "delta_t_10m_2m_c")) {
+    x <- get(name) # nolint: unnecessary_assignment_linter.
+    .assert(is.numeric(x) && is.null(dim(x)),
+      paste0("'", name, "' must be a numeric vector"))
+  }
+  daytime <- .srdt_flag(daytime, "daytime")
+  urban <- .srdt_flag(urban, "urban")
+  inputs <- .align_inputs(list(wind = wind, from_height_m = from_height_m,
+    solar_w_m2 = solar_w_m2, delta_t_10m_2m_c = delta_t_10m_2m_c,
+    daytime = daytime, urban = urban))
+  wind_v <- as.numeric(inputs$wind)
+  from_v <- as.numeric(inputs$from_height_m)
+  solar_v <- as.numeric(inputs$solar_w_m2)
+  dt_v <- as.numeric(inputs$delta_t_10m_2m_c)
+  day_v <- inputs$daytime
+  urban_v <- inputs$urban
+  n <- length(wind_v)
+
+  status <- rep("valid", n)
+  reason <- rep("", n)
+  mark_missing <- function(rows, why) {
+    rows <- which(rows & status == "valid")
+    if (length(rows)) {
+      status[rows] <<- "missing_input"
+      reason[rows] <<- why
+    }
+  }
+  mark_invalid <- function(rows, why) {
+    rows <- which(rows & status != "invalid_input")
+    if (length(rows)) {
+      status[rows] <<- "invalid_input"
+      reason[rows] <<- why
+    }
+  }
+  is_missing <- function(x) is.na(x) & !is.nan(x)
+  is_bad_num <- function(x, lower_bounded) {
+    is.nan(x) | (!is.na(x) & (!is.finite(x) | (lower_bounded & x < 0)))
+  }
+
+  mark_missing(is_missing(wind_v), "wind")
+  mark_invalid(is_bad_num(wind_v, TRUE), "wind")
+  mark_missing(is_missing(from_v), "from_height_m")
+  mark_invalid(is.nan(from_v) | (!is.na(from_v) & (!is.finite(from_v) |
+    from_v <= 0)), "from_height_m")
+
+  # Rows already at 2 m need no stability inputs at all.
+  valid <- status == "valid"
+  est_rows <- valid & from_v != .srdt_ref_height_m
+  mark_missing(est_rows & is.na(day_v), "daytime")
+  mark_missing(est_rows & is.na(urban_v), "urban")
+
+  valid <- status == "valid"
+  est_rows <- valid & from_v != .srdt_ref_height_m
+  day_rows <- est_rows & day_v
+  night_rows <- est_rows & !day_v
+  # Radiation is required only on daytime rows; nighttime radiation is
+  # ignored even when present and invalid.
+  mark_missing(day_rows & is_missing(solar_v), "solar_w_m2")
+  mark_invalid(day_rows & is_bad_num(solar_v, TRUE), "solar_w_m2")
+  # The inversion sign only changes the class below 2.5 m/s at night, so
+  # delta_t is required exactly there; elsewhere it is irrelevant.
+  dt_rows <- night_rows & !is.na(wind_v) & wind_v < 2.5
+  mark_missing(dt_rows & is_missing(dt_v), "delta_t_10m_2m_c")
+  mark_invalid(dt_rows & is_bad_num(dt_v, FALSE), "delta_t_10m_2m_c")
+
+  valid <- status == "valid"
+  pass_rows <- valid & from_v == .srdt_ref_height_m
+  est_rows <- valid & !pass_rows
+  day_rows <- est_rows & day_v
+
+  values <- rep(NA_real_, n)
+  cls <- rep(NA_integer_, n)
+  exponent <- rep(NA_real_, n)
+  adjustment <- rep(NA_real_, n)
+  floored <- rep(NA, n)
+  floored[pass_rows] <- FALSE
+  adjustment[pass_rows] <- 1
+  values[pass_rows] <- wind_v[pass_rows]
+
+  if (any(est_rows)) {
+    rows <- which(est_rows)
+    # delta_t is irrelevant at night at or above 2.5 m/s; neutralise it so
+    # an NA there cannot contaminate the class lookup.
+    dt_used <- dt_v
+    dt_used[!(night_rows & wind_v < 2.5)] <- 0
+    class_rows <- .srdt_stability_class(day_v[rows], wind_v[rows],
+      solar_v[rows], dt_used[rows])
+    exponent_rows <- ifelse(urban_v[rows], .srdt_urban_exp[class_rows],
+      .srdt_rural_exp[class_rows])
+    adj_rows <- (.srdt_ref_height_m / from_v[rows])^exponent_rows
+    raw_rows <- wind_v[rows] * adj_rows
+    values[rows] <- pmax(raw_rows, .srdt_min_speed)
+    cls[rows] <- class_rows
+    exponent[rows] <- exponent_rows
+    adjustment[rows] <- adj_rows
+    floored[rows] <- raw_rows < .srdt_min_speed
+  }
+
+  failed <- valid & !is.finite(values)
+  values[!valid | failed] <- NA_real_
+  # Missing rows stay silent in the v3 style; only invalid rows warn.
+  counts <- c(invalid = sum(status == "invalid_input"),
+    failed = sum(failed))
+  counts <- counts[counts > 0L]
+  if (length(counts)) {
+    warning(paste0("wind_2m_liljegren: ",
+      paste(names(counts), counts, sep = "="),
+      ". Invalid rows are NA; see ?wind_2m_liljegren for validity rules."),
+      call. = FALSE)
+  }
+  if (diagnostics) {
+    return(data.frame(wind_2m = values, stability_class = cls,
+      exponent = exponent, adjustment = adjustment, floored = floored,
+      status = status, reason = reason, stringsAsFactors = FALSE))
+  }
+  values
+}
