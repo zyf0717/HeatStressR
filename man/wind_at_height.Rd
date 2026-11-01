@@ -80,8 +80,7 @@ When \code{from_height_m} equals \code{to_height_m} the wind is returned unchang
 subject to ordinary wind and height validation.
 
 Record the source height, method and parameters alongside converted
-results for reproducibility. See Anderson et al. (2024) for a comparison
-of wind-height conversions for global reanalyses.
+results for reproducibility.
 }
 \examples{
 # 10 m reanalysis wind to the 2 m height wbgt_liljegren() expects,
@@ -94,8 +93,7 @@ wind_at_height(c(3, 6), from_height_m = c(10, 10), to_height_m = 2,
                method = "power", exponent = 0.143)
 }
 \references{
-Anderson, R., Paul, S., Coomes, D. A. and Emery, N. C. (2024).
-"Vertical Wind Downscaling for Global Offshore Wind Speed Resource
-Assessment." Journal of Applied Meteorology and Climatology.
-\doi{10.1175/JAMC-D-24-0009.1}
+U.S. EPA (2000). "Meteorological Monitoring Guidance for Regulatory
+Modeling Applications." EPA-454/R-99-005, section 6.2.5 (stability-class
+wind-profile adjustment).
 }

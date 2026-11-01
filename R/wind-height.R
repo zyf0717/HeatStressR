@@ -59,14 +59,12 @@
 #' subject to ordinary wind and height validation.
 #'
 #' Record the source height, method and parameters alongside converted
-#' results for reproducibility. See Anderson et al. (2024) for a comparison
-#' of wind-height conversions for global reanalyses.
+#' results for reproducibility.
 #'
 #' @references
-#' Anderson, R., Paul, S., Coomes, D. A. and Emery, N. C. (2024).
-#' "Vertical Wind Downscaling for Global Offshore Wind Speed Resource
-#' Assessment." Journal of Applied Meteorology and Climatology.
-#' \doi{10.1175/JAMC-D-24-0009.1}
+#' U.S. EPA (2000). "Meteorological Monitoring Guidance for Regulatory
+#' Modeling Applications." EPA-454/R-99-005, section 6.2.5 (stability-class
+#' wind-profile adjustment).
 #' @examples
 #' # 10 m reanalysis wind to the 2 m height wbgt_liljegren() expects,
 #' # using an explicit neutral log-law with open-terrain roughness.
@@ -166,7 +164,7 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
 }
 
 # Original Liljegren v1.1 SRDT tables, transcribed verbatim from stab_srdt()
-# and est_wind_speed() in the retained wbgt.c.original (EPA-454/5-99-005,
+# and est_wind_speed() in the retained wbgt.c.original (EPA-454/R-99-005,
 # 2000, section 6.2.5). Rows are wind-speed classes (day: i = 0..4 for
 # < 2, 2-3, 3-5, 5-6, >= 6 m/s; night: i = 0..2 for < 2, 2-2.5, >= 2.5 m/s).
 # Columns are 0-based as in C: day j = 0..3 for solar >= 925, >= 675,
@@ -222,8 +220,8 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
 #'
 #' @description
 #' Compatibility estimator reproducing the original Liljegren v1.1 SRDT
-#' (short-range diffusion time) stability-class lookup and 2 m power-law
-#' estimate from the retained C implementation (EPA-454/5-99-005, 2000,
+#' (Solar Radiation/Delta Temperature) stability-class lookup and 2 m
+#' power-law estimate from the retained C implementation (EPA-454/R-99-005, 2000,
 #' section 6.2.5). Use it when a reanalysis or tower wind must be reduced to
 #' the 2 m height [wbgt_liljegren()] expects using exactly the original
 #' stability logic. For any other height conversion, including 2 m targets
@@ -289,13 +287,13 @@ wind_at_height <- function(wind, from_height_m, to_height_m = 2, method,
 #' bitwise. Conversion does not resolve exposure representativeness,
 #' terrain or building effects, or time-averaging mismatches.
 #' @references
-#' Liljegren, J. C., Carff, J., Stotz, S. and Ebert, L. (2008).
-#' "Modeling the Wet Bulb Globe Temperature and Its Implications for Heat
-#' Stress Display Models in Outdoor Shaded Environments." International
-#' Journal of Occupational Environmental and Safety. \doi{10.1080/15459620802310770}.
+#' Liljegren, J. C., Carhart, R. A., Lawday, P., Tschopp, S. and Sharp, R.
+#' (2008). "Modeling the Wet Bulb Globe Temperature Using Standard
+#' Meteorological Measurements." Journal of Occupational and Environmental
+#' Hygiene, 5(10), 645-655. \doi{10.1080/15459620802310770}.
 #'
-#' U.S. EPA (2000). "ISC3 User's Guide, Volume II, Chapter 2: Meteorological
-#' Data Input." EPA-454/5-99-005, section 6.2.5.
+#' U.S. EPA (2000). "Meteorological Monitoring Guidance for Regulatory
+#' Modeling Applications." EPA-454/R-99-005, section 6.2.5.
 #' @seealso [wind_at_height()] for explicit general height conversion
 #' @examples
 #' # 10 m rural daytime wind, mid-range radiation.

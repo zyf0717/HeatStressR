@@ -60,8 +60,8 @@ floor was applied), and \code{status}/\code{reason} row records.
 }
 \description{
 Compatibility estimator reproducing the original Liljegren v1.1 SRDT
-(short-range diffusion time) stability-class lookup and 2 m power-law
-estimate from the retained C implementation (EPA-454/5-99-005, 2000,
+(Solar Radiation/Delta Temperature) stability-class lookup and 2 m
+power-law estimate from the retained C implementation (EPA-454/R-99-005, 2000,
 section 6.2.5). Use it when a reanalysis or tower wind must be reduced to
 the 2 m height \code{\link[=wbgt_liljegren]{wbgt_liljegren()}} expects using exactly the original
 stability logic. For any other height conversion, including 2 m targets
@@ -111,13 +111,13 @@ wind_2m_liljegren(c(4, 0.05), c(10, 10), c(500, 500), c(TRUE, TRUE),
   NA_real_, FALSE, diagnostics = TRUE)
 }
 \references{
-Liljegren, J. C., Carff, J., Stotz, S. and Ebert, L. (2008).
-"Modeling the Wet Bulb Globe Temperature and Its Implications for Heat
-Stress Display Models in Outdoor Shaded Environments." International
-Journal of Occupational Environmental and Safety. \doi{10.1080/15459620802310770}.
+Liljegren, J. C., Carhart, R. A., Lawday, P., Tschopp, S. and Sharp, R.
+(2008). "Modeling the Wet Bulb Globe Temperature Using Standard
+Meteorological Measurements." Journal of Occupational and Environmental
+Hygiene, 5(10), 645-655. \doi{10.1080/15459620802310770}.
 
-U.S. EPA (2000). "ISC3 User's Guide, Volume II, Chapter 2: Meteorological
-Data Input." EPA-454/5-99-005, section 6.2.5.
+U.S. EPA (2000). "Meteorological Monitoring Guidance for Regulatory
+Modeling Applications." EPA-454/R-99-005, section 6.2.5.
 }
 \seealso{
 \code{\link[=wind_at_height]{wind_at_height()}} for explicit general height conversion
