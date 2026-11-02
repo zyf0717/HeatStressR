@@ -3,8 +3,10 @@
 - `v2-valid.rds`: HeatStressR 2.4.0 at commit `112f43f`, generated before this
   implementation. Covers unaffected valid-input formula outputs and Bernard
   components. Heat Index is excluded because known NWS corrections change it.
-- `nws-heat-index.csv`: the published NWS procedure evaluated independently in
-  Python by `tools/generate-nws-fixtures.py`. Covers simple averaging,
+- `nws-heat-index.csv`: the published NWS Heat Index procedure evaluated
+  independently in base R by `tools/generate-nws-fixtures.R`, without importing
+  HeatStressR. Run `Rscript tools/generate-nws-fixtures.R` from the repository
+  root to regenerate. Covers simple averaging,
   regression selection, low/high RH adjustments, and their boundary values.
   Source: https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml.
 - `heatindex-0.0.2.csv`: direct output of the authors' CRAN R package 0.0.2,

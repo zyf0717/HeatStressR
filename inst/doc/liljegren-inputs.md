@@ -3,7 +3,28 @@
 `wbgt_liljegren()` evaluates instantaneous meteorological states. Supply air
 and dew-point temperature in C, wind at 2 m in m/s, total downwelling shortwave
 radiation in W/m2, geographic coordinates in degrees, and timestamps identifying
-instants. No wind-height or interval adjustment is performed.
+instants. No wind-height or interval adjustment is performed inside the kernel.
+
+## Wind-height conversion as preprocessing
+
+When wind is measured or reanalyzed at another height, convert it explicitly
+before calling `wbgt_liljegren()` and record the method and parameters with
+the results. `wind_at_height()` provides general power-law and neutral
+log-law conversion:
+
+```r
+u2 <- wind_at_height(wind10, from_height_m = 10,
+                     method = "neutral_log", roughness_length_m = 0.1)
+```
+
+`wind_2m_liljegren()` reproduces the original C program's SRDT
+stability-class estimate when continuity with SRDT-processed forcing matters;
+see [original-c-differences.md](original-c-differences.md). These utilities
+are preprocessing only: no implicit conversion or source-height inference
+happens anywhere in the package, and `heat_indices()` keeps `wind_10m` and
+`wind_2m` as distinct inputs. Conversion does not resolve exposure
+representativeness, terrain or building effects, or time-averaging
+mismatches between source series.
 
 POSIXct/POSIXlt timestamps and offset-bearing ISO-8601 strings are normalized
 to UTC. Convert strings upstream for repeated high-throughput calls. Date-only
